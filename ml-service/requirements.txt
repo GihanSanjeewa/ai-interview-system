@@ -1,0 +1,15 @@
+flask
+flask-cors
+openai-whisper
+pdfplumber
+spacy
+python-docx
+anthropic
+python-dotenv
+librosa
+scikit-learn
+pandas
+matplotlib
+seaborn
+joblib
+numpy
