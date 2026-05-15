@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./Dashboard.css";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [domains, setDomains] = useState([]);
   const [selectedDomain, setSelectedDomain] = useState("");
   const [cvId, setCvId] = useState(null);
   const [language, setLanguage] = useState("english");
+  const [difficulty, setDifficulty] = useState("intermediate");
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -34,7 +37,7 @@ const Dashboard = () => {
       setDomains(res.data.domains);
       setCvId(res.data.cvId);
     } catch (err) {
-      alert("Upload failed");
+      alert(err.response?.data?.message || "Upload failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -42,8 +45,7 @@ const Dashboard = () => {
 
   const startInterview = () => {
     if (!selectedDomain) return;
-    // Navigate to interview page with state
-    window.location.href = `/interview?cvId=${cvId}&domain=${encodeURIComponent(selectedDomain)}&language=${language}`;
+    navigate(`/interview?cvId=${cvId}&domain=${encodeURIComponent(selectedDomain)}&language=${language}&difficulty=${difficulty}`);
   };
 
   return (
@@ -51,6 +53,7 @@ const Dashboard = () => {
       <nav className="dashboard-nav">
         <div className="logo">AI Interviewer</div>
         <div className="user-info">
+          <button onClick={() => navigate("/history")} className="btn-history">My History</button>
           <span>{user?.username}</span>
           <button onClick={logout} className="btn-logout">Logout</button>
         </div>
@@ -65,9 +68,9 @@ const Dashboard = () => {
         <section className="upload-section">
           <div className="glass-card">
             <h2>Step 1: Upload your CV</h2>
-            <p>Upload your PDF resume to let our AI analyze your skills.</p>
+            <p>Upload your PDF or DOCX resume to let our AI analyze your skills.</p>
             <form onSubmit={handleUpload} className="upload-form">
-              <input type="file" onChange={handleFileChange} accept=".pdf" />
+              <input type="file" onChange={handleFileChange} accept=".pdf,.docx" />
               <button type="submit" className="btn-primary" disabled={loading || !file}>
                 {loading ? "Analyzing..." : "Upload & Analyze"}
               </button>
@@ -76,13 +79,13 @@ const Dashboard = () => {
 
           {domains.length > 0 && (
             <div className="glass-card fade-in">
-              <h2>Step 2: Select Interview Domain</h2>
+              <h2>Step 2: Configure Your Interview</h2>
               <p>We've detected these potential domains based on your CV:</p>
               <div className="domain-grid">
                 {domains.map((domain) => (
                   <button
                     key={domain}
-                    className={`domain-btn ${selectedDomain === domain ? 'active' : ''}`}
+                    className={`domain-btn ${selectedDomain === domain ? "active" : ""}`}
                     onClick={() => setSelectedDomain(domain)}
                   >
                     {domain}
@@ -92,15 +95,19 @@ const Dashboard = () => {
               <div className="config-grid">
                 <div className="config-group">
                   <label>Difficulty</label>
-                  <select className="premium-select">
-                    <option>Beginner</option>
-                    <option>Intermediate</option>
-                    <option>Advanced</option>
+                  <select
+                    className="premium-select"
+                    value={difficulty}
+                    onChange={(e) => setDifficulty(e.target.value)}
+                  >
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
                   </select>
                 </div>
                 <div className="config-group">
                   <label>Interview Language</label>
-                  <select 
+                  <select
                     className="premium-select"
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
@@ -110,8 +117,8 @@ const Dashboard = () => {
                   </select>
                 </div>
               </div>
-              <button 
-                className="btn-primary start-btn" 
+              <button
+                className="btn-primary start-btn"
                 onClick={startInterview}
                 disabled={!selectedDomain}
               >

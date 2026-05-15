@@ -28,7 +28,7 @@
   gap: 20px;
 }
 
-.btn-logout {
+.btn-logout, .btn-history {
   padding: 8px 16px;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -38,9 +38,19 @@
   transition: all 0.3s;
 }
 
-.btn-logout:hover {
+.btn-logout:hover, .btn-history:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: white;
+}
+
+.btn-history {
+  border-color: rgba(79, 172, 254, 0.4);
+  color: #4facfe;
+}
+
+.btn-history:hover {
+  background: rgba(79, 172, 254, 0.1);
+  border-color: #4facfe;
 }
 
 .dashboard-main {

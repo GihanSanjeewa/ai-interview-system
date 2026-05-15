@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment files — never commit API keys
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Python
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+ml-service/venv/
+ml-service/.venv/
+.venv/
+
+# Temp / generated files
+ml-service/temp.mp3
+ml-service/temp_cv.pdf
+ml-service/temp_cv.docx
+
+# Uploaded user files
+backend/uploads/
+
+# Build output
+frontend/dist/
+frontend/build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

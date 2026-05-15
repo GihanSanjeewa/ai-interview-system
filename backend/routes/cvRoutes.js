@@ -15,7 +15,17 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ext === ".pdf" || ext === ".docx") {
+      cb(null, true);
+    } else {
+      cb(new Error("Only PDF and DOCX files are allowed"), false);
+    }
+  }
+});
 
 router.post("/upload", auth, upload.single("cv"), uploadCV);
 router.get("/", auth, getUserCVs);

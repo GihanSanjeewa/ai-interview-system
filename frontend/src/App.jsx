@@ -5,6 +5,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Interview from "./pages/Interview";
 import Report from "./pages/Report";
+import History from "./pages/History";
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
@@ -33,6 +34,11 @@ function AppContent() {
         <Route path="/report" element={
           <ProtectedRoute>
             <Report />
+          </ProtectedRoute>
+        } />
+        <Route path="/history" element={
+          <ProtectedRoute>
+            <History />
           </ProtectedRoute>
         } />
         <Route path="/" element={<Navigate to="/dashboard" />} />
