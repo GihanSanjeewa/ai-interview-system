@@ -1,83 +1,75 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import axios from "axios";
+import { authApi, setAccessToken } from "@/services/api";
 
 const AuthContext = createContext(null);
 
 export const useAuth = () => useContext(AuthContext);
 
-const STORAGE_KEY = "iv_user";
-const TOKEN_KEY = "iv_token";
+const USER_KEY = "iv_user";
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const raw = localStorage.getItem(USER_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) setUser(JSON.parse(stored));
-    } catch {}
-    setLoading(false);
+    let cancelled = false;
+    (async () => {
+      try {
+        const { user: me } = await authApi.me();
+        if (cancelled) return;
+        setUser(me);
+        localStorage.setItem(USER_KEY, JSON.stringify(me));
+      } catch {
+        // Not logged in or refresh failed — keep cached user; pages requiring auth will redirect.
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const persist = (data) => {
-    localStorage.setItem(TOKEN_KEY, data.token || "demo-token");
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
+    setAccessToken(data.accessToken);
     setUser(data.user);
+    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
   };
 
   const login = async (email, password) => {
+    const data = await authApi.login({ email, password });
+    persist(data);
+    return data;
+  };
+
+  const register = async (fullName, email, password) => {
+    const data = await authApi.register({ fullName, email, password });
+    persist(data);
+    return data;
+  };
+
+  const updateUser = async (patch) => {
+    const { user: updated } = await authApi.updateProfile(patch);
+    setUser(updated);
+    localStorage.setItem(USER_KEY, JSON.stringify(updated));
+    return updated;
+  };
+
+  const logout = async () => {
     try {
-      const res = await axios.post("/api/auth/login", { email, password });
-      persist(res.data);
-      return res.data;
-    } catch (err) {
-      // Fallback for demo when backend isn't reachable
-      if (!email || !password) throw err;
-      const demoUser = {
-        id: "demo-1",
-        name: email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (s) => s.toUpperCase()),
-        email,
-        avatar: null,
-        plan: "Pro",
-        joinedAt: new Date().toISOString(),
-      };
-      persist({ token: "demo-token", user: demoUser });
-      return { token: "demo-token", user: demoUser };
+      await authApi.logout();
+    } catch {
+      // ignore
     }
-  };
-
-  const register = async (name, email, password) => {
-    try {
-      const res = await axios.post("/api/auth/register", { name, email, password });
-      persist(res.data);
-      return res.data;
-    } catch (err) {
-      if (!name || !email || !password) throw err;
-      const demoUser = {
-        id: "demo-1",
-        name,
-        email,
-        avatar: null,
-        plan: "Free",
-        joinedAt: new Date().toISOString(),
-      };
-      persist({ token: "demo-token", user: demoUser });
-      return { token: "demo-token", user: demoUser };
-    }
-  };
-
-  const updateUser = (updates) => {
-    setUser((u) => {
-      const next = { ...u, ...updates };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      return next;
-    });
-  };
-
-  const logout = () => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(STORAGE_KEY);
+    setAccessToken(null);
+    localStorage.removeItem(USER_KEY);
     setUser(null);
   };
 
