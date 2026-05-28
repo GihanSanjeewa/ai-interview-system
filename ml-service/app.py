@@ -17,6 +17,8 @@ from audio_analyzer import (
     LIBROSA_AVAILABLE,
 )
 from text_analyzer import analyze_conversation, FILLER_WORDS
+from classifier import classify_candidate_performance
+import numpy as np
 
 app = Flask(__name__)
 CORS(app)
@@ -115,9 +117,19 @@ def extract_text_from_docx(file_path: str) -> str:
 def transcribe_audio():
     audio = request.files["audio"]
     audio.save("temp.mp3")
-    result = whisper_model.transcribe("temp.mp3")
+    language = request.form.get("language", "english").lower()
+    
+    # Run Whisper transcription. Force Sinhala decode to improve transcription accuracy if selected.
+    whisper_args = {}
+    if language == "sinhala":
+        whisper_args["language"] = "si"
+    elif language == "english":
+        whisper_args["language"] = "en"
+        
+    result = whisper_model.transcribe("temp.mp3", **whisper_args)
     text = result["text"]
     segments = result.get("segments", [])
+    
     # Uses librosa (if installed) for full ML-based audio analysis
     metrics = compute_audio_metrics(text, segments, audio_path="temp.mp3")
     return jsonify({"text": text, "metrics": metrics})
@@ -148,20 +160,54 @@ def parse_cv():
     else:
         return jsonify({"error": "Unsupported file type. Please upload a PDF or DOCX."}), 400
 
-    prompt = f"""Analyze the following CV text and extract exactly 3-5 professional interview domains/roles this person is qualified for.
-Return them as a simple comma-separated list with no extra text or explanation.
+    prompt = f"""Analyze the following CV text and extract:
+1. Skills: A list of key professional skills found in the resume.
+2. Education: A list of degrees, certifications, or academic background.
+3. Experience: A list of past job titles, companies, or work experience.
+4. Certifications: Any professional certifications.
+5. Technologies: Specific programming languages, frameworks, databases, or software tools mentioned.
+6. Domains: Exactly 3-5 suitable interview categories/roles this person is qualified for. Prioritize selecting from: Software Engineering, Web Development, Data Science, Networking, UI/UX, Business Analysis.
+
+Return your response ONLY as a valid JSON object with the following structure, with no extra markdown, preambles, or explanation:
+{{
+  "skills": ["Skill 1", "Skill 2"],
+  "education": ["Education details"],
+  "experience": ["Experience details"],
+  "certifications": ["Certification details"],
+  "technologies": ["Technology 1", "Technology 2"],
+  "domains": ["Domain 1", "Domain 2"]
+}}
 
 CV Text:
-{text[:2000]}"""
+{text[:3000]}"""
 
     try:
-        response_text = ask_claude(prompt, model=SMART_MODEL, max_tokens=128)
-        domains = [d.strip() for d in response_text.split(",") if d.strip()]
+        response_text = ask_claude(prompt, model=SMART_MODEL, max_tokens=1024).strip()
+        if "```json" in response_text:
+            response_text = response_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in response_text:
+            response_text = response_text.split("```")[1].split("```")[0].strip()
+        parsed = json.loads(response_text)
+        extracted_info = {
+            "skills": parsed.get("skills", []),
+            "education": parsed.get("education", []),
+            "experience": parsed.get("experience", []),
+            "certifications": parsed.get("certifications", []),
+            "technologies": parsed.get("technologies", [])
+        }
+        domains = parsed.get("domains", ["Software Engineering", "Web Development"])
     except Exception as e:
         print(f"Claude CV parse error: {e}")
+        extracted_info = {
+            "skills": ["Communication", "Problem Solving"],
+            "education": ["Bachelor's Degree"],
+            "experience": ["Relevant Work Experience"],
+            "certifications": ["Professional Certification"],
+            "technologies": ["Office", "Git"]
+        }
         domains = ["Software Engineering", "General Management", "Sales"]
 
-    return jsonify({"text": text, "domains": domains})
+    return jsonify({"text": text, "extracted_info": extracted_info, "domains": domains})
 
 
 @app.route("/generate_question", methods=["POST"])
@@ -229,6 +275,22 @@ def evaluate_interview():
     # ── ML-based text analysis across all answers ──────────────────────────
     text_scores = analyze_conversation(history, domain)
 
+    # ── RandomForest ML-based performance level classification ─────────────
+    all_vectors = [m.get("feature_vector") for m in audio_metrics_list if m.get("feature_vector")]
+    if all_vectors:
+        overall_vector = list(np.mean(all_vectors, axis=0))
+    else:
+        # Fallback 21-dimensional feature vector
+        overall_vector = [
+            avg_metrics['words_per_minute'],
+            avg_metrics['confidence_score'],
+            avg_metrics['fluency_score'],
+            avg_metrics['speaking_speed_score'],
+            0.05, 120.0, 10.0, 0.25
+        ] + [0.0]*13
+
+    performance_level = classify_candidate_performance(overall_vector)
+
     prompt = f"""You are an expert interview evaluator. Provide a comprehensive performance evaluation.
 
 Domain: {domain}
@@ -254,19 +316,22 @@ NLP / Text Analysis (spaCy + TF-IDF):
 - Response Relevance:    {text_scores['response_relevance']}/100     (TF-IDF cosine similarity: question ↔ answer)
 - Technical Accuracy:    {text_scores['technical_accuracy']}/100     (domain keyword density)
 - Answers analysed:      {text_scores['answer_count']}
+
+=== ML-CLASSIFIED PERFORMANCE TIER ===
+- Performance Level:    {performance_level} (determined by our RandomForestClassifier ML model)
 =================================================================
 
 Return ONLY a valid JSON object with exactly these keys (no markdown, no extra text).
 Use the ML-computed scores above as your primary source for the numeric fields:
 {{
   "summary": "2-3 sentence overall summary in English",
-  "technical_score": <integer 0-100, based on technical_accuracy ML score>,
-  "communication_score": <integer 0-100, based on communication_quality ML score>,
-  "confidence_score": <integer 0-100, based on confidence_level ML score>,
-  "fluency_score": <integer 0-100, based on fluency ML score>,
-  "speaking_speed_score": <integer 0-100, based on speaking_speed ML score>,
-  "response_relevance_score": <integer 0-100, based on response_relevance ML score>,
-  "performance_level": "<exactly one of: Beginner, Intermediate, Advanced>",
+  "technical_score": {int(text_scores['technical_accuracy'])},
+  "communication_score": {int(text_scores['communication_quality'])},
+  "confidence_score": {int(avg_metrics['confidence_score'])},
+  "fluency_score": {int(avg_metrics['fluency_score'])},
+  "speaking_speed_score": {int(avg_metrics['speaking_speed_score'])},
+  "response_relevance_score": {int(text_scores['response_relevance'])},
+  "performance_level": "{performance_level}",
   "key_strengths": ["strength 1", "strength 2", "strength 3"],
   "areas_for_improvement": ["area 1", "area 2", "area 3"],
   "learning_resources": [
@@ -274,7 +339,20 @@ Use the ML-computed scores above as your primary source for the numeric fields:
     {{"title": "Resource Name", "type": "Course/Book/Website/Platform", "description": "One sentence about it"}},
     {{"title": "Resource Name", "type": "Course/Book/Website/Platform", "description": "One sentence about it"}}
   ],
-  "recommendations": ["Job Title 1", "Job Title 2", "Job Title 3"]
+  "recommendations": [
+    {{
+      "title": "Suitable Job Title 1",
+      "match_score": <integer 0-100, based on CV skills, technical score, and communication>,
+      "rationale": "Why this candidate fits this job role specifically based on their CV skills and interview performance.",
+      "career_path": "Transition or growth progression path (e.g. Junior Dev -> Mid Dev -> Senior Architect)"
+    }},
+    {{
+      "title": "Suitable Job Title 2",
+      "match_score": <integer 0-100, based on CV skills, technical score, and communication>,
+      "rationale": "Why this candidate fits this job role specifically based on their CV skills and interview performance.",
+      "career_path": "Transition or growth progression path (e.g. Associate Analyst -> Product Owner)"
+    }}
+  ]
 }}"""
 
     try:
@@ -297,7 +375,7 @@ Use the ML-computed scores above as your primary source for the numeric fields:
             "fluency_score":            int(avg_metrics.get("fluency_score", 65)),
             "speaking_speed_score":     int(avg_metrics.get("speaking_speed_score", 65)),
             "response_relevance_score": int(text_scores["response_relevance"]),
-            "performance_level": "Intermediate",
+            "performance_level": performance_level,
             "key_strengths": ["Completed the interview", "Provided structured responses"],
             "areas_for_improvement": ["Continue practising technical questions", "Work on communication clarity"],
             "learning_resources": [
@@ -305,7 +383,20 @@ Use the ML-computed scores above as your primary source for the numeric fields:
                 {"title": "LeetCode", "type": "Website", "description": "Practice coding and problem-solving challenges used in technical interviews."},
                 {"title": "Toastmasters International", "type": "Organization", "description": "Develop public speaking and communication confidence."}
             ],
-            "recommendations": ["Software Engineer", "Junior Developer", "Technical Analyst"]
+            "recommendations": [
+                {
+                    "title": "Software Engineer",
+                    "match_score": 80,
+                    "rationale": "Demonstrates solid foundational coding concepts and structured thinking.",
+                    "career_path": "Junior Developer -> Mid-level Software Engineer -> Tech Lead"
+                },
+                {
+                    "title": "Technical Analyst",
+                    "match_score": 75,
+                    "rationale": "Structured communication style fits analytical and system documentation roles.",
+                    "career_path": "Junior Analyst -> Systems Analyst -> IT Product Manager"
+                }
+            ]
         })
 
 

@@ -21,11 +21,10 @@ const Interview = () => {
   const [isAISpeaking, setIsAISpeaking] = useState(false);
   const [audioMetrics, setAudioMetrics] = useState([]);
   const [error, setError] = useState(null);
-  const [status, setStatus] = useState(""); // short status line shown above the mic
+  const [status, setStatus] = useState("");
 
   const synth = window.speechSynthesis;
   const messagesEndRef = useRef(null);
-  // Keep a ref to messages for use inside stale closures (e.g. ReactMic's onStop)
   const messagesRef = useRef([]);
 
   const addMessage = (role, content) => {
@@ -51,8 +50,9 @@ const Interview = () => {
         addMessage("assistant", firstQuestion);
         speak(firstQuestion);
       } catch (err) {
-        const msg = err.response?.data?.message || "Failed to start interview. Check that the backend is running.";
-        console.error("Start interview error:", err);
+        const msg =
+          err.response?.data?.message ||
+          "Failed to start interview. Check that the backend is running.";
         setError(msg);
       } finally {
         setLoading(false);
@@ -77,7 +77,9 @@ const Interview = () => {
       if (sinhalaVoice) utterance.voice = sinhalaVoice;
     } else {
       utterance.lang = "en-US";
-      const englishVoice = voices.find((v) => v.lang.includes("en-US") || v.lang.includes("en-GB"));
+      const englishVoice = voices.find(
+        (v) => v.lang.includes("en-US") || v.lang.includes("en-GB")
+      );
       if (englishVoice) utterance.voice = englishVoice;
     }
 
@@ -92,10 +94,8 @@ const Interview = () => {
     setStatus("Transcribing your answer...");
     const formData = new FormData();
     formData.append("audio", recordedBlob.blob);
-    formData.append("language", language);
 
     try {
-      // 1. Transcribe
       const transRes = await axios.post("http://localhost:8000/transcribe", formData);
       const userText = transRes.data.text;
       const metrics = transRes.data.metrics;
@@ -107,14 +107,11 @@ const Interview = () => {
         return;
       }
 
-      if (metrics) {
-        setAudioMetrics((prev) => [...prev, metrics]);
-      }
+      if (metrics) setAudioMetrics((prev) => [...prev, metrics]);
 
       addMessage("user", userText);
       setStatus("Getting next question...");
 
-      // 2. Get next question — use the ref to get the latest messages
       const nextRes = await axios.post(
         "http://localhost:5000/api/interviews/next",
         {
@@ -123,7 +120,7 @@ const Interview = () => {
           answer: userText,
           history: messagesRef.current,
           language,
-          difficulty
+          difficulty,
         },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
@@ -133,8 +130,8 @@ const Interview = () => {
       speak(nextQuestion);
       setStatus("");
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || "Something went wrong. Please try again.";
-      console.error("Interview step failed:", err);
+      const msg =
+        err.response?.data?.message || err.message || "Something went wrong. Please try again.";
       setError(msg);
       setStatus("");
     } finally {
@@ -158,7 +155,7 @@ const Interview = () => {
           history: messagesRef.current,
           language,
           difficulty,
-          audioMetrics
+          audioMetrics,
         },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
@@ -166,7 +163,6 @@ const Interview = () => {
       navigate("/report", { state: { report: res.data.report } });
     } catch (err) {
       const msg = err.response?.data?.message || "Failed to generate report.";
-      console.error("Complete interview error:", err);
       setError(msg);
       setStatus("");
     } finally {
@@ -174,10 +170,9 @@ const Interview = () => {
     }
   };
 
-  const difficultyLabel = { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced" }[difficulty] || difficulty;
-
-  const lastAssistantIdx = [...messages].reverse().findIndex(m => m.role === "assistant");
-  const actualLastAssistantIdx = lastAssistantIdx !== -1 ? messages.length - 1 - lastAssistantIdx : -1;
+  const difficultyLabel =
+    { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced" }[difficulty] ||
+    difficulty;
 
   return (
     <div className="interview-container">
@@ -194,8 +189,10 @@ const Interview = () => {
 
       {error && (
         <div className="error-banner">
-          <AlertCircle size={16} /> {error}
-          <button onClick={() => setError(null)} className="error-dismiss">✕</button>
+          <AlertCircle size={15} /> {error}
+          <button onClick={() => setError(null)} className="error-dismiss">
+            ✕
+          </button>
         </div>
       )}
 
@@ -204,12 +201,13 @@ const Interview = () => {
           {messages.map((msg, idx) => (
             <motion.div
               key={idx}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
               className={`message-wrapper ${msg.role}`}
             >
-              <div className={`avatar ${msg.role === "assistant" && idx === actualLastAssistantIdx && isAISpeaking ? "speaking" : ""}`}>
-                {msg.role === "assistant" ? <Bot size={20} /> : <User size={20} />}
+              <div className="avatar">
+                {msg.role === "assistant" ? <Bot size={18} /> : <User size={18} />}
               </div>
               <div className="message-content">{msg.content}</div>
             </motion.div>
@@ -217,7 +215,7 @@ const Interview = () => {
         </AnimatePresence>
         {loading && (
           <div className="loading-indicator">
-            <Loader2 className="animate-spin" />
+            <Loader2 size={16} className="animate-spin" />
             <span>{status || "AI is thinking..."}</span>
           </div>
         )}
@@ -231,7 +229,7 @@ const Interview = () => {
             className="sound-wave"
             onStop={onStop}
             strokeColor="#4facfe"
-            backgroundColor="#0a0a0f"
+            backgroundColor="#08080e"
           />
         </div>
 
@@ -239,26 +237,20 @@ const Interview = () => {
           {!isRecording ? (
             <button
               className="mic-btn start"
-              onClick={() => { setError(null); setIsRecording(true); }}
+              onClick={() => {
+                setError(null);
+                setIsRecording(true);
+              }}
               disabled={loading || isAISpeaking}
             >
-              <div className="mic-icon-wrapper">
-                <Mic size={32} />
-              </div>
+              <Mic size={28} />
               <span>Click to Answer</span>
             </button>
           ) : (
-            <div className="ripple-wrapper">
-              <div className="ripple-circle"></div>
-              <div className="ripple-circle"></div>
-              <div className="ripple-circle"></div>
-              <button className="mic-btn stop" onClick={() => setIsRecording(false)}>
-                <div className="mic-icon-wrapper active">
-                  <Square size={32} />
-                </div>
-                <span>Stop Recording</span>
-              </button>
-            </div>
+            <button className="mic-btn stop" onClick={() => setIsRecording(false)}>
+              <Square size={28} />
+              <span>Stop Recording</span>
+            </button>
           )}
         </div>
       </div>

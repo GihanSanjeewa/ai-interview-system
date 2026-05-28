@@ -22,19 +22,23 @@ exports.uploadCV = async (req, res) => {
       headers: formData.getHeaders(),
     });
 
-    const { text, domains } = mlResponse.data;
+    const { text, extracted_info, domains } = mlResponse.data;
 
     // Save to database
     db.query(
-      "INSERT INTO cvs (user_id, file_path, extracted_text, domains) VALUES (?, ?, ?, ?)",
-      [userId, filePath, text, JSON.stringify(domains)],
+      "INSERT INTO cvs (user_id, file_path, extracted_text, domains, extracted_info) VALUES (?, ?, ?, ?, ?)",
+      [userId, filePath, text, JSON.stringify(domains), JSON.stringify(extracted_info)],
       (err, result) => {
-        if (err) return res.status(500).json({ message: "Database error" });
+        if (err) {
+          console.error("DB error saving CV details:", err);
+          return res.status(500).json({ message: "Database error" });
+        }
         
         res.status(201).json({
           message: "CV uploaded and analyzed successfully",
           cvId: result.insertId,
-          domains: domains
+          domains: domains,
+          extracted_info: extracted_info
         });
       }
     );

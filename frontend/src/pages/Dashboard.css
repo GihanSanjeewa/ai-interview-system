@@ -177,3 +177,145 @@ input[type="file"] {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Premium CV Profile Card Styles */
+.cv-profile-card {
+  text-align: left;
+  border: 1px solid rgba(79, 172, 254, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  background: rgba(10, 10, 15, 0.6) !important;
+  backdrop-filter: blur(12px);
+}
+
+.profile-subtitle {
+  color: #a0aec0;
+  margin-bottom: 25px;
+  font-size: 0.95rem;
+}
+
+.profile-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 25px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 15px;
+}
+
+.tab-btn {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  color: #a0aec0;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.tab-btn.active {
+  background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+  color: #0a0a0f;
+  font-weight: 700;
+  border-color: transparent;
+  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+}
+
+.tab-content {
+  min-height: 120px;
+  padding: 10px 5px;
+}
+
+.skills-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.badge {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  transition: transform 0.2s;
+}
+
+.badge:hover {
+  transform: translateY(-2px);
+}
+
+.skill-badge {
+  background: rgba(79, 172, 254, 0.15);
+  color: #4facfe;
+  border: 1px solid rgba(79, 172, 254, 0.3);
+}
+
+.tech-badge {
+  background: rgba(0, 242, 254, 0.15);
+  color: #00f2fe;
+  border: 1px solid rgba(0, 242, 254, 0.3);
+}
+
+.timeline-list {
+  list-style: none;
+  padding-left: 20px;
+  border-left: 2px solid rgba(79, 172, 254, 0.2);
+  margin: 10px 0;
+  text-align: left;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 18px;
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: -27px;
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #4facfe;
+  box-shadow: 0 0 8px #4facfe;
+}
+
+.edu-item::before {
+  background: #00f2fe;
+  box-shadow: 0 0 8px #00f2fe;
+}
+
+.certs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 15px;
+}
+
+.cert-item {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 15px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-left: 3px solid #4facfe;
+}
+
+.no-data {
+  color: #718096;
+  font-style: italic;
+  font-size: 0.9rem;
+}
