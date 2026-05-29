@@ -115,24 +115,57 @@ def extract_text_from_docx(file_path: str) -> str:
 
 @app.route("/transcribe", methods=["POST"])
 def transcribe_audio():
-    audio = request.files["audio"]
-    audio.save("temp.mp3")
-    language = request.form.get("language", "english").lower()
-    
-    # Run Whisper transcription. Force Sinhala decode to improve transcription accuracy if selected.
-    whisper_args = {}
-    if language == "sinhala":
-        whisper_args["language"] = "si"
-    elif language == "english":
-        whisper_args["language"] = "en"
-        
-    result = whisper_model.transcribe("temp.mp3", **whisper_args)
-    text = result["text"]
-    segments = result.get("segments", [])
-    
+    # Accept either `audio` (legacy) or `file` (new TS BFF) form field.
+    upload = request.files.get("audio") or request.files.get("file")
+    if upload is None:
+        return jsonify({"error": "audio or file is required"}), 400
+
+    upload.save("temp.mp3")
+
+    raw_lang = (request.form.get("language") or "english").lower()
+    lang_code = "si" if raw_lang in ("si", "sinhala") else "en"
+
+    try:
+        from whisper_si import transcribe as si_transcribe  # lazy import
+
+        result = si_transcribe("temp.mp3", language=lang_code)
+        text = result.text
+        segments = result.segments
+        whisper_meta = {
+            "model": result.model_used,
+            "backend": result.backend,
+            "finetuned": result.finetuned,
+            "latency_ms": result.latency_ms,
+            "duration_sec": result.duration_sec,
+        }
+    except Exception as exc:
+        print(f"whisper_si pipeline failed, falling back to base: {exc}")
+        whisper_args = {"language": lang_code} if lang_code else {}
+        result = whisper_model.transcribe("temp.mp3", **whisper_args)
+        text = result["text"]
+        segments = result.get("segments", [])
+        whisper_meta = {
+            "model": "openai-whisper:base",
+            "backend": "openai-whisper",
+            "finetuned": False,
+            "latency_ms": None,
+            "duration_sec": None,
+        }
+
     # Uses librosa (if installed) for full ML-based audio analysis
     metrics = compute_audio_metrics(text, segments, audio_path="temp.mp3")
-    return jsonify({"text": text, "metrics": metrics})
+    return jsonify({"text": text, "metrics": metrics, "whisper": whisper_meta})
+
+
+@app.route("/whisper/info", methods=["GET"])
+def whisper_info():
+    """Lightweight probe — surfaces which Sinhala model the service would use."""
+    try:
+        from whisper_si import model_info
+
+        return jsonify({"en": model_info("en"), "si": model_info("si")})
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 @app.route("/parse_cv", methods=["POST"])
@@ -492,11 +525,11 @@ def score_answer_v2():
     )
 
     fallback = {
-        "technical": int(text_scores["technical_accuracy"]),
-        "communication": int(text_scores["communication_quality"]),
-        "clarity": int(text_scores["response_relevance"]),
         "confidence": 70,
-        "depth": int(text_scores["technical_accuracy"]),
+        "communication": int(text_scores["communication_quality"]),
+        "relevance": int(text_scores["response_relevance"]),
+        "technical": int(text_scores["technical_accuracy"]),
+        "fluency": int(text_scores["communication_quality"]),
         "pace": pace,
         "notes": [],
     }
@@ -507,10 +540,10 @@ def score_answer_v2():
         elif "```" in res_text:
             res_text = res_text.split("```")[1].split("```")[0].strip()
         parsed = json.loads(res_text)
-        for key in ("technical", "communication", "clarity", "confidence", "depth", "pace"):
+        for key in ("confidence", "communication", "relevance", "technical", "fluency", "pace"):
             parsed[key] = max(0, min(100, int(parsed.get(key, fallback[key]))))
         parsed["notes"] = list(parsed.get("notes", []))[:3]
-        _ = language  # placeholder for future locale switching
+        _ = language
         return jsonify(parsed)
     except Exception as exc:
         print(f"score/answer error: {exc}")
@@ -530,14 +563,20 @@ def score_session_v2():
         return int(round(sum(vals) / len(vals))) if vals else 70
 
     base = {
-        "technical": avg("technical"),
-        "communication": avg("communication"),
-        "clarity": avg("clarity"),
         "confidence": avg("confidence"),
-        "depth": avg("depth"),
+        "communication": avg("communication"),
+        "relevance": avg("relevance"),
+        "technical": avg("technical"),
+        "fluency": avg("fluency"),
         "pace": avg("pace"),
     }
     overall = int(round(sum(base.values()) / 6))
+    if overall >= 80:
+        performance_level = "ADVANCED"
+    elif overall >= 60:
+        performance_level = "INTERMEDIATE"
+    else:
+        performance_level = "BEGINNER"
 
     transcript_blob = "\n".join(
         f"Q{i + 1}: {a.get('question', '')}\nA: {(a.get('transcript') or '')[:600]}"
@@ -546,27 +585,40 @@ def score_session_v2():
 
     prompt = (
         f"You are evaluating a {role} mock interview. Return ONLY JSON with:\n"
-        "strengths (3-5 strings), weaknesses (3-5 strings), suggestions (3-5 short actionable strings).\n\n"
-        f"Per-metric averages: {base}\n\nTranscript excerpt:\n{transcript_blob[:4000]}"
+        "strengths (3-5 strings), weaknesses (3-5 strings), suggestions (3-5 short actionable strings),\n"
+        "resources (3-5 objects each {title, type, description}).\n\n"
+        f"Per-metric averages: {base}\n"
+        f"Performance level: {performance_level}\n\n"
+        f"Transcript excerpt:\n{transcript_blob[:4000]}"
     )
 
     fallback = {
         "strengths": [
             "Structured answers with concrete examples",
             "Stayed engaged throughout the session",
+            "Maintained a steady speaking pace",
         ],
         "weaknesses": [
             "Some answers skipped trade-offs and edge cases",
             "Filler words appeared in the opening minutes",
+            "Closing pitch was slightly rushed",
         ],
         "suggestions": [
             "Practice 2 system-design walkthroughs this week",
             "Record a 60-second self-intro and refine it daily",
             "Pause for 2 seconds before answering hard questions",
         ],
+        "resources": [
+            {"title": "Designing Data-Intensive Applications", "type": "Book",
+             "description": "Foundations every senior interviewer probes."},
+            {"title": "STAR method playbook", "type": "Article",
+             "description": "Structure behavioral answers with concrete outcomes."},
+            {"title": "Toastmasters International", "type": "Community",
+             "description": "Develop public speaking and communication confidence."},
+        ],
     }
     try:
-        res_text = ask_claude(prompt, model=FAST_MODEL, max_tokens=600).strip()
+        res_text = ask_claude(prompt, model=FAST_MODEL, max_tokens=900).strip()
         if "```json" in res_text:
             res_text = res_text.split("```json")[1].split("```")[0].strip()
         elif "```" in res_text:
@@ -580,9 +632,11 @@ def score_session_v2():
     return jsonify({
         "overallScore": overall,
         **base,
+        "performanceLevel": performance_level,
         "strengths": fallback["strengths"],
         "weaknesses": fallback["weaknesses"],
         "suggestions": fallback["suggestions"],
+        "resources": fallback["resources"],
     })
 
 

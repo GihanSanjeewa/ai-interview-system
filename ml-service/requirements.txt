@@ -13,3 +13,11 @@ matplotlib
 seaborn
 joblib
 numpy
+
+# Sinhala Whisper inference path. Heavier but optional — if you skip them,
+# the service falls back to openai-whisper for Sinhala.
+torch>=2.1
+transformers>=4.42
+accelerate>=0.30
+sentencepiece
+noisereduce

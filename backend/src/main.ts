@@ -16,6 +16,7 @@ import { cvRouter } from "@/http/routes/cv.routes";
 import { interviewRouter } from "@/http/routes/interview.routes";
 import { reportRouter } from "@/http/routes/report.routes";
 import { jobRouter } from "@/http/routes/job.routes";
+import { audioRouter } from "@/http/routes/audio.routes";
 import { errorHandler, notFound } from "@/http/middlewares/error-handler";
 import { attachInterviewGateway } from "@/ws/interview-gateway";
 
@@ -71,6 +72,7 @@ app.use("/api/v1/cvs", apiLimiter, cvRouter);
 app.use("/api/v1/interviews", apiLimiter, interviewRouter);
 app.use("/api/v1/reports", apiLimiter, reportRouter);
 app.use("/api/v1/jobs", apiLimiter, jobRouter);
+app.use("/api/v1/audio", apiLimiter, audioRouter);
 
 // Back-compat with legacy frontend
 app.use("/api/auth", authRouter);

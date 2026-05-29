@@ -110,3 +110,21 @@ export const jobsApi = {
   recommendations: () => api.get("/jobs/recommendations").then((r) => r.data),
   get: (id) => api.get(`/jobs/${id}`).then((r) => r.data),
 };
+
+export const audioApi = {
+  transcribe: (blob, language = "en") => {
+    const fd = new FormData();
+    fd.append("audio", blob, "answer.webm");
+    fd.append("language", language);
+    return api
+      .post("/audio/transcribe", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((r) => r.data);
+  },
+  whisperInfo: () => api.get("/audio/whisper/info").then((r) => r.data),
+};
+
+export const tracksApi = {
+  list: () => api.get("/interviews/tracks").then((r) => r.data),
+};

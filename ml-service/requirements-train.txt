@@ -1,0 +1,9 @@
+# Extra dependencies for FINE-TUNING ONLY. Install on the GPU box:
+#     pip install -r requirements.txt -r requirements-train.txt
+
+datasets>=2.20
+peft>=0.11
+evaluate>=0.4
+jiwer>=3.0
+soundfile
+audiomentations

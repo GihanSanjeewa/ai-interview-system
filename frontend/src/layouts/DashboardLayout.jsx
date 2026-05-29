@@ -3,7 +3,9 @@ import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Bell,
+  Briefcase,
   CreditCard,
+  FileText,
   History as HistoryIcon,
   LayoutDashboard,
   LogOut,
@@ -23,9 +25,11 @@ import { cn } from "@/lib/utils";
 
 const nav = [
   { to: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/app/cv", label: "My CV", icon: FileText },
   { to: "/app/interview", label: "Mock Interview", icon: Mic, accent: true },
   { to: "/app/history", label: "Interview History", icon: HistoryIcon },
   { to: "/app/reports", label: "Feedback Reports", icon: Sparkles },
+  { to: "/app/jobs", label: "Job Matches", icon: Briefcase },
   { to: "/app/profile", label: "Profile Settings", icon: Settings },
   { to: "/app/subscription", label: "Subscription", icon: CreditCard },
 ];

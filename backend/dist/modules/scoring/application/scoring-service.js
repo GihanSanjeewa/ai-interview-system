@@ -31,33 +31,36 @@ exports.scoringService = {
             where: { interviewId: interview.id },
             update: {
                 overallScore: session.overallScore,
-                technical: session.technical,
-                communication: session.communication,
-                clarity: session.clarity,
                 confidence: session.confidence,
-                depth: session.depth,
+                communication: session.communication,
+                relevance: session.relevance,
+                technical: session.technical,
+                fluency: session.fluency,
                 pace: session.pace,
+                performanceLevel: session.performanceLevel,
                 strengths: session.strengths,
                 weaknesses: session.weaknesses,
                 suggestions: session.suggestions,
+                resources: session.resources,
                 generatedAt: new Date(),
             },
             create: {
                 interviewId: interview.id,
                 userId: interview.userId,
                 overallScore: session.overallScore,
-                technical: session.technical,
-                communication: session.communication,
-                clarity: session.clarity,
                 confidence: session.confidence,
-                depth: session.depth,
+                communication: session.communication,
+                relevance: session.relevance,
+                technical: session.technical,
+                fluency: session.fluency,
                 pace: session.pace,
+                performanceLevel: session.performanceLevel,
                 strengths: session.strengths,
                 weaknesses: session.weaknesses,
                 suggestions: session.suggestions,
+                resources: session.resources,
             },
         });
-        // Trigger downstream: job matching
         await jobs_service_1.jobsService.matchForReport(report.id);
         return report;
     },
@@ -65,7 +68,22 @@ exports.scoringService = {
         const report = await client_1.prisma.report.findFirst({
             where: { interviewId, userId },
             include: {
-                interview: { select: { role: true, category: true, difficulty: true, language: true, persona: true, createdAt: true } },
+                interview: {
+                    select: {
+                        role: true,
+                        category: true,
+                        difficulty: true,
+                        language: true,
+                        persona: true,
+                        createdAt: true,
+                        startedAt: true,
+                        endedAt: true,
+                        questions: {
+                            include: { answer: { select: { transcript: true, metrics: true } } },
+                            orderBy: { ordinal: "asc" },
+                        },
+                    },
+                },
                 jobMatches: {
                     include: { job: true },
                     orderBy: { matchScore: "desc" },

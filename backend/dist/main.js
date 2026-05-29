@@ -19,6 +19,7 @@ const cv_routes_1 = require("@/http/routes/cv.routes");
 const interview_routes_1 = require("@/http/routes/interview.routes");
 const report_routes_1 = require("@/http/routes/report.routes");
 const job_routes_1 = require("@/http/routes/job.routes");
+const audio_routes_1 = require("@/http/routes/audio.routes");
 const error_handler_1 = require("@/http/middlewares/error-handler");
 const interview_gateway_1 = require("@/ws/interview-gateway");
 const app = (0, express_1.default)();
@@ -65,6 +66,7 @@ app.use("/api/v1/cvs", apiLimiter, cv_routes_1.cvRouter);
 app.use("/api/v1/interviews", apiLimiter, interview_routes_1.interviewRouter);
 app.use("/api/v1/reports", apiLimiter, report_routes_1.reportRouter);
 app.use("/api/v1/jobs", apiLimiter, job_routes_1.jobRouter);
+app.use("/api/v1/audio", apiLimiter, audio_routes_1.audioRouter);
 // Back-compat with legacy frontend
 app.use("/api/auth", auth_routes_1.authRouter);
 app.use(error_handler_1.notFound);

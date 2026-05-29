@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { asyncHandler } from "@/http/middlewares/async-handler";
 import { requireAuth } from "@/http/middlewares/auth";
-import { interviewService } from "@/modules/interview/application/interview-service";
+import { interviewService, interviewMeta } from "@/modules/interview/application/interview-service";
 import {
   CreateInterviewDto,
   EndInterviewDto,
@@ -9,6 +9,12 @@ import {
 } from "@/modules/interview/presentation/dto";
 
 export const interviewRouter = Router();
+
+// Public: list available tracks (used by the setup screen)
+interviewRouter.get("/tracks", (_req, res) => {
+  res.json({ tracks: interviewMeta.tracks });
+});
+
 interviewRouter.use(requireAuth);
 
 interviewRouter.post(

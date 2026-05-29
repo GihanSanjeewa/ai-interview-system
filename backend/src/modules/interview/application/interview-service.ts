@@ -5,6 +5,7 @@ import { logger } from "@/shared/logger/logger";
 import {
   phaseFor,
   pickQuestions,
+  TRACKS,
 } from "@/modules/interview/domain/question-bank";
 import type {
   CreateInterviewInput,
@@ -148,3 +149,7 @@ function nextOrdinal<T extends { ordinal: number }>(qs: T[], current: number) {
   const next = sorted.find((q) => q.ordinal > current);
   return next ? next.ordinal : null;
 }
+
+export const interviewMeta = {
+  tracks: TRACKS,
+};

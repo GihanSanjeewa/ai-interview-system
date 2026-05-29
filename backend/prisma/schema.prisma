@@ -206,22 +206,31 @@ model InterviewEvent {
 
 // ---------- scoring ----------
 
+enum PerformanceLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
 model Report {
-  id            String     @id @default(uuid()) @db.Char(36)
-  interviewId   String     @unique @db.Char(36)
-  userId        String     @db.Char(36)
-  overallScore  Int
-  technical     Int
-  communication Int
-  clarity       Int
-  confidence    Int
-  depth         Int
-  pace          Int
-  strengths     Json
-  weaknesses    Json
-  suggestions   Json
-  pdfKey        String?    @db.VarChar(500)
-  generatedAt   DateTime   @default(now())
+  id               String           @id @default(uuid()) @db.Char(36)
+  interviewId      String           @unique @db.Char(36)
+  userId           String           @db.Char(36)
+  overallScore     Int
+  // Six metrics — match the proposal §3.3 verbatim
+  confidence       Int              // Confidence level
+  communication    Int              // Communication quality
+  relevance        Int              // Response relevance
+  technical        Int              // Technical accuracy
+  fluency          Int              // Fluency
+  pace             Int              // Speaking speed
+  performanceLevel PerformanceLevel @default(INTERMEDIATE)
+  strengths        Json
+  weaknesses       Json
+  suggestions      Json
+  resources        Json?            // Recommended learning resources
+  pdfKey           String?          @db.VarChar(500)
+  generatedAt      DateTime         @default(now())
 
   interview     Interview  @relation(fields: [interviewId], references: [id], onDelete: Cascade)
   user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)

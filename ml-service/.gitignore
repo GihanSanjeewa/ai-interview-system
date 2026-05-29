@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+venv/
+.env
+
+# Local audio + CV scratch files
+temp.mp3
+temp_cv.*
+
+# Training artefacts — keep out of git, they're huge
+data/
+models/
+eval-report.csv
+*.safetensors

@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/infrastructure/prisma/client";
 import { mlClient, type AnswerScore } from "@/infrastructure/ml/ml-client";
 import { AppError } from "@/shared/errors/app-error";
@@ -31,36 +32,38 @@ export const scoringService = {
       where: { interviewId: interview.id },
       update: {
         overallScore: session.overallScore,
-        technical: session.technical,
-        communication: session.communication,
-        clarity: session.clarity,
         confidence: session.confidence,
-        depth: session.depth,
+        communication: session.communication,
+        relevance: session.relevance,
+        technical: session.technical,
+        fluency: session.fluency,
         pace: session.pace,
+        performanceLevel: session.performanceLevel,
         strengths: session.strengths,
         weaknesses: session.weaknesses,
         suggestions: session.suggestions,
+        resources: session.resources as unknown as Prisma.InputJsonValue,
         generatedAt: new Date(),
       },
       create: {
         interviewId: interview.id,
         userId: interview.userId,
         overallScore: session.overallScore,
-        technical: session.technical,
-        communication: session.communication,
-        clarity: session.clarity,
         confidence: session.confidence,
-        depth: session.depth,
+        communication: session.communication,
+        relevance: session.relevance,
+        technical: session.technical,
+        fluency: session.fluency,
         pace: session.pace,
+        performanceLevel: session.performanceLevel,
         strengths: session.strengths,
         weaknesses: session.weaknesses,
         suggestions: session.suggestions,
+        resources: session.resources as unknown as Prisma.InputJsonValue,
       },
     });
 
-    // Trigger downstream: job matching
     await jobsService.matchForReport(report.id);
-
     return report;
   },
 
@@ -68,7 +71,22 @@ export const scoringService = {
     const report = await prisma.report.findFirst({
       where: { interviewId, userId },
       include: {
-        interview: { select: { role: true, category: true, difficulty: true, language: true, persona: true, createdAt: true } },
+        interview: {
+          select: {
+            role: true,
+            category: true,
+            difficulty: true,
+            language: true,
+            persona: true,
+            createdAt: true,
+            startedAt: true,
+            endedAt: true,
+            questions: {
+              include: { answer: { select: { transcript: true, metrics: true } } },
+              orderBy: { ordinal: "asc" },
+            },
+          },
+        },
         jobMatches: {
           include: { job: true },
           orderBy: { matchScore: "desc" },

@@ -7,6 +7,10 @@ const auth_1 = require("@/http/middlewares/auth");
 const interview_service_1 = require("@/modules/interview/application/interview-service");
 const dto_1 = require("@/modules/interview/presentation/dto");
 exports.interviewRouter = (0, express_1.Router)();
+// Public: list available tracks (used by the setup screen)
+exports.interviewRouter.get("/tracks", (_req, res) => {
+    res.json({ tracks: interview_service_1.interviewMeta.tracks });
+});
 exports.interviewRouter.use(auth_1.requireAuth);
 exports.interviewRouter.post("/", (0, async_handler_1.asyncHandler)(async (req, res) => {
     const input = dto_1.CreateInterviewDto.parse(req.body);

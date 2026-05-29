@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.interviewService = void 0;
+exports.interviewMeta = exports.interviewService = void 0;
 const client_1 = require("@/infrastructure/prisma/client");
 const ml_client_1 = require("@/infrastructure/ml/ml-client");
 const app_error_1 = require("@/shared/errors/app-error");
@@ -141,4 +141,7 @@ function nextOrdinal(qs, current) {
     const next = sorted.find((q) => q.ordinal > current);
     return next ? next.ordinal : null;
 }
+exports.interviewMeta = {
+    tracks: question_bank_1.TRACKS,
+};
 //# sourceMappingURL=interview-service.js.map

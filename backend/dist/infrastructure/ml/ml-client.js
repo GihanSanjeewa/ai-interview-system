@@ -82,13 +82,20 @@ function heuristicAnswerScore(transcript) {
     const wc = transcript.trim().split(/\s+/).filter(Boolean).length;
     const base = Math.min(95, 55 + Math.round(wc / 4));
     return {
-        technical: base,
-        communication: Math.min(95, base + 3),
-        clarity: Math.min(95, base + 1),
         confidence: Math.max(50, base - 4),
-        depth: Math.min(95, base - 2),
+        communication: Math.min(95, base + 3),
+        relevance: Math.min(95, base + 1),
+        technical: base,
+        fluency: Math.min(95, base - 2),
         pace: 84,
     };
+}
+function pickLevel(score) {
+    if (score >= 80)
+        return "ADVANCED";
+    if (score >= 60)
+        return "INTERMEDIATE";
+    return "BEGINNER";
 }
 function aggregateHeuristic(answers) {
     if (answers.length === 0) {
@@ -96,46 +103,64 @@ function aggregateHeuristic(answers) {
     }
     const m = answers.map((a) => a.metrics ?? heuristicAnswerScore(a.transcript));
     const avg = (k) => Math.round(m.reduce((s, x) => s + x[k], 0) / m.length);
-    const technical = avg("technical");
-    const communication = avg("communication");
-    const clarity = avg("clarity");
     const confidence = avg("confidence");
-    const depth = avg("depth");
+    const communication = avg("communication");
+    const relevance = avg("relevance");
+    const technical = avg("technical");
+    const fluency = avg("fluency");
     const pace = avg("pace");
+    const overall = Math.round((confidence + communication + relevance + technical + fluency + pace) / 6);
     return {
-        overallScore: Math.round((technical + communication + clarity + confidence + depth + pace) / 6),
-        technical,
-        communication,
-        clarity,
+        overallScore: overall,
         confidence,
-        depth,
+        communication,
+        relevance,
+        technical,
+        fluency,
         pace,
+        performanceLevel: pickLevel(overall),
         strengths: [
             "Structured answers with concrete examples",
             "Maintained an even pace throughout the session",
+            "Stayed engaged across the full interview",
         ],
         weaknesses: [
             "Some answers lacked depth on edge cases",
-            "Reduce filler words in the opening minutes",
+            "Filler words appeared in the opening minutes",
         ],
         suggestions: [
             "Drill 2–3 system-design walkthroughs this week",
             "Record a 60-second self-intro and refine it daily",
+            "Pause for 2 seconds before answering hard questions",
+        ],
+        resources: [
+            {
+                title: "Designing Data-Intensive Applications",
+                type: "Book",
+                description: "Foundations every senior interviewer probes.",
+            },
+            {
+                title: "STAR method playbook",
+                type: "Article",
+                description: "Structure behavioral answers with concrete outcomes.",
+            },
         ],
     };
 }
 function zeroSession() {
     return {
         overallScore: 0,
-        technical: 0,
-        communication: 0,
-        clarity: 0,
         confidence: 0,
-        depth: 0,
+        communication: 0,
+        relevance: 0,
+        technical: 0,
+        fluency: 0,
         pace: 0,
+        performanceLevel: "BEGINNER",
         strengths: [],
         weaknesses: ["No answers were recorded for this session."],
         suggestions: ["Try a fresh mock interview and respond to at least 3 questions."],
+        resources: [],
     };
 }
 //# sourceMappingURL=ml-client.js.map

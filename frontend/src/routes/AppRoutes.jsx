@@ -17,6 +17,8 @@ import History from "@/pages/app/History";
 import Report from "@/pages/app/Report";
 import Profile from "@/pages/app/Profile";
 import Subscription from "@/pages/app/Subscription";
+import CvAnalysis from "@/pages/app/CvAnalysis";
+import Jobs from "@/pages/app/Jobs";
 
 export default function AppRoutes() {
   return (
@@ -46,10 +48,12 @@ export default function AppRoutes() {
           >
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="cv" element={<CvAnalysis />} />
             <Route path="interview" element={<Interview />} />
             <Route path="history" element={<History />} />
             <Route path="reports" element={<Report />} />
             <Route path="reports/:id" element={<Report />} />
+            <Route path="jobs" element={<Jobs />} />
             <Route path="profile" element={<Profile />} />
             <Route path="subscription" element={<Subscription />} />
           </Route>
