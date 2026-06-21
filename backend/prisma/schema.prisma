@@ -1,0 +1,362 @@
+// Inverview AI — Prisma schema (MySQL 8)
+// See ARCHITECTURE.md §6 for the design rationale.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- enums ----------
+
+enum Role {
+  USER
+  ADMIN
+  RECRUITER
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum Plan {
+  FREE
+  PRO
+  TEAM
+}
+
+enum CvStatus {
+  PENDING
+  PARSED
+  FAILED
+}
+
+enum InterviewStatus {
+  PENDING
+  LIVE
+  COMPLETED
+  ABORTED
+  FAILED
+}
+
+// ---------- identity ----------
+
+model User {
+  id             String     @id @default(uuid()) @db.Char(36)
+  email          String     @unique @db.VarChar(255)
+  emailVerified  DateTime?
+  passwordHash   String?    @db.VarChar(255)
+  fullName       String     @db.VarChar(255)
+  avatarUrl      String?    @db.VarChar(500)
+  title          String?    @db.VarChar(255)
+  bio            String?    @db.Text
+  locale         String     @default("en") @db.VarChar(8)
+  role           Role       @default(USER)
+  status         UserStatus @default(ACTIVE)
+  plan           Plan       @default(FREE)
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  lastLoginAt    DateTime?
+
+  oauthAccounts  OAuthAccount[]
+  cvs            Cv[]
+  interviews     Interview[]
+  reports        Report[]
+  subscriptions  Subscription[]
+  refreshTokens  RefreshToken[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+
+  @@index([role, status])
+  @@map("users")
+}
+
+model OAuthAccount {
+  id         String   @id @default(uuid()) @db.Char(36)
+  userId     String   @db.Char(36)
+  provider   String   @db.VarChar(32)
+  providerId String   @db.VarChar(255)
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@index([userId])
+  @@map("oauth_accounts")
+}
+
+model RefreshToken {
+  id          String    @id @default(uuid()) @db.Char(36)
+  userId      String    @db.Char(36)
+  familyId    String    @db.Char(36)
+  tokenHash   String    @unique @db.VarChar(128)
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  userAgent   String?   @db.VarChar(500)
+  ip          String?   @db.VarChar(64)
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
+
+// ---------- cv ----------
+
+model Cv {
+  id              String   @id @default(uuid()) @db.Char(36)
+  userId          String   @db.Char(36)
+  fileKey         String   @db.VarChar(500)
+  originalName    String   @db.VarChar(500)
+  mimeType        String   @db.VarChar(128)
+  sizeBytes       Int
+  pageCount       Int?
+  rawText         String?  @db.LongText
+  parsed          Json?
+  readinessScore  Int?
+  suggestedTracks Json?
+  status          CvStatus @default(PENDING)
+  errorMessage    String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interviews      Interview[]
+
+  @@index([userId, createdAt])
+  @@map("cvs")
+}
+
+// ---------- interview ----------
+
+model Interview {
+  id           String          @id @default(uuid()) @db.Char(36)
+  userId       String          @db.Char(36)
+  cvId         String?         @db.Char(36)
+  role         String          @db.VarChar(255)
+  category     String          @db.VarChar(64)
+  language     String          @default("en") @db.VarChar(8)
+  difficulty   String          @db.VarChar(32)
+  persona      String          @default("aria") @db.VarChar(32)
+  plannedSec   Int             @default(1800)
+  startedAt    DateTime?
+  endedAt      DateTime?
+  status       InterviewStatus @default(PENDING)
+  abortReason  String?         @db.VarChar(255)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cv           Cv?               @relation(fields: [cvId], references: [id])
+  questions    Question[]
+  events       InterviewEvent[]
+  report       Report?
+
+  @@index([userId, status])
+  @@index([userId, createdAt])
+  @@map("interviews")
+}
+
+model Question {
+  id           String    @id @default(uuid()) @db.Char(36)
+  interviewId  String    @db.Char(36)
+  ordinal      Int
+  text         String    @db.Text
+  phase        String    @db.VarChar(32)
+  askedAt      DateTime  @default(now())
+  interview    Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  answer       Answer?
+
+  @@unique([interviewId, ordinal])
+  @@map("questions")
+}
+
+model Answer {
+  id            String    @id @default(uuid()) @db.Char(36)
+  questionId    String    @unique @db.Char(36)
+  audioKey      String?   @db.VarChar(500)
+  transcript    String?   @db.LongText
+  wordTimings   Json?
+  durationMs    Int?
+  metrics       Json?
+  scoredAt      DateTime?
+  createdAt     DateTime  @default(now())
+  question      Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("answers")
+}
+
+model InterviewEvent {
+  id           String    @id @default(uuid()) @db.Char(36)
+  interviewId  String    @db.Char(36)
+  type         String    @db.VarChar(64)
+  payload      Json?
+  occurredAt   DateTime  @default(now())
+  interview    Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+
+  @@index([interviewId, occurredAt])
+  @@map("interview_events")
+}
+
+// ---------- scoring ----------
+
+enum PerformanceLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+model Report {
+  id               String           @id @default(uuid()) @db.Char(36)
+  interviewId      String           @unique @db.Char(36)
+  userId           String           @db.Char(36)
+  overallScore     Int
+  // Six metrics — match the proposal §3.3 verbatim
+  confidence       Int              // Confidence level
+  communication    Int              // Communication quality
+  relevance        Int              // Response relevance
+  technical        Int              // Technical accuracy
+  fluency          Int              // Fluency
+  pace             Int              // Speaking speed
+  performanceLevel PerformanceLevel @default(INTERMEDIATE)
+  strengths        Json
+  weaknesses       Json
+  suggestions      Json
+  resources        Json?            // Recommended learning resources
+  pdfKey           String?          @db.VarChar(500)
+  generatedAt      DateTime         @default(now())
+
+  interview     Interview  @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobMatches    JobMatch[]
+
+  @@index([userId, generatedAt])
+  @@map("reports")
+}
+
+// ---------- jobs ----------
+
+model Job {
+  id           String     @id @default(uuid()) @db.Char(36)
+  externalId   String?    @unique @db.VarChar(255)
+  title        String     @db.VarChar(255)
+  company      String     @db.VarChar(255)
+  location     String?    @db.VarChar(255)
+  remote       Boolean    @default(false)
+  seniority    String?    @db.VarChar(64)
+  description  String     @db.LongText
+  skills       Json
+  postedAt     DateTime?
+  sourceUrl    String?    @db.VarChar(500)
+  createdAt    DateTime   @default(now())
+
+  matches      JobMatch[]
+
+  @@index([title])
+  @@map("jobs")
+}
+
+model JobMatch {
+  id           String   @id @default(uuid()) @db.Char(36)
+  reportId     String   @db.Char(36)
+  jobId        String   @db.Char(36)
+  matchScore   Float
+  reasonJson   Json
+  skillGaps    Json
+  createdAt    DateTime @default(now())
+
+  report       Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  job          Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([reportId, matchScore])
+  @@map("job_matches")
+}
+
+// ---------- billing ----------
+
+model Subscription {
+  id                String    @id @default(uuid()) @db.Char(36)
+  userId            String    @db.Char(36)
+  plan              Plan
+  status            String    @db.VarChar(32)
+  stripeSubId       String?   @unique @db.VarChar(255)
+  currentPeriodEnd  DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices          Invoice[]
+
+  @@map("subscriptions")
+}
+
+model Invoice {
+  id              String       @id @default(uuid()) @db.Char(36)
+  subscriptionId  String       @db.Char(36)
+  amountCents     Int
+  currency        String       @default("USD") @db.VarChar(8)
+  status          String       @db.VarChar(32)
+  hostedUrl       String?      @db.VarChar(500)
+  paidAt          DateTime?
+  createdAt       DateTime     @default(now())
+
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@map("invoices")
+}
+
+// ---------- platform ----------
+
+model Notification {
+  id         String    @id @default(uuid()) @db.Char(36)
+  userId     String    @db.Char(36)
+  type       String    @db.VarChar(64)
+  title      String    @db.VarChar(255)
+  body       String?   @db.Text
+  link       String?   @db.VarChar(500)
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id         String    @id @default(uuid()) @db.Char(36)
+  userId     String?   @db.Char(36)
+  actor      String    @db.VarChar(32)
+  action     String    @db.VarChar(128)
+  entity     String    @db.VarChar(64)
+  entityId   String?   @db.VarChar(64)
+  ip         String?   @db.VarChar(64)
+  userAgent  String?   @db.VarChar(500)
+  metadata   Json?
+  createdAt  DateTime  @default(now())
+
+  user       User?     @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([userId, createdAt])
+  @@map("audit_logs")
+}
+
+model OutboxEvent {
+  id            String    @id @default(uuid()) @db.Char(36)
+  aggregate     String    @db.VarChar(64)
+  aggregateId   String    @db.VarChar(64)
+  type          String    @db.VarChar(128)
+  payload       Json
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([publishedAt, createdAt])
+  @@map("outbox_events")
+}

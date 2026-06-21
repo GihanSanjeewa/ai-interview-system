@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ChevronLeft, Clock, Award, Mic } from "lucide-react";
+import { motion } from "framer-motion";
 import "./History.css";
 
 const LEVEL_COLORS = {
@@ -48,35 +49,67 @@ const History = () => {
 
   return (
     <div className="history-container">
-      <header className="history-header">
+      <motion.header
+        className="history-header"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <button onClick={() => navigate("/dashboard")} className="btn-back-hist">
           <ChevronLeft size={18} /> Back to Dashboard
         </button>
         <h1>Interview History</h1>
         <span className="history-count">{interviews.length} sessions</span>
-      </header>
+      </motion.header>
 
       <main className="history-main">
         {loading && <div className="history-loading">Loading your history...</div>}
         {error && <div className="history-error">{error}</div>}
 
         {!loading && !error && interviews.length === 0 && (
-          <div className="history-empty">
+          <motion.div
+            className="history-empty"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
             <Mic size={48} className="empty-icon" />
             <p>No interviews yet. Complete your first interview to see your history here.</p>
             <button className="btn-primary-hist" onClick={() => navigate("/dashboard")}>
               Start an Interview
             </button>
-          </div>
+          </motion.div>
         )}
 
         {!loading && interviews.length > 0 && (
-          <div className="history-grid">
+          <motion.div
+            className="history-grid"
+            initial="hidden"
+            animate="show"
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: { staggerChildren: 0.08 }
+              }
+            }}
+          >
             {interviews.map((item) => {
               const levelStyle = LEVEL_COLORS[item.performance_level] || LEVEL_COLORS.Intermediate;
               const isCompleted = item.status === "completed";
               return (
-                <div key={item.id} className={`history-card ${!isCompleted ? "pending-card" : ""}`}>
+                <motion.div
+                  key={item.id}
+                  className={`history-card ${isCompleted ? "clickable-card" : "pending-card"}`}
+                  onClick={() => isCompleted && navigate("/report", { state: { report: item } })}
+                  variants={{
+                    hidden: { opacity: 0, y: 30, scale: 0.96 },
+                    show: { opacity: 1, y: 0, scale: 1 }
+                  }}
+                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  whileHover={isCompleted ? { y: -6, scale: 1.015, borderColor: "rgba(79, 172, 254, 0.25)" } : {}}
+                  whileTap={isCompleted ? { scale: 0.985 } : {}}
+                >
                   <div className="history-card-top">
                     <div className="history-domain">{item.domain}</div>
                     <div className="history-meta">
@@ -118,13 +151,18 @@ const History = () => {
                     <p className="history-summary">{item.summary}</p>
                   )}
 
-                  <div className="history-date">
-                    <Clock size={13} /> {formatDate(item.created_at)}
+                  <div className="history-date-row">
+                    <div className="history-date">
+                      <Clock size={13} /> {formatDate(item.created_at)}
+                    </div>
+                    {isCompleted && (
+                      <span className="view-report-hint">View Report →</span>
+                    )}
                   </div>
-                </div>
+                </motion.div>
               );
             })}
-          </div>
+          </motion.div>
         )}
       </main>
     </div>

@@ -1,40 +1,82 @@
-import { createContext, useState, useEffect, useContext } from "react";
-import axios from "axios";
+import { createContext, useContext, useEffect, useState } from "react";
+import { authApi, setAccessToken } from "@/services/api";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const useAuth = () => useContext(AuthContext);
 
+const USER_KEY = "iv_user";
+
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const raw = localStorage.getItem(USER_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      // In a real app, verify token with backend
-      const userData = JSON.parse(localStorage.getItem("user"));
-      setUser(userData);
-    }
-    setLoading(false);
+    let cancelled = false;
+    (async () => {
+      try {
+        const { user: me } = await authApi.me();
+        if (cancelled) return;
+        setUser(me);
+        localStorage.setItem(USER_KEY, JSON.stringify(me));
+      } catch {
+        // Not logged in or refresh failed — keep cached user; pages requiring auth will redirect.
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const login = async (email, password) => {
-    const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
-    localStorage.setItem("token", res.data.token);
-    localStorage.setItem("user", JSON.stringify(res.data.user));
-    setUser(res.data.user);
-    return res.data;
+  const persist = (data) => {
+    setAccessToken(data.accessToken);
+    setUser(data.user);
+    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  const login = async (email, password) => {
+    const data = await authApi.login({ email, password });
+    persist(data);
+    return data;
+  };
+
+  const register = async (fullName, email, password) => {
+    const data = await authApi.register({ fullName, email, password });
+    persist(data);
+    return data;
+  };
+
+  const updateUser = async (patch) => {
+    const { user: updated } = await authApi.updateProfile(patch);
+    setUser(updated);
+    localStorage.setItem(USER_KEY, JSON.stringify(updated));
+    return updated;
+  };
+
+  const logout = async () => {
+    try {
+      await authApi.logout();
+    } catch {
+      // ignore
+    }
+    setAccessToken(null);
+    localStorage.removeItem(USER_KEY);
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider
+      value={{ user, login, register, logout, updateUser, loading }}
+    >
       {children}
     </AuthContext.Provider>
   );

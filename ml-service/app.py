@@ -17,6 +17,8 @@ from audio_analyzer import (
     LIBROSA_AVAILABLE,
 )
 from text_analyzer import analyze_conversation, FILLER_WORDS
+from classifier import classify_candidate_performance
+import numpy as np
 
 app = Flask(__name__)
 CORS(app)
@@ -113,14 +115,57 @@ def extract_text_from_docx(file_path: str) -> str:
 
 @app.route("/transcribe", methods=["POST"])
 def transcribe_audio():
-    audio = request.files["audio"]
-    audio.save("temp.mp3")
-    result = whisper_model.transcribe("temp.mp3")
-    text = result["text"]
-    segments = result.get("segments", [])
+    # Accept either `audio` (legacy) or `file` (new TS BFF) form field.
+    upload = request.files.get("audio") or request.files.get("file")
+    if upload is None:
+        return jsonify({"error": "audio or file is required"}), 400
+
+    upload.save("temp.mp3")
+
+    raw_lang = (request.form.get("language") or "english").lower()
+    lang_code = "si" if raw_lang in ("si", "sinhala") else "en"
+
+    try:
+        from whisper_si import transcribe as si_transcribe  # lazy import
+
+        result = si_transcribe("temp.mp3", language=lang_code)
+        text = result.text
+        segments = result.segments
+        whisper_meta = {
+            "model": result.model_used,
+            "backend": result.backend,
+            "finetuned": result.finetuned,
+            "latency_ms": result.latency_ms,
+            "duration_sec": result.duration_sec,
+        }
+    except Exception as exc:
+        print(f"whisper_si pipeline failed, falling back to base: {exc}")
+        whisper_args = {"language": lang_code} if lang_code else {}
+        result = whisper_model.transcribe("temp.mp3", **whisper_args)
+        text = result["text"]
+        segments = result.get("segments", [])
+        whisper_meta = {
+            "model": "openai-whisper:base",
+            "backend": "openai-whisper",
+            "finetuned": False,
+            "latency_ms": None,
+            "duration_sec": None,
+        }
+
     # Uses librosa (if installed) for full ML-based audio analysis
     metrics = compute_audio_metrics(text, segments, audio_path="temp.mp3")
-    return jsonify({"text": text, "metrics": metrics})
+    return jsonify({"text": text, "metrics": metrics, "whisper": whisper_meta})
+
+
+@app.route("/whisper/info", methods=["GET"])
+def whisper_info():
+    """Lightweight probe — surfaces which Sinhala model the service would use."""
+    try:
+        from whisper_si import model_info
+
+        return jsonify({"en": model_info("en"), "si": model_info("si")})
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 @app.route("/parse_cv", methods=["POST"])
@@ -148,20 +193,54 @@ def parse_cv():
     else:
         return jsonify({"error": "Unsupported file type. Please upload a PDF or DOCX."}), 400
 
-    prompt = f"""Analyze the following CV text and extract exactly 3-5 professional interview domains/roles this person is qualified for.
-Return them as a simple comma-separated list with no extra text or explanation.
+    prompt = f"""Analyze the following CV text and extract:
+1. Skills: A list of key professional skills found in the resume.
+2. Education: A list of degrees, certifications, or academic background.
+3. Experience: A list of past job titles, companies, or work experience.
+4. Certifications: Any professional certifications.
+5. Technologies: Specific programming languages, frameworks, databases, or software tools mentioned.
+6. Domains: Exactly 3-5 suitable interview categories/roles this person is qualified for. Prioritize selecting from: Software Engineering, Web Development, Data Science, Networking, UI/UX, Business Analysis.
+
+Return your response ONLY as a valid JSON object with the following structure, with no extra markdown, preambles, or explanation:
+{{
+  "skills": ["Skill 1", "Skill 2"],
+  "education": ["Education details"],
+  "experience": ["Experience details"],
+  "certifications": ["Certification details"],
+  "technologies": ["Technology 1", "Technology 2"],
+  "domains": ["Domain 1", "Domain 2"]
+}}
 
 CV Text:
-{text[:2000]}"""
+{text[:3000]}"""
 
     try:
-        response_text = ask_claude(prompt, model=SMART_MODEL, max_tokens=128)
-        domains = [d.strip() for d in response_text.split(",") if d.strip()]
+        response_text = ask_claude(prompt, model=SMART_MODEL, max_tokens=1024).strip()
+        if "```json" in response_text:
+            response_text = response_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in response_text:
+            response_text = response_text.split("```")[1].split("```")[0].strip()
+        parsed = json.loads(response_text)
+        extracted_info = {
+            "skills": parsed.get("skills", []),
+            "education": parsed.get("education", []),
+            "experience": parsed.get("experience", []),
+            "certifications": parsed.get("certifications", []),
+            "technologies": parsed.get("technologies", [])
+        }
+        domains = parsed.get("domains", ["Software Engineering", "Web Development"])
     except Exception as e:
         print(f"Claude CV parse error: {e}")
+        extracted_info = {
+            "skills": ["Communication", "Problem Solving"],
+            "education": ["Bachelor's Degree"],
+            "experience": ["Relevant Work Experience"],
+            "certifications": ["Professional Certification"],
+            "technologies": ["Office", "Git"]
+        }
         domains = ["Software Engineering", "General Management", "Sales"]
 
-    return jsonify({"text": text, "domains": domains})
+    return jsonify({"text": text, "extracted_info": extracted_info, "domains": domains})
 
 
 @app.route("/generate_question", methods=["POST"])
@@ -229,6 +308,22 @@ def evaluate_interview():
     # ── ML-based text analysis across all answers ──────────────────────────
     text_scores = analyze_conversation(history, domain)
 
+    # ── RandomForest ML-based performance level classification ─────────────
+    all_vectors = [m.get("feature_vector") for m in audio_metrics_list if m.get("feature_vector")]
+    if all_vectors:
+        overall_vector = list(np.mean(all_vectors, axis=0))
+    else:
+        # Fallback 21-dimensional feature vector
+        overall_vector = [
+            avg_metrics['words_per_minute'],
+            avg_metrics['confidence_score'],
+            avg_metrics['fluency_score'],
+            avg_metrics['speaking_speed_score'],
+            0.05, 120.0, 10.0, 0.25
+        ] + [0.0]*13
+
+    performance_level = classify_candidate_performance(overall_vector)
+
     prompt = f"""You are an expert interview evaluator. Provide a comprehensive performance evaluation.
 
 Domain: {domain}
@@ -254,19 +349,22 @@ NLP / Text Analysis (spaCy + TF-IDF):
 - Response Relevance:    {text_scores['response_relevance']}/100     (TF-IDF cosine similarity: question ↔ answer)
 - Technical Accuracy:    {text_scores['technical_accuracy']}/100     (domain keyword density)
 - Answers analysed:      {text_scores['answer_count']}
+
+=== ML-CLASSIFIED PERFORMANCE TIER ===
+- Performance Level:    {performance_level} (determined by our RandomForestClassifier ML model)
 =================================================================
 
 Return ONLY a valid JSON object with exactly these keys (no markdown, no extra text).
 Use the ML-computed scores above as your primary source for the numeric fields:
 {{
   "summary": "2-3 sentence overall summary in English",
-  "technical_score": <integer 0-100, based on technical_accuracy ML score>,
-  "communication_score": <integer 0-100, based on communication_quality ML score>,
-  "confidence_score": <integer 0-100, based on confidence_level ML score>,
-  "fluency_score": <integer 0-100, based on fluency ML score>,
-  "speaking_speed_score": <integer 0-100, based on speaking_speed ML score>,
-  "response_relevance_score": <integer 0-100, based on response_relevance ML score>,
-  "performance_level": "<exactly one of: Beginner, Intermediate, Advanced>",
+  "technical_score": {int(text_scores['technical_accuracy'])},
+  "communication_score": {int(text_scores['communication_quality'])},
+  "confidence_score": {int(avg_metrics['confidence_score'])},
+  "fluency_score": {int(avg_metrics['fluency_score'])},
+  "speaking_speed_score": {int(avg_metrics['speaking_speed_score'])},
+  "response_relevance_score": {int(text_scores['response_relevance'])},
+  "performance_level": "{performance_level}",
   "key_strengths": ["strength 1", "strength 2", "strength 3"],
   "areas_for_improvement": ["area 1", "area 2", "area 3"],
   "learning_resources": [
@@ -274,7 +372,20 @@ Use the ML-computed scores above as your primary source for the numeric fields:
     {{"title": "Resource Name", "type": "Course/Book/Website/Platform", "description": "One sentence about it"}},
     {{"title": "Resource Name", "type": "Course/Book/Website/Platform", "description": "One sentence about it"}}
   ],
-  "recommendations": ["Job Title 1", "Job Title 2", "Job Title 3"]
+  "recommendations": [
+    {{
+      "title": "Suitable Job Title 1",
+      "match_score": <integer 0-100, based on CV skills, technical score, and communication>,
+      "rationale": "Why this candidate fits this job role specifically based on their CV skills and interview performance.",
+      "career_path": "Transition or growth progression path (e.g. Junior Dev -> Mid Dev -> Senior Architect)"
+    }},
+    {{
+      "title": "Suitable Job Title 2",
+      "match_score": <integer 0-100, based on CV skills, technical score, and communication>,
+      "rationale": "Why this candidate fits this job role specifically based on their CV skills and interview performance.",
+      "career_path": "Transition or growth progression path (e.g. Associate Analyst -> Product Owner)"
+    }}
+  ]
 }}"""
 
     try:
@@ -297,7 +408,7 @@ Use the ML-computed scores above as your primary source for the numeric fields:
             "fluency_score":            int(avg_metrics.get("fluency_score", 65)),
             "speaking_speed_score":     int(avg_metrics.get("speaking_speed_score", 65)),
             "response_relevance_score": int(text_scores["response_relevance"]),
-            "performance_level": "Intermediate",
+            "performance_level": performance_level,
             "key_strengths": ["Completed the interview", "Provided structured responses"],
             "areas_for_improvement": ["Continue practising technical questions", "Work on communication clarity"],
             "learning_resources": [
@@ -305,8 +416,228 @@ Use the ML-computed scores above as your primary source for the numeric fields:
                 {"title": "LeetCode", "type": "Website", "description": "Practice coding and problem-solving challenges used in technical interviews."},
                 {"title": "Toastmasters International", "type": "Organization", "description": "Develop public speaking and communication confidence."}
             ],
-            "recommendations": ["Software Engineer", "Junior Developer", "Technical Analyst"]
+            "recommendations": [
+                {
+                    "title": "Software Engineer",
+                    "match_score": 80,
+                    "rationale": "Demonstrates solid foundational coding concepts and structured thinking.",
+                    "career_path": "Junior Developer -> Mid-level Software Engineer -> Tech Lead"
+                },
+                {
+                    "title": "Technical Analyst",
+                    "match_score": 75,
+                    "rationale": "Structured communication style fits analytical and system documentation roles.",
+                    "career_path": "Junior Analyst -> Systems Analyst -> IT Product Manager"
+                }
+            ]
         })
+
+
+# ─── v2 contract (used by the new TypeScript BFF) ──────────────────────────
+
+@app.route("/cv/parse", methods=["POST"])
+def cv_parse_v2():
+    """Adapter for the TS backend CV upload flow.
+    Returns the schema described in services/api → CvParsedResult.
+    """
+    if "file" not in request.files:
+        return jsonify({"error": "file is required"}), 400
+    file = request.files["file"]
+    filename = (file.filename or "").lower()
+
+    try:
+        if filename.endswith(".pdf"):
+            path = "temp_cv.pdf"
+            file.save(path)
+            text = extract_text_from_pdf(path)
+        elif filename.endswith(".docx"):
+            path = "temp_cv.docx"
+            file.save(path)
+            text = extract_text_from_docx(path)
+        else:
+            return jsonify({"error": "Unsupported file type. PDF or DOCX only."}), 400
+    except Exception as exc:
+        return jsonify({"error": f"Failed to parse: {exc}"}), 500
+
+    prompt = (
+        "Analyze the following CV text and respond ONLY with a JSON object of:\n"
+        "skills, education, experience, certifications, technologies (each a list of strings),\n"
+        "years_total (integer), readiness_score (0-100), suggested_tracks (array of 3-5 tracks "
+        "chosen from: react, swe, dotnet, node, hr, behavioral, leadership).\n\n"
+        f"CV Text:\n{text[:4000]}"
+    )
+
+    parsed = {
+        "skills": [],
+        "education": [],
+        "experience": [],
+        "certifications": [],
+        "technologies": [],
+        "years_total": None,
+        "readiness_score": 60,
+        "suggested_tracks": ["react", "swe"],
+    }
+    try:
+        res_text = ask_claude(prompt, model=SMART_MODEL, max_tokens=1024).strip()
+        if "```json" in res_text:
+            res_text = res_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in res_text:
+            res_text = res_text.split("```")[1].split("```")[0].strip()
+        parsed.update(json.loads(res_text))
+    except Exception as exc:
+        print(f"cv/parse claude error: {exc}")
+
+    return jsonify({
+        "skills": parsed.get("skills", []),
+        "education": parsed.get("education", []),
+        "experience": parsed.get("experience", []),
+        "certifications": parsed.get("certifications", []),
+        "technologies": parsed.get("technologies", []),
+        "yearsTotal": parsed.get("years_total"),
+        "readinessScore": int(parsed.get("readiness_score", 60)),
+        "suggestedTracks": parsed.get("suggested_tracks", ["react", "swe"]),
+        "rawText": text,
+    })
+
+
+@app.route("/score/answer", methods=["POST"])
+def score_answer_v2():
+    data = request.get_json(silent=True) or {}
+    question = data.get("question", "")
+    transcript = data.get("transcript", "")
+    language = data.get("language", "en")
+
+    # Use existing NLP analyzer on a single-pair "conversation".
+    history = [{"role": "ai", "text": question}, {"role": "user", "text": transcript}]
+    text_scores = analyze_conversation(history, "general")
+
+    word_count = len([w for w in transcript.split() if w.strip()])
+    # No audio file here — heuristic-only pace.
+    pace = 145 if 50 < word_count < 350 else (90 if word_count <= 50 else 175)
+
+    prompt = (
+        "You are an interview judge. Given the question and answer, return ONLY a JSON object with:\n"
+        "technical, communication, clarity, confidence, depth, pace (each 0-100 integer), and\n"
+        "notes (array of up to 3 short strings).\n\n"
+        f"Question: {question}\n\nAnswer: {transcript[:2000]}\n\n"
+        f"Hints (use as priors, don't blindly trust): communication={int(text_scores['communication_quality'])}, "
+        f"technical={int(text_scores['technical_accuracy'])}, relevance={int(text_scores['response_relevance'])}."
+    )
+
+    fallback = {
+        "confidence": 70,
+        "communication": int(text_scores["communication_quality"]),
+        "relevance": int(text_scores["response_relevance"]),
+        "technical": int(text_scores["technical_accuracy"]),
+        "fluency": int(text_scores["communication_quality"]),
+        "pace": pace,
+        "notes": [],
+    }
+    try:
+        res_text = ask_claude(prompt, model=FAST_MODEL, max_tokens=400).strip()
+        if "```json" in res_text:
+            res_text = res_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in res_text:
+            res_text = res_text.split("```")[1].split("```")[0].strip()
+        parsed = json.loads(res_text)
+        for key in ("confidence", "communication", "relevance", "technical", "fluency", "pace"):
+            parsed[key] = max(0, min(100, int(parsed.get(key, fallback[key]))))
+        parsed["notes"] = list(parsed.get("notes", []))[:3]
+        _ = language
+        return jsonify(parsed)
+    except Exception as exc:
+        print(f"score/answer error: {exc}")
+        return jsonify(fallback)
+
+
+@app.route("/score/session", methods=["POST"])
+def score_session_v2():
+    data = request.get_json(silent=True) or {}
+    answers = data.get("answers", [])
+    role = data.get("role", "Software Engineer")
+    language = data.get("language", "en")
+
+    def avg(field):
+        vals = [a.get("metrics", {}).get(field) for a in answers if a.get("metrics")]
+        vals = [v for v in vals if isinstance(v, (int, float))]
+        return int(round(sum(vals) / len(vals))) if vals else 70
+
+    base = {
+        "confidence": avg("confidence"),
+        "communication": avg("communication"),
+        "relevance": avg("relevance"),
+        "technical": avg("technical"),
+        "fluency": avg("fluency"),
+        "pace": avg("pace"),
+    }
+    overall = int(round(sum(base.values()) / 6))
+    if overall >= 80:
+        performance_level = "ADVANCED"
+    elif overall >= 60:
+        performance_level = "INTERMEDIATE"
+    else:
+        performance_level = "BEGINNER"
+
+    transcript_blob = "\n".join(
+        f"Q{i + 1}: {a.get('question', '')}\nA: {(a.get('transcript') or '')[:600]}"
+        for i, a in enumerate(answers[:8])
+    )
+
+    prompt = (
+        f"You are evaluating a {role} mock interview. Return ONLY JSON with:\n"
+        "strengths (3-5 strings), weaknesses (3-5 strings), suggestions (3-5 short actionable strings),\n"
+        "resources (3-5 objects each {title, type, description}).\n\n"
+        f"Per-metric averages: {base}\n"
+        f"Performance level: {performance_level}\n\n"
+        f"Transcript excerpt:\n{transcript_blob[:4000]}"
+    )
+
+    fallback = {
+        "strengths": [
+            "Structured answers with concrete examples",
+            "Stayed engaged throughout the session",
+            "Maintained a steady speaking pace",
+        ],
+        "weaknesses": [
+            "Some answers skipped trade-offs and edge cases",
+            "Filler words appeared in the opening minutes",
+            "Closing pitch was slightly rushed",
+        ],
+        "suggestions": [
+            "Practice 2 system-design walkthroughs this week",
+            "Record a 60-second self-intro and refine it daily",
+            "Pause for 2 seconds before answering hard questions",
+        ],
+        "resources": [
+            {"title": "Designing Data-Intensive Applications", "type": "Book",
+             "description": "Foundations every senior interviewer probes."},
+            {"title": "STAR method playbook", "type": "Article",
+             "description": "Structure behavioral answers with concrete outcomes."},
+            {"title": "Toastmasters International", "type": "Community",
+             "description": "Develop public speaking and communication confidence."},
+        ],
+    }
+    try:
+        res_text = ask_claude(prompt, model=FAST_MODEL, max_tokens=900).strip()
+        if "```json" in res_text:
+            res_text = res_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in res_text:
+            res_text = res_text.split("```")[1].split("```")[0].strip()
+        parsed = json.loads(res_text)
+        fallback.update({k: parsed[k] for k in fallback.keys() if k in parsed})
+    except Exception as exc:
+        print(f"score/session error: {exc}")
+
+    _ = language
+    return jsonify({
+        "overallScore": overall,
+        **base,
+        "performanceLevel": performance_level,
+        "strengths": fallback["strengths"],
+        "weaknesses": fallback["weaknesses"],
+        "suggestions": fallback["suggestions"],
+        "resources": fallback["resources"],
+    })
 
 
 if __name__ == "__main__":

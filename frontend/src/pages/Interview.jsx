@@ -92,6 +92,7 @@ const Interview = () => {
     setStatus("Transcribing your answer...");
     const formData = new FormData();
     formData.append("audio", recordedBlob.blob);
+    formData.append("language", language);
 
     try {
       // 1. Transcribe
@@ -175,6 +176,9 @@ const Interview = () => {
 
   const difficultyLabel = { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced" }[difficulty] || difficulty;
 
+  const lastAssistantIdx = [...messages].reverse().findIndex(m => m.role === "assistant");
+  const actualLastAssistantIdx = lastAssistantIdx !== -1 ? messages.length - 1 - lastAssistantIdx : -1;
+
   return (
     <div className="interview-container">
       <div className="interview-header">
@@ -204,7 +208,7 @@ const Interview = () => {
               animate={{ opacity: 1, y: 0 }}
               className={`message-wrapper ${msg.role}`}
             >
-              <div className="avatar">
+              <div className={`avatar ${msg.role === "assistant" && idx === actualLastAssistantIdx && isAISpeaking ? "speaking" : ""}`}>
                 {msg.role === "assistant" ? <Bot size={20} /> : <User size={20} />}
               </div>
               <div className="message-content">{msg.content}</div>
@@ -238,14 +242,23 @@ const Interview = () => {
               onClick={() => { setError(null); setIsRecording(true); }}
               disabled={loading || isAISpeaking}
             >
-              <Mic size={32} />
+              <div className="mic-icon-wrapper">
+                <Mic size={32} />
+              </div>
               <span>Click to Answer</span>
             </button>
           ) : (
-            <button className="mic-btn stop" onClick={() => setIsRecording(false)}>
-              <Square size={32} />
-              <span>Stop Recording</span>
-            </button>
+            <div className="ripple-wrapper">
+              <div className="ripple-circle"></div>
+              <div className="ripple-circle"></div>
+              <div className="ripple-circle"></div>
+              <button className="mic-btn stop" onClick={() => setIsRecording(false)}>
+                <div className="mic-icon-wrapper active">
+                  <Square size={32} />
+                </div>
+                <span>Stop Recording</span>
+              </button>
+            </div>
           )}
         </div>
       </div>

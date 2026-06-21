@@ -179,7 +179,10 @@ exports.getInterviewHistory = (req, res) => {
       r.communication_score,
       r.confidence_score,
       r.performance_level,
-      r.recommendations
+      r.recommendations,
+      r.key_strengths,
+      r.areas_for_improvement,
+      r.learning_resources
     FROM interviews i
     LEFT JOIN reports r ON i.id = r.interview_id
     WHERE i.user_id = ?
@@ -195,7 +198,8 @@ exports.getInterviewHistory = (req, res) => {
           SELECT i.id, i.type AS domain, i.status, i.score, i.created_at,
                  'english' AS language, 'intermediate' AS difficulty,
                  r.summary, r.technical_score, r.communication_score,
-                 NULL AS confidence_score, NULL AS performance_level, r.recommendations
+                 NULL AS confidence_score, NULL AS performance_level, r.recommendations,
+                 NULL AS key_strengths, NULL AS areas_for_improvement, NULL AS learning_resources
           FROM interviews i
           LEFT JOIN reports r ON i.id = r.interview_id
           WHERE i.user_id = ?
@@ -203,7 +207,13 @@ exports.getInterviewHistory = (req, res) => {
         `;
         return db.query(fallbackQuery, [userId], (err2, rows) => {
           if (err2) return res.status(500).json({ message: "Database error" });
-          res.json(rows.map((row) => ({ ...row, recommendations: row.recommendations ? JSON.parse(row.recommendations) : [] })));
+          res.json(rows.map((row) => ({
+            ...row,
+            recommendations: row.recommendations ? JSON.parse(row.recommendations) : [],
+            key_strengths: [],
+            areas_for_improvement: [],
+            learning_resources: []
+          })));
         });
       }
       return res.status(500).json({ message: "Database error" });
@@ -211,7 +221,10 @@ exports.getInterviewHistory = (req, res) => {
 
     const history = results.map((row) => ({
       ...row,
-      recommendations: row.recommendations ? JSON.parse(row.recommendations) : []
+      recommendations: row.recommendations ? JSON.parse(row.recommendations) : [],
+      key_strengths: row.key_strengths ? JSON.parse(row.key_strengths) : [],
+      areas_for_improvement: row.areas_for_improvement ? JSON.parse(row.areas_for_improvement) : [],
+      learning_resources: row.learning_resources ? JSON.parse(row.learning_resources) : []
     }));
 
     res.json(history);
