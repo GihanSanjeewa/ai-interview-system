@@ -2,6 +2,7 @@ import { Router } from "express";
 import { asyncHandler } from "@/http/middlewares/async-handler";
 import { requireAuth } from "@/http/middlewares/auth";
 import { interviewService, interviewMeta } from "@/modules/interview/application/interview-service";
+import { mlClient } from "@/infrastructure/ml/ml-client";
 import {
   CreateInterviewDto,
   EndInterviewDto,
@@ -56,6 +57,15 @@ interviewRouter.post(
     const input = SubmitAnswerDto.parse(req.body);
     const result = await interviewService.submitAnswer(req.user!.sub, req.params.id, input);
     res.status(201).json(result);
+  })
+);
+
+interviewRouter.post(
+  "/evaluate-code",
+  asyncHandler(async (req, res) => {
+    const { code, language, problem } = req.body;
+    const result = await mlClient.evaluateCode({ code, language, problem });
+    res.json(result);
   })
 );
 

@@ -179,6 +179,31 @@ const Interview = () => {
   const lastAssistantIdx = [...messages].reverse().findIndex(m => m.role === "assistant");
   const actualLastAssistantIdx = lastAssistantIdx !== -1 ? messages.length - 1 - lastAssistantIdx : -1;
 
+  const [code, setCode] = useState("// Write your solution here...\ndef solve():\n    pass");
+  const [codeLang, setCodeLang] = useState("python");
+  const [showCodeEditor, setShowCodeEditor] = useState(false);
+  const [codeEvalResult, setCodeEvalResult] = useState(null);
+
+  const evaluateCodeSubmit = async () => {
+    setLoading(true);
+    setStatus("Evaluating your code submission...");
+    try {
+      const res = await axios.post("http://localhost:8000/evaluate_code", {
+        code,
+        language: codeLang,
+        problem: messagesRef.current[messagesRef.current.length - 1]?.content || ""
+      });
+      setCodeEvalResult(res.data);
+      addMessage("user", `[Submitted Code Solution (${codeLang.toUpperCase()} - Score: ${res.data.score}/100)]\n\`\`\`${codeLang}\n${code}\n\`\`\``);
+      setStatus("");
+    } catch (err) {
+      console.error("Code evaluation error:", err);
+      setError("Failed to evaluate code.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="interview-container">
       <div className="interview-header">
@@ -187,10 +212,53 @@ const Interview = () => {
           <span className="difficulty-badge">{difficultyLabel}</span>
           <span className="lang-badge">{language === "sinhala" ? "සිංහල" : "English"}</span>
         </div>
-        <button onClick={endSession} className="btn-exit" disabled={loading}>
-          End Session
-        </button>
+        <div className="header-actions">
+          <button 
+            onClick={() => setShowCodeEditor(!showCodeEditor)} 
+            className="btn-code-toggle"
+          >
+            {showCodeEditor ? "Hide Code Playground" : "💻 Code Playground"}
+          </button>
+          <button onClick={endSession} className="btn-exit" disabled={loading}>
+            End Session
+          </button>
+        </div>
       </div>
+
+      {showCodeEditor && (
+        <div className="code-playground-drawer">
+          <div className="code-playground-header">
+            <h4>Live Coding Evaluation</h4>
+            <select 
+              value={codeLang} 
+              onChange={(e) => setCodeLang(e.target.value)}
+              className="lang-select"
+            >
+              <option value="python">Python</option>
+              <option value="javascript">JavaScript</option>
+              <option value="java">Java</option>
+              <option value="php">PHP</option>
+            </select>
+          </div>
+          <textarea
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            className="code-textarea"
+            rows={8}
+            placeholder="Write your code solution here..."
+          />
+          <div className="code-playground-actions">
+            <button onClick={evaluateCodeSubmit} className="btn-eval-code" disabled={loading}>
+              Run Code Evaluation
+            </button>
+            {codeEvalResult && (
+              <div className="eval-result-badge">
+                Score: {codeEvalResult.score}/100 | Correctness: {codeEvalResult.correctness}% | Complexity: {codeEvalResult.complexity}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="error-banner">
