@@ -1,0 +1,185 @@
+{
+  "total": 8330,
+  "source": {
+    "ali-alkhars/interviews": 1190,
+    "common-pile/stackexchange": 7140
+  },
+  "domain": {
+    "SQL": 478,
+    "Database Optimization": 465,
+    "OOP": 571,
+    "Design Patterns": 471,
+    "Microservices": 531,
+    "Docker": 473,
+    "Kubernetes": 366,
+    "REST APIs": 466,
+    "Concurrency": 424,
+    "Algorithms": 467,
+    "Data Structures": 466,
+    "Security": 468,
+    "Unit Testing": 475,
+    "System Design": 364,
+    "Frontend Development": 1073,
+    "Programming Languages": 772
+  },
+  "difficulty": {
+    "Beginner": 2847,
+    "Intermediate": 3655,
+    "Advanced": 1828
+  },
+  "split": {
+    "train": 6625,
+    "validation": 825,
+    "test": 880
+  },
+  "with_expected_answer": 5975,
+  "domain_by_split": {
+    "train": {
+      "Frontend Development": 856,
+      "Design Patterns": 374,
+      "Programming Languages": 614,
+      "Database Optimization": 370,
+      "Unit Testing": 378,
+      "Security": 371,
+      "OOP": 454,
+      "Concurrency": 338,
+      "Microservices": 422,
+      "SQL": 380,
+      "System Design": 288,
+      "Data Structures": 372,
+      "Algorithms": 370,
+      "REST APIs": 371,
+      "Docker": 376,
+      "Kubernetes": 291
+    },
+    "validation": {
+      "Frontend Development": 107,
+      "OOP": 57,
+      "Programming Languages": 78,
+      "Microservices": 52,
+      "SQL": 47,
+      "Unit Testing": 47,
+      "System Design": 36,
+      "Docker": 47,
+      "Concurrency": 42,
+      "Algorithms": 46,
+      "Data Structures": 45,
+      "Database Optimization": 46,
+      "Kubernetes": 36,
+      "REST APIs": 46,
+      "Security": 46,
+      "Design Patterns": 47
+    },
+    "test": {
+      "Frontend Development": 110,
+      "Security": 51,
+      "Design Patterns": 50,
+      "Unit Testing": 50,
+      "Database Optimization": 49,
+      "OOP": 60,
+      "Programming Languages": 80,
+      "Data Structures": 49,
+      "Microservices": 57,
+      "REST APIs": 49,
+      "SQL": 51,
+      "System Design": 40,
+      "Concurrency": 44,
+      "Algorithms": 51,
+      "Kubernetes": 39,
+      "Docker": 50
+    }
+  },
+  "difficulty_by_split": {
+    "train": {
+      "Beginner": 2265,
+      "Intermediate": 2912,
+      "Advanced": 1448
+    },
+    "validation": {
+      "Beginner": 282,
+      "Intermediate": 361,
+      "Advanced": 182
+    },
+    "test": {
+      "Beginner": 300,
+      "Intermediate": 382,
+      "Advanced": 198
+    }
+  },
+  "source_by_split": {
+    "train": {
+      "ali-alkhars/interviews": 933,
+      "common-pile/stackexchange": 5692
+    },
+    "validation": {
+      "ali-alkhars/interviews": 112,
+      "common-pile/stackexchange": 713
+    },
+    "test": {
+      "ali-alkhars/interviews": 145,
+      "common-pile/stackexchange": 735
+    }
+  },
+  "question_chars": {
+    "min": 15,
+    "mean": 65.3,
+    "max": 208
+  },
+  "filtering": {
+    "cap_domain_Algorithms": 1414,
+    "cap_domain_Data Structures": 490,
+    "cap_domain_Database Optimization": 732,
+    "cap_domain_Design Patterns": 498,
+    "cap_domain_OOP": 420,
+    "cap_domain_Programming Languages": 1064,
+    "cap_domain_SQL": 17448,
+    "cap_domain_Security": 7100,
+    "cap_domain_Unit Testing": 257,
+    "cap_se_global": 7452,
+    "dedup_exact": 136,
+    "dedup_near": 20,
+    "drop.interviews.empty": 1,
+    "drop.interviews.non_interview_content": 30,
+    "drop.interviews.not_a_question": 338,
+    "drop.interviews.off_domain": 656,
+    "drop.interviews.too_few_words": 2,
+    "drop.interviews.too_long": 21,
+    "drop.interviews.too_short": 29,
+    "drop.stackexchange.corrupted": 170,
+    "drop.stackexchange.non_interview_content": 12046,
+    "drop.stackexchange.not_a_question": 266168,
+    "drop.stackexchange.off_domain": 71742,
+    "drop.stackexchange.too_few_words": 3346,
+    "drop.stackexchange.too_short": 14,
+    "kept.interviews.without_expected_answer": 1215,
+    "kept.stackexchange.without_expected_answer": 11863,
+    "kept_interviews": 1215,
+    "kept_stackexchange": 44146,
+    "raw_interviews": 2292,
+    "raw_stackexchange": 397632
+  },
+  "validation": {
+    "records": 8330,
+    "domains_covered": "16/16",
+    "exact_duplicates": 0,
+    "leakage": {
+      "train->validation": 0,
+      "train->test": 0,
+      "validation->test": 0
+    },
+    "empty_questions": 0,
+    "too_short": 0,
+    "too_long": 0
+  },
+  "config": {
+    "seed": 42,
+    "max_per_domain": 1200,
+    "se_ratio": 6.0,
+    "ratios": [
+      0.8,
+      0.1,
+      0.1
+    ],
+    "limit_per_shard": null
+  }
+}

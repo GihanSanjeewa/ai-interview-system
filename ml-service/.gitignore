@@ -12,3 +12,6 @@ data/
 models/
 eval-report.csv
 *.safetensors
+
+# Raw downloaded datasets — hundreds of MB; re-fetch with dataset/download_datasets.py
+dataset/raw/
