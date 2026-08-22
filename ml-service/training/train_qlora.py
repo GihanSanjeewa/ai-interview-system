@@ -50,7 +50,7 @@ DEFAULT_OUTPUT = ML_SERVICE / "training" / "output" / "interview_llm"
 
 # Bumped whenever the T4 precision handling changes. Printed at startup so it is
 # immediately obvious which copy of this file a remote machine is running.
-PRECISION_FIX_BUILD = "t4-fp16-guard-3"
+PRECISION_FIX_BUILD = "t4-fp16-guard-4"
 
 SYSTEM_PROMPT = (
     "You are a senior software engineering interviewer. You ask precise "
@@ -1307,6 +1307,17 @@ def train(argv: list[str] | None = None) -> int:
 
     # ── build the trainer ────────────────────────────────────────────────────
     print(f"precision fix build: {PRECISION_FIX_BUILD}")
+    print("-" * 60)
+    print("STARTUP PRECISION VALIDATION")
+    print("-" * 60)
+    print(f"  GPU:                  {gpu.get('name') or 'none (CPU)'}")
+    print(f"  CUDA available:       {gpu.get('cuda_available')}")
+    print(f"  Compute capability:   {gpu.get('capability')}")
+    print(f"  Native bf16 support:  {native_bf16_supported()}")
+    print(f"  FP16:                 {'enabled' if gpu.get('cuda_available') else 'disabled (no CUDA)'}")
+    print(f"  BF16:                 disabled")
+    print(f"  4-bit compute dtype:  {'torch.float16' if not args.no_4bit else 'n/a (--no_4bit)'}")
+    print("-" * 60)
     if gpu.get("cuda_available"):
         # Must happen before transformers constructs its Accelerator.
         metadata["accelerate_env"] = force_fp16_mixed_precision_env()
@@ -1378,6 +1389,17 @@ def train(argv: list[str] | None = None) -> int:
         log.info("SFTConfig in trl %s does not accept %s — skipped",
                  versions.get("trl"), dropped)
     sft_config = SFTConfig(**config_kwargs)
+
+    # TrainingArguments.__post_init__ derives `mixed_precision` from
+    # ACCELERATE_MIXED_PRECISION first and only then applies the fp16/bf16 flags
+    # (transformers/training_args.py). Pin all three here so a stale environment
+    # value cannot select bf16 on a GPU that has no bf16 tensor cores.
+    if gpu.get("cuda_available") and not native_bf16_supported():
+        sft_config.fp16 = True
+        sft_config.bf16 = False
+        if hasattr(sft_config, "mixed_precision"):
+            sft_config.mixed_precision = "fp16"
+        log.info("pinned SFTConfig: fp16=True, bf16=False, mixed_precision=fp16")
 
     peft_config = LoraConfig(
         r=args.lora_r,
@@ -1452,7 +1474,20 @@ def train(argv: list[str] | None = None) -> int:
     # so undo it here — after construction, before the optimizer is built inside
     # trainer.train(). See enforce_fp16_safe_trainable_dtype() for the full
     # explanation.
-    if getattr(sft_config, "fp16", False):
+    # Gate on the *actual* scaler, not on sft_config.fp16. A GradScaler is created
+    # whenever Accelerator.mixed_precision == "fp16", and transformers can reach
+    # that state from ACCELERATE_MIXED_PRECISION alone — i.e. with sft_config.fp16
+    # still False. Gating on the flag would then skip this entire block while the
+    # scaler is live and TRL has already cast the adapters to bf16, which is
+    # exactly the reported crash. fp32 adapters are also the right default on any
+    # pre-Ampere GPU, so capability is a second trigger.
+    _accel = getattr(trainer, "accelerator", None)
+    _scaler_live = getattr(_accel, "scaler", None) is not None
+    fp16_amp_active = (_scaler_live
+                       or bool(getattr(sft_config, "fp16", False))
+                       or not native_bf16_supported())
+
+    if fp16_amp_active:
         recast = enforce_fp16_safe_trainable_dtype(trainer.model)
         if recast:
             detail = ", ".join(f"{n:,} params from {d}" for d, n in recast.items())
@@ -1498,7 +1533,7 @@ def train(argv: list[str] | None = None) -> int:
           f"({100 * trainable / max(total, 1):.4f}%)")
 
     # ── train ────────────────────────────────────────────────────────────────
-    if getattr(sft_config, "fp16", False):
+    if fp16_amp_active:
         assert_fp16_grad_safe(trainer.model, "pre-train check")
         print("Precision pre-flight: all trainable parameters are float32 — "
               "GradScaler-safe.")
