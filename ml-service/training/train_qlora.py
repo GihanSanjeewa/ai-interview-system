@@ -525,6 +525,127 @@ def library_versions() -> dict[str, str]:
     return versions
 
 
+def native_bf16_supported() -> bool:
+    """True only when the GPU has *native* bfloat16 tensor cores (Ampere, sm_80+).
+
+    Deliberately NOT `torch.cuda.is_bf16_supported()`. That function falls back to
+    an emulation probe — it simply allocates a bf16 tensor — which succeeds on a
+    Tesla T4 (sm_75) even though the hardware has no bf16 tensor cores and the
+    AMP GradScaler has no bf16 kernels. Trusting it is what leads libraries to
+    select bf16 on a T4 and fail at the first optimizer step.
+    """
+    try:
+        import torch
+    except ImportError:
+        return False
+    if not torch.cuda.is_available():
+        return False
+    return torch.cuda.get_device_properties(0).major >= 8
+
+
+def dtype_census(model: Any) -> tuple[dict[str, int], dict[str, int]]:
+    """(frozen, trainable) parameter-count breakdown by dtype."""
+    frozen: dict[str, int] = {}
+    trainable: dict[str, int] = {}
+    for _, param in model.named_parameters():
+        key = str(param.dtype).replace("torch.", "")
+        if param.__class__.__name__ == "Params4bit":
+            key += " (4-bit NF4)"
+        bucket = trainable if param.requires_grad else frozen
+        bucket[key] = bucket.get(key, 0) + param.numel()
+    return frozen, trainable
+
+
+def enforce_fp16_safe_trainable_dtype(model: Any) -> dict[str, int]:
+    """Force every trainable parameter to fp32 and report what had to change.
+
+    Required because TRL casts LoRA adapter weights to bfloat16 whenever the base
+    model is quantized (trl/trainer/sft_trainer.py, "the PEFT adapter weights are
+    converted to bf16 to follow the recommendations from the original paper").
+    That cast is unconditional — it does not check GPU capability, and it does not
+    check whether fp16 AMP is active. Under fp16 AMP the backward pass then
+    produces bfloat16 gradients, and `GradScaler.unscale_()` dispatches to
+    `_amp_foreach_non_finite_check_and_unscale_cuda`, which has no bfloat16
+    kernel:
+
+        NotImplementedError: "_amp_foreach_non_finite_check_and_unscale_cuda"
+                             not implemented for 'BFloat16'
+
+    fp32 master weights are the correct target: `torch.autocast` still runs the
+    matmuls in fp16, so speed and activation memory are unaffected, while the
+    gradients land in fp32 where the scaler has kernels. This is the standard AMP
+    recipe and what QLoRA reference implementations use on pre-Ampere hardware.
+
+    Idempotent: on a TRL build that does not perform the cast it changes nothing.
+    """
+    import torch
+
+    changed: dict[str, int] = {}
+    for _, param in model.named_parameters():
+        if param.requires_grad and param.dtype != torch.float32:
+            key = str(param.dtype).replace("torch.", "")
+            changed[key] = changed.get(key, 0) + param.numel()
+            # Reassigning .data keeps the Parameter object identity, so any
+            # optimizer param group already referencing it stays valid.
+            param.data = param.data.to(torch.float32)
+    return changed
+
+
+def print_precision_report(model: Any, sft_config: Any, gpu: dict,
+                           trainer: Any = None) -> dict:
+    """Print the precision diagnostics and return them for the metadata file."""
+    import torch
+
+    scaler = None
+    if trainer is not None:
+        accelerator = getattr(trainer, "accelerator", None)
+        scaler = getattr(accelerator, "scaler", None) if accelerator else None
+
+    frozen, trainable = dtype_census(model)
+    report = {
+        "torch_version": torch.__version__,
+        "cuda_version": torch.version.cuda,
+        "gpu_name": gpu.get("name"),
+        "compute_capability": gpu.get("capability"),
+        "torch_cuda_is_bf16_supported": (torch.cuda.is_bf16_supported()
+                                         if torch.cuda.is_available() else None),
+        "native_bf16_tensor_cores": native_bf16_supported(),
+        "bnb_4bit_compute_dtype": "torch.float16",
+        "fp16": bool(getattr(sft_config, "fp16", False)),
+        "bf16": bool(getattr(sft_config, "bf16", False)),
+        "grad_scaler": type(scaler).__name__ if scaler is not None else "none",
+        "grad_scaler_enabled": bool(getattr(scaler, "is_enabled", lambda: False)())
+                               if scaler is not None else False,
+        "frozen_parameter_dtypes": frozen,
+        "trainable_parameter_dtypes": trainable,
+    }
+
+    print("-" * 60)
+    print("PRECISION DIAGNOSTICS")
+    print("-" * 60)
+    print(f"  torch                        {report['torch_version']}")
+    print(f"  CUDA                         {report['cuda_version']}")
+    print(f"  GPU                          {report['gpu_name']} "
+          f"(compute capability {report['compute_capability']})")
+    print(f"  torch.cuda.is_bf16_supported {report['torch_cuda_is_bf16_supported']}"
+          f"   <- emulation probe, True on a T4; do not trust it")
+    print(f"  native bf16 tensor cores     {report['native_bf16_tensor_cores']}"
+          f"   <- the value that actually matters")
+    print(f"  bnb_4bit_compute_dtype       {report['bnb_4bit_compute_dtype']}")
+    print(f"  SFTConfig.fp16               {report['fp16']}")
+    print(f"  SFTConfig.bf16               {report['bf16']}")
+    print(f"  gradient scaler              {report['grad_scaler']} "
+          f"(enabled={report['grad_scaler_enabled']})")
+    print("  frozen parameters:")
+    for dtype, count in sorted(frozen.items(), key=lambda kv: -kv[1]):
+        print(f"      {dtype:24} {count:>14,}")
+    print("  trainable parameters (LoRA):")
+    for dtype, count in sorted(trainable.items(), key=lambda kv: -kv[1]):
+        print(f"      {dtype:24} {count:>14,}")
+    print("-" * 60)
+    return report
+
+
 def gpu_info() -> dict[str, Any]:
     try:
         import torch
@@ -539,7 +660,10 @@ def gpu_info() -> dict[str, Any]:
         "name": props.name,
         "vram_gb": round(props.total_memory / 1024 ** 3, 2),
         "capability": f"{props.major}.{props.minor}",
+        # props.major >= 8 is the real test. torch.cuda.is_bf16_supported() also
+        # returns True on a T4 via an emulation probe, which is misleading here.
         "supports_bf16": props.major >= 8,
+        "torch_reports_bf16": torch.cuda.is_bf16_supported(),
     }
 
 
@@ -1172,6 +1296,29 @@ def train(argv: list[str] | None = None) -> int:
                       if k in trainer_params and v is not None}
 
     trainer = SFTTrainer(**trainer_kwargs)
+
+    # ── precision guard ──────────────────────────────────────────────────────
+    # SFTTrainer.__init__ casts every trainable parameter to bfloat16 when the
+    # base model is quantized. On a pre-Ampere GPU that is fatal under fp16 AMP,
+    # so undo it here — after construction, before the optimizer is built inside
+    # trainer.train(). See enforce_fp16_safe_trainable_dtype() for the full
+    # explanation.
+    if getattr(sft_config, "fp16", False):
+        recast = enforce_fp16_safe_trainable_dtype(trainer.model)
+        if recast:
+            detail = ", ".join(f"{n:,} params from {d}" for d, n in recast.items())
+            log.warning("precision guard: recast %s to float32 — fp16 AMP is active "
+                        "and torch's GradScaler has no bfloat16 kernels", detail)
+        else:
+            log.info("precision guard: all trainable parameters were already float32")
+        metadata["precision_guard_recast"] = recast
+
+    if getattr(sft_config, "bf16", False) and not native_bf16_supported():
+        log.error("bf16 is enabled but this GPU has no native bf16 tensor cores; "
+                  "training would be emulated and extremely slow. Use fp16.")
+        return 1
+
+    metadata["precision"] = print_precision_report(trainer.model, sft_config, gpu, trainer)
 
     trainable = sum(p.numel() for p in trainer.model.parameters() if p.requires_grad)
     total = sum(p.numel() for p in trainer.model.parameters())
