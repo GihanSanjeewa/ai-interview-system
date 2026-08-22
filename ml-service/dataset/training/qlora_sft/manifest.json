@@ -1,0 +1,39 @@
+{
+  "generated_by": "notebooks/01_qlora_data_preparation.ipynb",
+  "source_dataset": "dataset\\processed\\question_generator",
+  "task": "both",
+  "tokenizer": "mistralai/Mistral-7B-v0.3",
+  "prompt_style": "plain",
+  "max_seq_length": 512,
+  "seed": 42,
+  "validation_split": 0.1,
+  "counts": {
+    "train": 11398,
+    "validation": 1420
+  },
+  "dataset_report": {
+    "records_read": 7450,
+    "examples_built": 12818,
+    "duplicate_examples_removed": 0,
+    "schemas_detected": {
+      "instruction_io": 7450
+    },
+    "records_dropped": {},
+    "examples_per_task": {
+      "answer": 5368,
+      "question_generation": 7450
+    }
+  },
+  "library_versions": {
+    "python": "3.14.5",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "torch": "2.13.0+cpu",
+    "transformers": "5.15.1",
+    "datasets": "5.0.1",
+    "peft": "0.20.0",
+    "trl": "1.10.0",
+    "bitsandbytes": "not installed",
+    "accelerate": "1.14.0",
+    "huggingface_hub": "1.28.0"
+  }
+}

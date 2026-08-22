@@ -1,9 +1,33 @@
 # Extra dependencies for FINE-TUNING ONLY. Install on the GPU box:
 #     pip install -r requirements.txt -r requirements-train.txt
+#
+# torch is deliberately NOT pinned here. On Google Colab the preinstalled build
+# already matches the driver's CUDA version; forcing a reinstall usually breaks
+# bitsandbytes. Install torch from pytorch.org only on a self-managed GPU box.
+#
+# Tesla T4 notes (compute capability 7.5):
+#   * fp16 only — bf16 is unsupported, so train_qlora.py always uses fp16.
+#   * FlashAttention-2 needs Ampere or newer; the script uses sdpa instead.
+#   * bitsandbytes has supported sm75 4-bit NF4 since 0.39; 0.43+ is what the
+#     current peft/transformers integration expects.
 
+# --- QLoRA / SFT stack -------------------------------------------------------
+transformers>=4.44          # v4.44+ and v5.x are both supported (feature-detected)
 datasets>=2.20
-peft>=0.11
+accelerate>=0.30
+peft>=0.11                  # prepare_model_for_kbit_training + LoraConfig
+trl>=0.9                    # SFTTrainer / SFTConfig; API drift is handled at runtime
+bitsandbytes>=0.43          # 4-bit NF4; needs a CUDA build, no-op on CPU
+safetensors>=0.4
+sentencepiece               # Llama / Mistral tokenizers
+protobuf                    # required by some sentencepiece converters
+
+# --- Sinhala Whisper fine-tuning (unchanged) ---------------------------------
 evaluate>=0.4
 jiwer>=3.0
 soundfile
 audiomentations
+
+# --- Notebook / reporting (optional, used by notebooks/) ---------------------
+matplotlib
+pandas
