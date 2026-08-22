@@ -1,0 +1,28 @@
+[
+  {
+    "question_id": "SWE_OOP_0002",
+    "role": "Software Engineer",
+    "experience_level": "Junior (1-2 Years)",
+    "technology": "Object-Oriented Programming / Design Patterns",
+    "difficulty_level": "Medium",
+    "question_type": "Core Concepts",
+    "interview_question": "Explain the difference between composition and inheritance, and when you would prefer composition.",
+    "expected_answer": "Inheritance establishes an 'is-a' relationship between classes, while composition establishes a 'has-a' relationship. Composition is generally preferred because it promotes loose coupling, prevents fragile base class issues, and allows dynamic behavior modification at runtime.",
+    "evaluation_criteria": "Understanding of OOP principles, coupling, code maintainability, real-world trade-offs.",
+    "key_concepts": [
+      "Inheritance",
+      "Composition",
+      "Loose Coupling",
+      "Fragile Base Class",
+      "Polymorphism"
+    ],
+    "scoring_rules": {
+      "max_score": 10,
+      "concept_weights": {
+        "definitions": 0.4,
+        "trade_offs": 0.4,
+        "examples": 0.2
+      }
+    }
+  }
+]
