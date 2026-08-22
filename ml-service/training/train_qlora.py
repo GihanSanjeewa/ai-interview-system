@@ -50,7 +50,7 @@ DEFAULT_OUTPUT = ML_SERVICE / "training" / "output" / "interview_llm"
 
 # Bumped whenever the T4 precision handling changes. Printed at startup so it is
 # immediately obvious which copy of this file a remote machine is running.
-PRECISION_FIX_BUILD = "t4-fp16-guard-4"
+PRECISION_FIX_BUILD = "t4-fp16-guard-5"
 
 SYSTEM_PROMPT = (
     "You are a senior software engineering interviewer. You ask precise "
@@ -1314,8 +1314,9 @@ def train(argv: list[str] | None = None) -> int:
     print(f"  CUDA available:       {gpu.get('cuda_available')}")
     print(f"  Compute capability:   {gpu.get('capability')}")
     print(f"  Native bf16 support:  {native_bf16_supported()}")
-    print(f"  FP16:                 {'enabled' if gpu.get('cuda_available') else 'disabled (no CUDA)'}")
-    print(f"  BF16:                 disabled")
+    print("  Training precision:")
+    print(f"    FP16:               {bool(gpu.get('cuda_available'))}")
+    print(f"    BF16:               False")
     print(f"  4-bit compute dtype:  {'torch.float16' if not args.no_4bit else 'n/a (--no_4bit)'}")
     print("-" * 60)
     if gpu.get("cuda_available"):
@@ -1400,6 +1401,9 @@ def train(argv: list[str] | None = None) -> int:
         if hasattr(sft_config, "mixed_precision"):
             sft_config.mixed_precision = "fp16"
         log.info("pinned SFTConfig: fp16=True, bf16=False, mixed_precision=fp16")
+    print(f"Training precision (resolved): FP16: {sft_config.fp16}  "
+          f"BF16: {sft_config.bf16}  "
+          f"mixed_precision: {getattr(sft_config, 'mixed_precision', 'n/a')}")
 
     peft_config = LoraConfig(
         r=args.lora_r,
