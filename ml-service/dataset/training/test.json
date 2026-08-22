@@ -1,0 +1,29 @@
+[
+  {
+    "question_id": "SWE_SYS_DESIGN_0001",
+    "role": "Backend Engineer",
+    "experience_level": "Mid-Level (3-5 Years)",
+    "technology": "Distributed Systems / Redis / Kafka",
+    "difficulty_level": "Hard",
+    "question_type": "System Design / Adaptive Technical",
+    "interview_question": "How would you design a distributed rate limiter that handles 100,000 requests per second across multiple data centers?",
+    "expected_answer": "A distributed rate limiter can be implemented using the Token Bucket or Sliding Window Log algorithm stored in a Redis cluster. To handle high request throughput across multi-regions, local in-memory batching with eventual consistency or atomic Redis Lua scripts can be utilized...",
+    "evaluation_criteria": "Understanding of distributed locking, Redis memory constraints, latency trade-offs, fallback mechanics.",
+    "key_concepts": [
+      "Token Bucket",
+      "Sliding Window Log",
+      "Redis Cluster",
+      "Race Conditions",
+      "Eventual Consistency"
+    ],
+    "scoring_rules": {
+      "max_score": 10,
+      "concept_weights": {
+        "algorithm_choice": 0.3,
+        "concurrency_handling": 0.3,
+        "scalability": 0.2,
+        "edge_cases": 0.2
+      }
+    }
+  }
+]

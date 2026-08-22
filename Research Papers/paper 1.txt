@@ -1,0 +1,509 @@
+Modular AI-Powered Interviewer with Dynamic
+Question Generation and Expertise Profiling
+Aisvarya Adeseye1[0009−0003−2401−3076], Jouni Isoaho1[0000−0002−5789−3992],
+Seppo Virtanen1[0000−0002−9487−3018], and Mohammad
+Tahir1[0000−0002−6273−4603]
+Department of Computing, University of Turku, Turku, Finland
+{aisvarya.a.adeseye, jouni.isoaho, seppo.virtanen, tahir.mohammad}@utu.fi
+Abstract.Automated interviewers and chatbots are common in re-
+search, recruitment, customer service, and education. Many existing sys-
+tems use fixed question lists, strict rules, and limited personalization,
+leading to repeated conversations that cause low engagement. Therefore,
+these tools are not effective for complex qualitative research, which re-
+quiresflexibility,contextawareness,andethicalsensitivity.Consequently,
+there is a need for a more adaptive and context-aware interviewing sys-
+tem. To address this, an AI-powered interviewer that dynamically gener-
+ates questions that are contextually appropriate and expertise aligned is
+presented in this study. The interviewer is built on a locally hosted large
+language model (LLM) that generates coherent dialogue while preserv-
+ing data privacy. The interviewer profiles the participants’ expertise in
+real time to generate knowledge-appropriate questions, well-articulated
+responses, and smooth transition messages similar to human-like inter-
+views. To implement these functionalities, a modular prompt engineering
+pipeline was designed to ensure that the interview conversation remains
+scalable, adaptive, and semantically rich. To evaluate the AI-powered
+interviewer, it was tested with various participants, and it achieved high
+satisfaction (mean 4.45) and engagement (mean 4.33). The proposed
+interviewer is a scalable, privacy-conscious solution that advances AI-
+assisted qualitative data collection.
+Keywords:AI-Powered Interviewer·Expertise-Aware Dialogue Sys-
+tems·Prompt Engineering·Local Large Language Models (LLMs)·
+Adaptive Qualitative Research Tools.
+1 Introduction
+Artificial Intelligence (AI) plays a vital role in improving human–machine inter-
+actionindomainssuchascustomerservice,education,recruitment,andresearch.
+Chatbots [1] like like Replika [3], Mitsuku [4], and automated interviewers
+[2] are tools that help make interaction consistent, reducing human workload.
+Chatbots use predefined rules or intent recognition to handle simple and routine
+questions. They have limited flexibility, hence, they are not adaptive to the
+expertise level of the user.
+arXiv:2601.11534v1  [cs.HC]  21 Nov 2025
+2 A. Adeseye et al.
+Contrariwise, automated interviewers such as HireVue [5] and Tengai [6] are
+early efforts to achieve automated interviews. They are designed to handle struc-
+tured or semi-structured interactions in recruitment, research, or evaluation.
+However, they mostly rely on traditional Natural Language Processing (NLP)
+techniques, which limit their capacity to generate adaptive and contextually
+relevant follow-up questions.
+Although chatbots and automated interviewers are broadly adopted, they
+generally suffer from poor personalization, inflexible scripts that make dialogues
+repetitive.Inthelastfewyears,largelanguagemodels(LLMs)likeGPT,LLaMA,
+Gemini, and DeepSeek have emerged, enabling dynamic question generation,
+adaptive follow-ups in conversational dialogue without the need for hard-coded
+templates.
+However, LLM models have their own challenges, such as producing irrele-
+vant information, hallucinations, and redundant responses. To mitigate these,
+effective prompt designs are needed to ensure that the model produces clear,
+accurate, and relevant responses. Furthermore, a structured prompt design and
+appropriate performance evaluation are two important aspects to ensure that
+LLM-based interviews stay context-aware and reliable.
+Consequently, this study aims to design and analyze the performance of an
+adaptive conversational AI-powered interviewer that generates contextually rel-
+evant and non-repetitive interview questions. Additionally, it evaluates how well
+the system maintains coherent and user-appropriate dialogue flow with partici-
+pants of diverse knowledge, experience, and expertise levels.
+Hence, this study focuses on two main research questions (RQs):
+– RQ1-How effectively does an AI-powered interviewer generate a coherent
+flow of contextually appropriate, expertise-aligned questions across interview
+sessions through prompt-driven logic?
+– RQ2-What are the performance, adaptability, and overall user experience
+of an AI-powered interviewer?
+Thisresearchprovidestwokeycontributionswhichare(1)amodular,prompt-
+driven AI-powered interviewer that dynamically adjusts question complexity in
+real time based on the user’s expertise level, and (2) a structured framework
+for generating contextually relevant, non-redundant, and semantically coherent
+interview dialogues using locally hosted LLMs.
+2 Background Study
+Existing Approaches in Chatbots and Automated Interviewers
+Chatbots and automated interviewers are two different tools widely used
+for conversational interaction between human and machine [1]. Chatbots are
+designed to do routine tasks, and are often used for answering frequently asked
+questions, scheduling appointments, and giving scripted customer support [7].
+Examples such as Replika [3] and Mitsuku [4] use rule-based logic or intent
+Modular AI-Powered Interviewer 3
+classifierstorespond.Theirabilitytopersonalizeconversationsortoasknuanced
+follow-up questions is limited because of their static designs.
+However, automated interviewers are more suited and generally used for
+structured interactions, such as candidate screening, academic interviews, and
+qualitative research [8]. Systems such as HireVue [5] and Tengai [6] attempt to
+make interviews like real conversations. But they have limitations such as ask-
+ing repeated questions, not being able to understand conversations well, and
+a lack of adaptability to different scenarios due to rigid question structure or
+limited NLP capabilities. The AI-powered interviewer proposed in this study
+addresses these limitations by integrating local LLMs to dynamically generate
+context-aware and expertise-aligned interviews.
+Intelligent Interview Technologies
+NLP is a widely used technique in the development of conversational agents
+[9]. Basic interactions in earlier systems used template-based generation, part-
+of-speech tagging, and entity recognition [10]. However, due to the evolution of
+NLP techniques, methods such as topic modeling, semantic similarity scoring,
+and sequence-to-sequence models were introduced to improve the conversational
+flow and thematic relevance [11]. Also, some interview bots incorporate domain-
+specific ontologies or knowledge graphs to ensure question consistency within
+technical fields [12].
+However, these systems have limited scalability because they heavily depend
+on manually designed dialogue flows, which limit their responsiveness to unex-
+pected user inputs. The popularity of LLMs has improved conversational dia-
+logue. Models like GPT-4, LLaMA, and Gemini can generate human-like but
+coherent conversation that adapts to the user’s domain, tone, or expertise level
+without needing predefined templates [13].
+Despite these benefits, cloud-based commercial LLMs cannot be used to pro-
+cess sensitive information due to privacy and regulatory compliance. Examples
+include ChatGPT and Gemini. Consequently, there is growing interest in deploy-
+ing LLMs locally in institutional or personal infrastructure, which guarantees
+data privacy, the blocking of third-party access, and maintains ethical consider-
+ations in data-sensitive research and operations.
+The Role of Prompt Engineering in Local LLM
+Local LLMs are highly sensitive to prompt structure unlike commercial mod-
+els that use a wide range of reinforcement training and server-side optimization
+to improve output accuracy and quality. Without these techniques, prompt en-
+gineering is critical to extract reliable outputs from local models.
+When using local language models, prompt engineering is very important be-
+cause they do not have the extensive fallback mechanisms as commercial models
+[15].Togeteffectiveresults,localmodelsneedclearandwell-structuredprompts.
+If the prompts are poorly designed, the model may produce confusing or irrel-
+evant outputs. In worst cases, it may lead to hallucination, contradictions, or a
+break in the conversational flow.
+There are two main types of prompts that control how an LLM behaves
+[19]. System prompts define the model behavior during the entire session [16].
+4 A. Adeseye et al.
+For example, a system prompt might instruct the model to provide responses
+according to the user’s preferences. User prompts are specific inputs given during
+interaction, such as responses from the user or situational data [17]. They assist
+the model in deciding what to ask next (follow-up questions) or summarize what
+happened earlier.
+The main difference between system and user prompts is about what they do:
+system prompt helps the model understand its goals and identity. However, user
+prompts help the model answer questions in real-time. When they work together,
+they create outputs with minimal repetition, dynamic, highly relevant, and sen-
+sitive to user input. Therefore, to design an effective AI-powered interviewer,
+prompt engineering is essential
+3 AI-Powered Interviewer Architecture
+The presented AI-powered Interviewer is a locally deployed system that assists
+with interviews. It is designed to understand and communicate with humans.
+The system is made up of small, reusable parts called modules. Each module
+does a specific job and passes its output to the next module. This modular ar-
+chitecturemakestheinterviewerflexible,reusable,andtransparent.Themodules
+are independent and can be added or removed without affecting the entire sys-
+tem. This architecture makes it easy to adapt to different cultures or languages,
+change the level of difficulty for participants, and add or remove features easily.
+The five main modules and their interaction are illustrated in Figure 1.
+Fig.1.Modular Pipeline Architecture of AI-Powered Interviewer
+This modular architecture design has several advantages from an implemen-
+tation perspective. It assists in separating different tasks, making it easier to
+optimize, fix bugs, and modify each part for different purposes independently,
+for example, different interview topics or ethical rules. The architecture is also
+transparent, making it easy to inspect and audit the outputs from each module.
+Modular AI-Powered Interviewer 5
+3.1 Module 1 (M1): Generate System Prompt
+This module sets up the interview environment by creating a structured system
+prompt that tells the local LLM how to behave throughout the entire interview
+session. It receives information provided in figure 2 to generate a single reusable
+JSON prompt. This is the only time the system prompt is created and stored, so
+the interviewer provides consistent, ethical, and context-aware responses during
+the entire interaction. Figure 2 depicts the structure of the system prompt, while
+Figure 3 contains the structure of the user prompt used in generating the system
+prompt module.
+Fig.2.System Prompt Outline in Generating the System Prompt Module
+Fig.3.User Prompt Outline in Generating the System Prompt Module
+3.2 Module 2 (M2): Generate Initial Question
+The LLM begins the interview by selecting a high-priority key research area
+and generating a simple or less complex question that is easy for people to
+understand. This makes the interview accessible, encouraging early engagement.
+As seen in Figure 4, this process is guided by these key elements: the input source
+and role specification, complexity adjustments, contextual framing, justification
+requirements, and structured behavior. It also states "what format the answer
+6 A. Adeseye et al.
+should be" and "what not to say during the interview". These specifications
+ensure that the questions are crystal clear, purposeful, and aligned with the
+objective of the research.
+Fig.4.User Prompt Outline for Initial Question Prompt
+3.3 Module 3 (M3): Expertise Profiling
+This module profiles participants’ expertise level via previous conversations. The
+LLMevaluatestechnicalterminology,insightdepth,andacademicrelevancewith
+a four-level rubric, which includesNovice,Basic Knowledge,Advanced Knowl-
+edge, andExpert. As seen in Figure 5, this classification depends on the following:
+input type specification, evaluation criteria, behavioral control, domain knowl-
+edge, and justification requirements. This module also helps Module 4 to create
+questions that adapt to the participant’s expert level, ensuring that the inter-
+view remains challenging, interesting, and relevant so that it yields high-quality
+conversational data.
+Fig.5.User Prompt Outline for Expert Level
+3.4 Module 4 (M4): Generate Iterative Questions
+This module creates follow-up questions that are adaptive, coherent, and con-
+versational based on the participant’s previous response and expertise level. It
+achieves this via three main structures: first, generating a brief response (under
+10 words) that agrees or reflects on the participant’s answer, second, write a
+Modular AI-Powered Interviewer 7
+smooth transition message to maintain the conversation flow, and lastly, for-
+mulate a context-aware, expertise-aligned, open-ended follow-up question. Addi-
+tionally, it also includes a short justification (up to 25 words) on why a specific
+question was created. Figure 6 shows the key constraints used by the LLM model
+to formulate the user prompt. This structure for the user prompt ensures that
+each question deepens the conversation and matches the participant’s tone, con-
+versation history, and topic continuity.
+Fig.6.User Prompt Outline for Generate Iterative Questions
+3.5 Module 5 (M5): Validate Question Uniqueness
+This module ensures that each new question is unique to avoid semantic dupli-
+cation. The module checks the new question against previous ones to see if they
+mean the same thing (conceptual overlaps), even if they use different words,
+phrases, or synonymous substitutions. For example, if the model asks "What
+are LLMs?" and then the model again asks "What do you understand by Large
+Language Models?", the module would recognize that it is asking the same thing,
+even though the questions are phrased differently. Figure 7 contains the key prin-
+ciples that need to be considered when designing the user prompt to implement
+this module. By incorporating these principles, the module ensures thematic
+progression, minimizes redundancy, and reduces participant fatigue. Also, this
+module helps collect reliable and accurate data.
+Fig.7.User Prompt Outline for Validate Question Uniqueness
+8 A. Adeseye et al.
+4 Technical Implementation
+A case study used to test the modular pipeline architecture of the AI-powered
+interviewer was about"how employees interact with LLMs in the workplace con-
+text". The study focused on employee awareness, skills, usage, and privacy con-
+cerns. The AI interviewer generates questions based on the research area name
+and priority level (High, Medium, Low), so the interview stays structured and
+relevant. Table 1 contains the main research areas, their priority levels, and the
+number of questions for each research area for the case study.
+Table 1.Priority Levels for Different Research Areas in LLM Awareness and Adoption.
+Research Area Priority No of Questions
+Awareness and knowledge of LLMs among employees High 4
+Application of LLMs in the Organization Medium 3
+Skill levels and training in using LLMs High 3
+Concerns related to data privacy and security in LLM useMedium 4
+Organizational guidelines for LLM use and adoption Low 2
+Fig.8.User Prompt Implementation Skeleton for Generative Iterative Questions (M4)
+4.1 Implementation
+LLaMA v3.2 (3B parameters) was used to implement the proposed modular
+pipeline architecture of the AI-powered interviewer. The prompts used to design
+Modular AI-Powered Interviewer 9
+all the modules in the architecture can be accessed through the following link:
+AI-Powered Interviewer GitHub Repository. The simplified structure of the user
+prompt used in generating iterative questions (M4) is shown in Figure 8.
+4.2 Testing and Results
+In the pilot study, a group of early users was selected to test the implemented AI-
+powered interviewer. Their feedback was important for refining the operations
+and functionality of the interviewer. Feedback received from 41 testers helped
+understand the strengths and potential areas for improvement. The testers were
+from diverse demographic, educational, and technical background (see Figure
+9). This attribute captured a wide range of real-world interactions, making the
+feedback robust and representative.
+Fig.9.Demographic Information about the Pilot Testers
+Expertise LevelThe AI Interviewer demonstrated effective capability in dy-
+namically identifying participants expertise level after each answer. Each inter-
+view started with a low-complexity, novice-friendly question. For example,
+“Can you describe a situation where you’ve heard of or used a Large Language Model
+(LLM) before?”
+Based on the participant’s response, the system assigned one of four expertise
+levels: Novice, Basic Knowledge, Advanced Knowledge, or Expert. Some partic-
+ipants started as Novices but moved to advanced knowledge as they showed
+increased knowledge and familiarity with the topic. For example, one partici-
+pant began by talking about simple uses like summarizing reports, but later
+discussed the differences between local and commercial LLMs and the need for
+training within their organization for responsible use of LLMs. This shows that
+the system has the ability to recognize and adapt to how participants’ expertise
+fluctuate during conversations.
+10 A. Adeseye et al.
+Question Complexity by Expertise LevelThe AI Interviewer adjusted the
+difficulty of the questions according to the expertise level of the participant. to
+keep the participant engaged and interested in the conversation, allowing for a
+more in-depth and meaningful insight.
+For novice-level participants, the system uses simple questions that are easy
+to understand and answer, for example:
+“What do you think are some benefits or drawbacks of using AI tools in your daily
+work?”
+As the level of expertise increased, the question became relatively harder
+in terms of terminology and in-depth knowledge. Advanced knowledge users
+received questions like:
+“How do you think your organization should train employees to adapt to the presence
+of LLMs in daily operations?”
+At the Expert level, the system asked scenario-driven, ethics-oriented, or
+governance-related questions that require profound understanding of the subject
+matter:
+“Can you describe a situation where a public LLM could pose a data security risk within
+your organization, and how you would mitigate it?”
+Question UniquenessThe AI-powered Interviewer checks if newly generated
+questions are different from the ones that were already asked in the interview
+session. The interviewer ensures that no two follow-ups were semantically re-
+dundant. The follow-up questions were tailored based on the participants’ back-
+ground and experiences shared from prior responses. This ensures that the con-
+versation stayed interesting, engaging, and contextually relevant.
+Progressive AdaptabilityTheAI-poweredIntervieweris effective atadapting
+to what participants said (progressive adaptation) by changing the way it asks
+questions, not just by adjusting the difficulty or complexity of the questions:
+the interview questions have a clear direction. It starts with general information
+and ends with deep thoughts on areas that include: responsible AI use, how
+organizations work, and ethical ways to use AI, capturing diverse participants’
+opinions and experiences. For example, at the beginning of the interview, one
+participant said this:
+“I’ve heard of ChatGPT and used it to write summaries.”
+But mid-interview, the conversation was as follows:
+“Organizations should train employees on local versus publicly available LLMs, and cre-
+ate internal guidelines on how data should be handled to mitigate ethical breaches.”
+This indicates that the interviewer understands conversation, adjusting ques-
+tions complexity as the conversation proceeds. Also, the conversation flows freely
+without following any strict plan.
+Modular AI-Powered Interviewer 11
+Response Message AccuracyThis is an important but often overlooked part
+of the conversation, theresponse message. It is a short and affirmative statement
+that confirms that the AI interviewer understood the response provided by the
+participant to the previous question in the conversation. The system consistently
+answered with semantically accurate and tone-appropriate responses. Examples
+include:
+–Participant:“I think AI tools may one day take over jobs.”
+System Response:“That’s a valid concern about job displacement.”
+– Participant:“We use LLMs to optimize code in healthcare applications.”
+System Response:“That’s a great use-case for efficiency.”
+In these examples, the interviewer understood the participant’s statement
+and feelings and responded with a short but accurate response, making the con-
+versation feel more natural and engaging. Evaluation of all 41 interview tran-
+scripts shows that no semantic mismatches or tone violations were found, con-
+firming the system’s reliability.
+5 Performance Evaluation
+Three key performance indicators of AI-powered interviewer were evaluated to
+study the effectiveness. The key performance indicators are
+–Cognitive and Emotional Engagement: How well does the system keep the
+user’s attention and engaged?
+–Question Relevance and Coherence: Are the questions logical and relevant
+to the conversation?
+–Overall User Satisfaction and Comparative Experience: How satisfied are
+users with the experience, and how does it compare to traditional human-
+led interviews?
+These performance indicators show how well the system can have a mean-
+ingful conversation, ask good questions, and provide good user experience.
+Together, these indicators provide a robust framework for evaluating the
+usability, adaptability, and success of the proposed AI-interviewer in conducting
+semi-structured qualitative interviews.
+As presented in Table 2, descriptive statistics show consistently high mean
+scores across all three indicators, indicating a strong positive experience among
+participants. Low standard deviations suggest a high level of agreement, and the
+skewness and kurtosis values fall within acceptable ranges, supporting the use
+of parametric analysis.
+The regression model summary in Table 3 indicates a moderate relationship
+between predictors and user satisfaction, with R = 0.499 and R²= 0.249. This
+means that approximately 24.9% of the variation in satisfaction is explained by
+engagement and question relevance. Although not a strong predictive model, it
+is acceptable in exploratory and human-computer interaction studies, where user
+satisfaction is shaped by multiple contextual variables.
+12 A. Adeseye et al.
+Table 2.Descriptive statistics of performance evaluation factors
+Variable NMinMaxMeanStd. Dev.VarianceSkewnessSkew. SEKurtosisKurt. SE
+Question Relevance
+and Coherence 413.675.00 4.61 0.4825 0.23 -0.519 0.369 -1.615 0.724
+Cognitive and
+Emotional Engagement413.335.00 4.33 0.3496 0.12 -0.410 0.369 0.986 0.724
+Overall User Satisfaction and
+Comparative Experience414.005.00 4.45 0.2917 0.09 0.003 0.369 0.080 0.724
+Table 3.Regression Model Summary Showing the Strength of the Relationship Be-
+tween Predictors and User Satisfaction
+Model R R SquareAdjusted R SquareStd. Error of the Estimate
+1 .499a .249 .209 .2594
+a Predictors: (Constant), Cognitive and Emotional Engagement, Question Relevance
+and Coherence
+Table 4.ANOVA Table Indicating the Overall Significance of the Regression Model
+Model Sum of Squaresdf Mean Square F Sig.
+1
+Regression .846 2 .423 6.289 .004a
+Residual 2.556 38 .067
+Total 3.402 40
+ANOVA Dependent Variable: Overall User Satisfaction and Comparative Experience
+a Predictors: (Constant), Cognitive and Emotional Engagement, Question Relevance
+and Coherence
+Table 5.Regression Coefficients Showing the Individual Contribution of Predictors to
+User Satisfaction
+Model Unstandardized
+Coefficients
+Standardized
+Coefficients t Sig.
+B Std. Error Beta
+1
+(Constant) 2.965 0.676 4.384 <.001
+Question Relevance and
+Coherence -0.055 0.085 -0.091 -0.645 0.523
+Cognitive and Emotional
+Engagement 0.402 0.118 0.481 3.407 0.002
+Dependent Variable: Overall User Satisfaction and Comparative Experience
+Modular AI-Powered Interviewer 13
+The statistical significance of the model (F = 6.289, p = 0.004) is confirmed
+by the ANOVA results in Table 4, which indicates that cognitive engagement and
+question relevance together meaningfully contribute to predicting satisfaction.
+More detailed analysis of the regression coefficients in Table 5 indicates
+that Cognitive and Emotional Engagement is a significant positive predictor
+(B = 0.402, p = 0.002), emphasizing why it is important to keep users emotion-
+ally and mentally during the interview conversation. Whereas, Question Rele-
+vance and Coherence, although rated highly in descriptive terms failed to signifi-
+cantly predict satisfaction when analyzed independently (B = -0.055, p = 0.523),
+suggesting that once users are engaged, question relevance may be viewed as a
+baseline expectation rather than a standout factor. Generally, the performance
+evaluation indicates that the AI-powered interviewer worked well. It kept users
+engaged and satisfied, adapting to their responses, making conversation personal
+and meaningful. These results show that the interviewer can be an effective tool
+for the collection of qualitative data via interviews.
+6 Analysis and Discussion
+Many participants from diverse backgrounds were highly satisfied with the inter-
+view experience. The participants found the question to be relevant and clear;
+they generally enjoyed how the conversation flowed. The interviewer was rated
+high for its adaptability as it continued the conversation based on prior con-
+versations, which made the conversation feel natural and easy to follow. Some
+participants also loved the interviewer’s neutral and non-judgmental tone, be-
+cause it made them feel comfortable discussing sensitive topics. Participants were
+also happy with the actual questions, which they rated as being clear and easy
+to understand. Generally, the study indicates that the AI-powered interviewer
+is a promising alternative way to conduct qualitative interviews.
+However, differences in preferences were observed among the participants.
+Some participants preferred traditional interviews, while others liked the AI-
+powered interviews. Older participants were found to prefer traditional inter-
+views because they provide personal connection and felt more natural. Contrari-
+wise, younger participants were more open to AI-powered interviews. Addition-
+ally, introverted participants preferred AI-powered interviews over traditional
+interviews because they felt more comfortable and less pressured. Several partic-
+ipants thought the AI-powered interviews were good for discussing sensitive top-
+ics like racism and discrimination because they are neutral and non-judgmental.
+The AI-powered interviewer’s response messages were appreciated because
+they were brief and relevant to what people said. They also pointed out that this
+made the conversation feel natural and easy to follow. Also, they added that the
+questions were easy to understand and kept people interested throughout the
+session. This indicates that the interviewer was designed efficiently to conduct
+qualitative interviews. Even though the initial pilot study of the interviewer
+showed promising results, it is important to acknowledge some limitations in
+the current version. The current version of the interviewer depends heavily on
+14 A. Adeseye et al.
+well-crafted prompts that could fail due to prompt weaknesses when the LLM
+model is swapped. Also, the smaller LLaMA model used has context memory
+limitations, so if the interview lasts for several hours, the interviewer may not
+remember the entire conversation.
+7 Conclusion
+This study presented a modular AI-powered interviewer to help conduct quali-
+tative interviews. The interviewer was designed to conduct adaptive, secure, and
+context-aware qualitative interview sessions. The interviewer was implemented
+using a local LLM (LLaMA 3.2, 3B). The pilot test results showed that partic-
+ipants were very satisfied with the interview (average score: 4.52), engaged and
+focused (average score: 4.39), and thought the interview questions were very
+relevant (average score: 4.41). The study found that engagement was a strong
+predictor of satisfaction, explaining nearly 25% of the difference in satisfaction
+scores.
+These findings suggest that the interviewer has great potential for conducting
+scalable and privacy-focused qualitative data collection. The modular design
+makes it easy to modify and use across different languages, cultures, and topics.
+In the future, it would be useful to integrate an automated tool to analyze and
+summarize participant responses in real-time for immediate insight, as proposed
+in [18] and [19], while keeping the data private. Expanding context memory and
+enhancing multilingual capabilities are important areas to consider for future
+development as well.
+References
+1. Han, X., Zhou, M., Turner, M.J., Yeh, T.: Designing Effective Interview Chatbots:
+Automatic Chatbot Profiling and Design Suggestion Generation for Chatbot Debug-
+ging. In: Proceedings of the 2021 CHI Conference on Human Factors in Computing
+Systems (CHI ’21), Yokohama, Japan. Article 389, pp. 1–15 (2021).
+2. Ajunwa, I.: Automated Video Interviewing as the New Phrenology. Berkeley Tech-
+nology Law Journal36(3), 1173–1226 (2021).
+3. Følstad, A., Araujo, T., Law, E.L.-C., Brandtzaeg, P.B., Papadopoulos, S., Reis,
+L., Baez, M., Laban, G., McAllister, P., Ischen, C., Wald, R., Catania, F., Meyer
+von Wolff, R., Hobert, S., Luger, E.: Future directions for chatbot research: an
+interdisciplinary research agenda. Computing103(12), 2915–2942 (2021).
+4. Auer, I., Schlögl, S., Glowka, G.: Chatbots in Airport Customer Service—Exploring
+Use Cases and Technology Acceptance. Future Internet16(5), Article 175 (2024).
+5. Drage, E., Mackereth, K.: Does AI Debias Recruitment? Race, Gender, and AI’s
+“Eradication of Difference”. Philosophy & Technology35(4), 89–11 (2022).
+6. Bolin, G.: Communicative AI and techno-semiotic mediatization: Understanding
+the communicative role of the machine. Human-Machine Communication7, 65–82
+(2024).
+7. Nirala, K.K., Singh, N.K., Purani, V.S.: A survey on providing customer and public
+administration based services using AI: chatbot. Multimedia Tools and Applications
+81(16), 22215–22246 (2022).
+Modular AI-Powered Interviewer 15
+8. Langer, M., König, C.J., Sanchez, D.R.-P., Samadi, S.: Highly automated inter-
+views: applicant reactions and the organizational context. Journal of Managerial
+Psychology35(4), 301–314 (2020).
+9. Sharma, D., Sundravadivelu, K., Khengar, J., Thaker, D.J., Patel, S.N., Shah, P.:
+Advancements in cloud: Enhancing Machine Understanding of Human Language
+in Conversational AI Systems. Journal of Computational Analysis & Applications
+33(6), 713 (2024).
+10. Nasar, Z., Jaffry, S.W., Malik, M.K.: Named Entity Recognition and Relation Ex-
+traction: State-of-the-Art. ACM Computing Surveys54(1), Article 20, 1–39 (2021).
+11. Pandey, A.K., Roy, S.S.: Natural Language Generation Using Sequential Models:
+A Survey. Neural Processing Letters55(6), 7709–7742 (2023).
+12. Abu-Salih, B.: Domain-specific knowledge graphs: A survey. Journal of Network
+and Computer Applications185, Article 103076 (2021).
+13. Veeramachaneni, V.: Large Language Models: A Comprehensive Survey on Ar-
+chitectures, Applications, and Challenges. Advanced Innovations in Computer Pro-
+gramming Languages7(1), 20–39 (2025).
+14. Kibriya, H., Khan, W.Z., Siddiqa, A., Khan, M.K.: Privacy issues in Large Lan-
+guage Models: A survey. Computers and Electrical Engineering120, Article 109698
+(2024).
+15. Liu, Z., Chai, Y., Li, J.: Toward Automated Simulation Research Workflow through
+LLM Prompt Engineering Design. Journal of Chemical Information and Modeling
+65(1), 114–124 (2025).
+16. Giray, L.: Prompt Engineering with ChatGPT: A Guide for Academic Writers.
+Annals of Biomedical Engineering51(12), 2629–2633 (2023).
+17. Jishan, M.A., Allvi, M.W., Rifat, M.A.K.: Analyzing User Prompt Quality: In-
+sights From Data. In: 2024 International Conference on Decision Aid Sciences and
+Applications (DASA), Manama, Bahrain, pp. 1–5.
+18. Adeseye, A., Isoaho, J., Mohammad, T.: LLM-Assisted Qualitative Data Analysis:
+Security and Privacy Concerns in Gamified Workforce Studies. In: Procedia Com-
+puter Science, The 16th International Conference on Ambient Systems, Networks
+and Technologies (ANT) / the 8th International Conference on Emerging Data and
+Industry 4.0 (EDI40), Patras, Greece.257, pp. 60–67 (2025).
+19. Adeseye, A., Isoaho, J., Tahir, M.: Systematic Prompt Framework for Qualitative
+Data Analysis: Designing System and User Prompts. In: 2025 IEEE 5th Interna-
+tional Conferenceon Human-Machine Systems (ICHMS).IEEE, pp. 229–234(2025).
