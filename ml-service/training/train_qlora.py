@@ -48,6 +48,10 @@ ML_SERVICE = Path(__file__).resolve().parent.parent
 DEFAULT_DATASET = ML_SERVICE / "dataset" / "processed" / "question_generator"
 DEFAULT_OUTPUT = ML_SERVICE / "training" / "output" / "interview_llm"
 
+# Bumped whenever the T4 precision handling changes. Printed at startup so it is
+# immediately obvious which copy of this file a remote machine is running.
+PRECISION_FIX_BUILD = "t4-fp16-guard-3"
+
 SYSTEM_PROMPT = (
     "You are a senior software engineering interviewer. You ask precise "
     "technical interview questions and give accurate, concise technical answers."
@@ -525,6 +529,121 @@ def library_versions() -> dict[str, str]:
     return versions
 
 
+def force_fp16_mixed_precision_env() -> dict[str, Any]:
+    """Pin Accelerate to fp16 before transformers builds its Accelerator.
+
+    transformers resolves mixed precision like this (training_args.py):
+
+        self.mixed_precision = os.environ.get("ACCELERATE_MIXED_PRECISION", "no")
+        if self.fp16:   self.mixed_precision = "fp16"
+        elif self.bf16: self.mixed_precision = "bf16"
+
+    and then passes it straight to `Accelerator(mixed_precision=...)`. The env
+    var is the *base* value, so a stale `ACCELERATE_MIXED_PRECISION=bf16` left by
+    an `accelerate config`, a Colab magic, or an earlier cell would take effect
+    for any code path that does not set fp16 explicitly. AcceleratorState is also
+    a process-wide shared singleton, so an Accelerator built earlier in the same
+    Python process pins the mode for everything created afterwards.
+
+    This pins the env to fp16 and clears a previously initialised state so the
+    Trainer's Accelerator is guaranteed to be built fresh in fp16.
+    """
+    before = {k: os.environ.get(k) for k in
+              ("ACCELERATE_MIXED_PRECISION", "ACCELERATE_USE_FP16", "ACCELERATE_USE_BF16")}
+    os.environ["ACCELERATE_MIXED_PRECISION"] = "fp16"
+    os.environ.pop("ACCELERATE_USE_BF16", None)
+
+    reset = False
+    try:
+        from accelerate.state import AcceleratorState, PartialState
+        if getattr(AcceleratorState, "_shared_state", None):
+            AcceleratorState._reset_state()
+            PartialState._reset_state()
+            reset = True
+    except Exception as exc:
+        log.debug("could not reset AcceleratorState (%s) — continuing", exc)
+
+    return {"env_before": before, "env_after": "fp16", "accelerator_state_reset": reset}
+
+
+def non_fp32_trainable(model: Any) -> list[tuple[str, str, int]]:
+    """Every trainable parameter that is not float32: (name, dtype, numel)."""
+    out = []
+    for name, param in model.named_parameters():
+        if param.requires_grad and str(param.dtype) != "torch.float32":
+            out.append((name, str(param.dtype), param.numel()))
+    return out
+
+
+def assert_fp16_grad_safe(model: Any, where: str) -> None:
+    """Fail loudly, with the offending parameters named, instead of deep in torch.
+
+    Under fp16 AMP `GradScaler.unscale_()` accepts only fp32 gradients:
+      * bfloat16 -> `_amp_foreach_non_finite_check_and_unscale_cuda` has no bf16
+        kernel  -> NotImplementedError
+      * float16  -> explicit `ValueError: Attempting to unscale FP16 gradients.`
+    Gradients inherit the parameter dtype, so fp32 parameters are the requirement.
+    """
+    offenders = non_fp32_trainable(model)
+    if not offenders:
+        return
+    total = sum(n for _, _, n in offenders)
+    lines = [f"    {name}  {dtype}  ({numel:,} params)"
+             for name, dtype, numel in offenders[:10]]
+    if len(offenders) > 10:
+        lines.append(f"    ... and {len(offenders) - 10} more tensors")
+    raise RuntimeError(
+        f"precision guard failed at {where}: {len(offenders)} trainable tensors "
+        f"({total:,} parameters) are not float32 while fp16 AMP is active.\n"
+        + "\n".join(lines)
+        + "\n\nThe GradScaler would raise NotImplementedError on the first "
+          "optimizer step. Report this output — it names exactly which module "
+          "re-introduced the dtype."
+    )
+
+
+def make_precision_guard_callback():
+    """TrainerCallback that re-asserts fp32 trainable params inside train().
+
+    The one-shot cast after SFTTrainer() is not sufficient on its own: anything
+    that runs later inside `Trainer.train()` — `accelerator.prepare()`, a model
+    re-wrap, a second PEFT pass — could reintroduce a non-fp32 dtype. This hooks
+    the two events that still precede the first `_clip_grad_norm`:
+
+        on_train_begin  -> after create_optimizer_and_scheduler + prepare()
+        on_step_begin   -> before the forward/backward of each accumulation step
+
+    `on_pre_optimizer_step` is deliberately NOT used: in transformers 5.x it
+    fires *after* `_clip_grad_norm`, which is where the crash happens.
+    """
+    from transformers import TrainerCallback
+
+    class Fp16PrecisionGuard(TrainerCallback):
+        def __init__(self) -> None:
+            self.recasts: list[dict] = []
+
+        def _apply(self, model, where: str) -> None:
+            if model is None:
+                return
+            recast = enforce_fp16_safe_trainable_dtype(model)
+            if recast:
+                self.recasts.append({"where": where, "recast": recast})
+                log.warning("precision guard (%s): recast %s back to float32", where,
+                            ", ".join(f"{n:,} params from {d}" for d, n in recast.items()))
+            assert_fp16_grad_safe(model, where)
+
+        def on_train_begin(self, args, state, control, model=None, **kwargs):
+            self._apply(model, "on_train_begin")
+
+        def on_step_begin(self, args, state, control, model=None, **kwargs):
+            # Only the first optimizer step needs checking; after that the dtype
+            # is stable and this would be pure overhead.
+            if state.global_step == 0:
+                self._apply(model, "on_step_begin(step 0)")
+
+    return Fp16PrecisionGuard()
+
+
 def native_bf16_supported() -> bool:
     """True only when the GPU has *native* bfloat16 tensor cores (Ampere, sm_80+).
 
@@ -601,15 +720,27 @@ def print_precision_report(model: Any, sft_config: Any, gpu: dict,
         accelerator = getattr(trainer, "accelerator", None)
         scaler = getattr(accelerator, "scaler", None) if accelerator else None
 
+    accelerator = getattr(trainer, "accelerator", None) if trainer is not None else None
+    first_trainable = next(((n, str(pp.dtype)) for n, pp in model.named_parameters()
+                            if pp.requires_grad), (None, None))
+
     frozen, trainable = dtype_census(model)
     report = {
+        "precision_fix_build": PRECISION_FIX_BUILD,
         "torch_version": torch.__version__,
         "cuda_version": torch.version.cuda,
         "gpu_name": gpu.get("name"),
         "compute_capability": gpu.get("capability"),
         "torch_cuda_is_bf16_supported": (torch.cuda.is_bf16_supported()
                                          if torch.cuda.is_available() else None),
+        "device_capability_tuple": (list(torch.cuda.get_device_capability(0))
+                                   if torch.cuda.is_available() else None),
         "native_bf16_tensor_cores": native_bf16_supported(),
+        "accelerator_mixed_precision": getattr(accelerator, "mixed_precision", None),
+        "accelerator_native_amp": getattr(accelerator, "native_amp", None),
+        "env_ACCELERATE_MIXED_PRECISION": os.environ.get("ACCELERATE_MIXED_PRECISION"),
+        "first_trainable_param": first_trainable[0],
+        "first_trainable_param_dtype": first_trainable[1],
         "bnb_4bit_compute_dtype": "torch.float16",
         "fp16": bool(getattr(sft_config, "fp16", False)),
         "bf16": bool(getattr(sft_config, "bf16", False)),
@@ -623,6 +754,7 @@ def print_precision_report(model: Any, sft_config: Any, gpu: dict,
     print("-" * 60)
     print("PRECISION DIAGNOSTICS")
     print("-" * 60)
+    print(f"  precision fix build          {report['precision_fix_build']}")
     print(f"  torch                        {report['torch_version']}")
     print(f"  CUDA                         {report['cuda_version']}")
     print(f"  GPU                          {report['gpu_name']} "
@@ -634,8 +766,14 @@ def print_precision_report(model: Any, sft_config: Any, gpu: dict,
     print(f"  bnb_4bit_compute_dtype       {report['bnb_4bit_compute_dtype']}")
     print(f"  SFTConfig.fp16               {report['fp16']}")
     print(f"  SFTConfig.bf16               {report['bf16']}")
+    print(f"  device capability tuple      {report['device_capability_tuple']}")
+    print(f"  Accelerator.mixed_precision  {report['accelerator_mixed_precision']}")
+    print(f"  Accelerator.native_amp       {report['accelerator_native_amp']}")
+    print(f"  ACCELERATE_MIXED_PRECISION   {report['env_ACCELERATE_MIXED_PRECISION']}")
     print(f"  gradient scaler              {report['grad_scaler']} "
           f"(enabled={report['grad_scaler_enabled']})")
+    print(f"  first trainable parameter    {report['first_trainable_param']}")
+    print(f"                        dtype  {report['first_trainable_param_dtype']}")
     print("  frozen parameters:")
     for dtype, count in sorted(frozen.items(), key=lambda kv: -kv[1]):
         print(f"      {dtype:24} {count:>14,}")
@@ -990,6 +1128,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--save_total_limit", type=int, default=2)
     parser.add_argument("--optim", type=str, default="paged_adamw_8bit")
     parser.add_argument("--no_gradient_checkpointing", action="store_true")
+    parser.add_argument("--no_grad_scaler", action="store_true",
+                        help="disable the fp16 GradScaler (keeps autocast and clipping). "
+                             "Safe only because trainable params are fp32 — see "
+                             "the note in train(); use if the scaler still misbehaves")
     parser.add_argument("--no_4bit", action="store_true",
                         help="skip bitsandbytes quantisation — for CPU smoke tests "
                              "or small models; an 8B model will not fit on a T4 this way")
@@ -1164,6 +1306,13 @@ def train(argv: list[str] | None = None) -> int:
         return 0
 
     # ── build the trainer ────────────────────────────────────────────────────
+    print(f"precision fix build: {PRECISION_FIX_BUILD}")
+    if gpu.get("cuda_available"):
+        # Must happen before transformers constructs its Accelerator.
+        metadata["accelerate_env"] = force_fp16_mixed_precision_env()
+        log.info("pinned ACCELERATE_MIXED_PRECISION=fp16 (state reset: %s)",
+                 metadata["accelerate_env"]["accelerator_state_reset"])
+
     try:
         import torch
         from datasets import Dataset
@@ -1313,6 +1462,27 @@ def train(argv: list[str] | None = None) -> int:
             log.info("precision guard: all trainable parameters were already float32")
         metadata["precision_guard_recast"] = recast
 
+        # The one-shot cast above can be undone by anything that runs later
+        # inside train(); this callback re-asserts it at the last two events
+        # that still precede _clip_grad_norm.
+        guard_callback = make_precision_guard_callback()
+        trainer.add_callback(guard_callback)
+
+        if args.no_grad_scaler:
+            # Loss scaling exists to stop *fp16* gradients underflowing to zero.
+            # Every trainable parameter here is fp32, so its gradients are fp32
+            # (dynamic range ~1e-38) and cannot underflow; fp16 is confined to
+            # the forward matmuls by autocast. Disabling the scaler in THIS
+            # configuration is therefore numerically safe. It would NOT be safe
+            # with fp16 trainable parameters. Autocast and gradient clipping
+            # both keep working: an unscaled gradient needs no unscaling.
+            import torch as _torch
+            trainer.accelerator.scaler = _torch.amp.GradScaler(device="cuda", enabled=False)
+            log.warning("--no_grad_scaler: GradScaler disabled (fp32 master weights "
+                        "make loss scaling unnecessary here); autocast and gradient "
+                        "clipping remain active")
+            metadata["grad_scaler_disabled"] = True
+
     if getattr(sft_config, "bf16", False) and not native_bf16_supported():
         log.error("bf16 is enabled but this GPU has no native bf16 tensor cores; "
                   "training would be emulated and extremely slow. Use fp16.")
@@ -1328,6 +1498,11 @@ def train(argv: list[str] | None = None) -> int:
           f"({100 * trainable / max(total, 1):.4f}%)")
 
     # ── train ────────────────────────────────────────────────────────────────
+    if getattr(sft_config, "fp16", False):
+        assert_fp16_grad_safe(trainer.model, "pre-train check")
+        print("Precision pre-flight: all trainable parameters are float32 — "
+              "GradScaler-safe.")
+
     print()
     print("Starting training...")
     train_started = time.time()
