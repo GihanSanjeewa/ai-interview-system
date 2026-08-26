@@ -22,6 +22,17 @@ safetensors>=0.4
 sentencepiece               # Llama / Mistral tokenizers
 protobuf                    # required by some sentencepiece converters
 
+# --- Evaluation metrics (training/evaluate_model.py) -------------------------
+# BLEU/ROUGE/BERTScore have no single canonical formula, so the harness prefers
+# the standard implementations below and records which backend produced each
+# number. All three are pure-Python and cross-platform. Without them the harness
+# still runs on its own builtin BLEU/ROUGE and labels the scores accordingly;
+# BERTScore is the one metric with no honest fallback, so it is reported as null
+# when bert-score is absent rather than approximated.
+sacrebleu>=2.4               # corpus/sentence BLEU, mteval-v13a tokenisation
+rouge-score>=0.1.2           # ROUGE-1/2/L F-measure with Porter stemming
+bert-score>=0.3.13           # contextual-embedding P/R/F1; downloads an encoder on first use
+
 # --- Sinhala Whisper fine-tuning (unchanged) ---------------------------------
 evaluate>=0.4
 jiwer>=3.0

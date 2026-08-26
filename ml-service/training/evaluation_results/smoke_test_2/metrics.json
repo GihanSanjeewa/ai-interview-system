@@ -1,0 +1,344 @@
+{
+  "run": {
+    "label": "smoke_test_2",
+    "timestamp_utc": "2026-08-26T06:13:26+00:00",
+    "seed": 42,
+    "device": "cpu",
+    "device_note": "  (CPU \u2014 generation is orders of magnitude slower than GPU)",
+    "runtime_seconds": 395.73,
+    "generation_seconds": 0.38,
+    "library_versions": {
+      "python": "3.14.5",
+      "platform": "Windows-11-10.0.26200-SP0",
+      "torch": "2.13.0+cpu",
+      "transformers": "5.15.1",
+      "datasets": "5.0.1",
+      "peft": "0.20.0",
+      "trl": "1.10.0",
+      "bitsandbytes": "not installed",
+      "accelerate": "1.14.0",
+      "huggingface_hub": "1.28.0"
+    },
+    "platform": "Windows-11-10.0.26200-SP0",
+    "git_commit": "a2c331b",
+    "command": "python evaluate_model.py --base_model hf-internal-testing/tiny-random-LlamaForCausalLM --split test --max_samples 2 --max_new_tokens 24 --max_input_tokens 256 --bertscore_model distilbert-base-uncased --bertscore_layer 5 --output_dir training/evaluation_results --run_name smoke_test_2",
+    "gpu": {
+      "cuda_available": false,
+      "name": null,
+      "vram_gb": null
+    }
+  },
+  "model": {
+    "base_model": "hf-internal-testing/tiny-random-LlamaForCausalLM",
+    "quantisation": "none (fp32 on CPU)",
+    "loaded_in_4bit": false,
+    "model_type": "llama",
+    "dtype": "torch.float32",
+    "adapter_path": null,
+    "is_finetuned": false,
+    "total_parameters": 1032272,
+    "parameters_billions": 0.001,
+    "adapter": null
+  },
+  "prompt": {
+    "style": "chat",
+    "system_prompt": "You are a senior software engineering interviewer. You ask precise technical interview questions and give accurate, concise technical answers.",
+    "tokenizer_source": "hf-internal-testing/tiny-random-LlamaForCausalLM",
+    "tokenizer_origin": "base model",
+    "source": "train_qlora.make_renderer() \u2014 identical to training"
+  },
+  "dataset": {
+    "argument": "C:\\Users\\gihan\\Documents\\ai-interview-system\\ml-service\\dataset\\processed\\question_generator",
+    "file": "C:\\Users\\gihan\\Documents\\ai-interview-system\\ml-service\\dataset\\processed\\question_generator\\test.jsonl",
+    "split": "test",
+    "split_note": "",
+    "task": "both",
+    "records_read": 880,
+    "pairs_built": 1487,
+    "duplicates_removed": 0,
+    "records_dropped": {},
+    "examples_per_task": {
+      "answer": 607,
+      "question_generation": 880
+    },
+    "subsample_note": "2 of 1487 pairs, task-stratified, seed 42",
+    "max_samples": 2,
+    "prompts_truncated": 0
+  },
+  "generation": {
+    "max_new_tokens": 24,
+    "do_sample": false,
+    "temperature": null,
+    "top_p": null,
+    "num_beams": 1,
+    "repetition_penalty": 1.0,
+    "batch_size": 1,
+    "max_input_tokens": 256,
+    "stop_strings": [
+      "\nUser:",
+      "\n\nUser:",
+      "User:\n",
+      "\nSystem:"
+    ],
+    "summary": "greedy, max_new_tokens=24"
+  },
+  "metric_backends": {
+    "bleu": {
+      "backend": "builtin",
+      "detail": "builtin corpus BLEU-4, 13a-style tokenisation",
+      "available": true,
+      "reason": null
+    },
+    "rouge": {
+      "backend": "rouge_score",
+      "detail": "google-research rouge_score, use_stemmer=True, F-measure",
+      "available": true,
+      "reason": null
+    },
+    "bertscore": {
+      "backend": "bert_score",
+      "detail": "bert_score 0.3.12, model=distilbert-base-uncased, layer=5, rescale_with_baseline=False",
+      "available": true,
+      "reason": null,
+      "model": "distilbert-base-uncased",
+      "layer": 5
+    }
+  },
+  "results": {
+    "overall": {
+      "n": 2,
+      "bleu_corpus": 0.0,
+      "bleu_sentence_mean": 0.006513,
+      "rouge1": 0.0,
+      "rouge2": 0.0,
+      "rougeL": 0.0,
+      "bertscore_precision": 0.643111,
+      "bertscore_recall": 0.641718,
+      "bertscore_f1": 0.641151,
+      "exact_match": 0.0,
+      "empty_predictions": 0,
+      "mean_prediction_chars": 134.5,
+      "mean_reference_chars": 597.5,
+      "mean_token_nll": 10.380753,
+      "perplexity": 32233.2107,
+      "perplexity_tokens": 218
+    },
+    "per_task": {
+      "answer": {
+        "n": 1,
+        "bleu_corpus": 0.0,
+        "bleu_sentence_mean": 0.0,
+        "rouge1": 0.0,
+        "rouge2": 0.0,
+        "rougeL": 0.0,
+        "bertscore_precision": 0.679135,
+        "bertscore_recall": 0.620769,
+        "bertscore_f1": 0.648642,
+        "exact_match": 0.0,
+        "empty_predictions": 0,
+        "mean_prediction_chars": 143.0,
+        "mean_reference_chars": 1135.0,
+        "mean_token_nll": 10.380936,
+        "perplexity": 32239.1125,
+        "perplexity_tokens": 200,
+        "by_domain": {
+          "Frontend Development": {
+            "n": 1,
+            "bleu_corpus": 0.0,
+            "bleu_sentence_mean": 0.0,
+            "rouge1": 0.0,
+            "rouge2": 0.0,
+            "rougeL": 0.0,
+            "bertscore_precision": 0.679135,
+            "bertscore_recall": 0.620769,
+            "bertscore_f1": 0.648642,
+            "exact_match": 0.0,
+            "empty_predictions": 0,
+            "mean_prediction_chars": 143.0,
+            "mean_reference_chars": 1135.0,
+            "mean_token_nll": 10.380936,
+            "perplexity": 32239.1125,
+            "perplexity_tokens": 200
+          }
+        },
+        "by_difficulty": {
+          "Beginner": {
+            "n": 1,
+            "bleu_corpus": 0.0,
+            "bleu_sentence_mean": 0.0,
+            "rouge1": 0.0,
+            "rouge2": 0.0,
+            "rougeL": 0.0,
+            "bertscore_precision": 0.679135,
+            "bertscore_recall": 0.620769,
+            "bertscore_f1": 0.648642,
+            "exact_match": 0.0,
+            "empty_predictions": 0,
+            "mean_prediction_chars": 143.0,
+            "mean_reference_chars": 1135.0,
+            "mean_token_nll": 10.380936,
+            "perplexity": 32239.1125,
+            "perplexity_tokens": 200
+          }
+        }
+      },
+      "question_generation": {
+        "n": 1,
+        "bleu_corpus": 0.0,
+        "bleu_sentence_mean": 0.013026,
+        "rouge1": 0.0,
+        "rouge2": 0.0,
+        "rougeL": 0.0,
+        "bertscore_precision": 0.607086,
+        "bertscore_recall": 0.662667,
+        "bertscore_f1": 0.63366,
+        "exact_match": 0.0,
+        "empty_predictions": 0,
+        "mean_prediction_chars": 126.0,
+        "mean_reference_chars": 60.0,
+        "mean_token_nll": 10.378718,
+        "perplexity": 32167.7082,
+        "perplexity_tokens": 18,
+        "by_domain": {
+          "Data Structures": {
+            "n": 1,
+            "bleu_corpus": 0.0,
+            "bleu_sentence_mean": 0.013026,
+            "rouge1": 0.0,
+            "rouge2": 0.0,
+            "rougeL": 0.0,
+            "bertscore_precision": 0.607086,
+            "bertscore_recall": 0.662667,
+            "bertscore_f1": 0.63366,
+            "exact_match": 0.0,
+            "empty_predictions": 0,
+            "mean_prediction_chars": 126.0,
+            "mean_reference_chars": 60.0,
+            "mean_token_nll": 10.378718,
+            "perplexity": 32167.7082,
+            "perplexity_tokens": 18
+          }
+        },
+        "by_difficulty": {
+          "Intermediate": {
+            "n": 1,
+            "bleu_corpus": 0.0,
+            "bleu_sentence_mean": 0.013026,
+            "rouge1": 0.0,
+            "rouge2": 0.0,
+            "rougeL": 0.0,
+            "bertscore_precision": 0.607086,
+            "bertscore_recall": 0.662667,
+            "bertscore_f1": 0.63366,
+            "exact_match": 0.0,
+            "empty_predictions": 0,
+            "mean_prediction_chars": 126.0,
+            "mean_reference_chars": 60.0,
+            "mean_token_nll": 10.378718,
+            "perplexity": 32167.7082,
+            "perplexity_tokens": 18
+          }
+        }
+      }
+    },
+    "breakdowns": {
+      "by_domain": {
+        "Data Structures": {
+          "n": 1,
+          "bleu_corpus": 0.0,
+          "bleu_sentence_mean": 0.013026,
+          "rouge1": 0.0,
+          "rouge2": 0.0,
+          "rougeL": 0.0,
+          "bertscore_precision": 0.607086,
+          "bertscore_recall": 0.662667,
+          "bertscore_f1": 0.63366,
+          "exact_match": 0.0,
+          "empty_predictions": 0,
+          "mean_prediction_chars": 126.0,
+          "mean_reference_chars": 60.0,
+          "mean_token_nll": 10.378718,
+          "perplexity": 32167.7082,
+          "perplexity_tokens": 18
+        },
+        "Frontend Development": {
+          "n": 1,
+          "bleu_corpus": 0.0,
+          "bleu_sentence_mean": 0.0,
+          "rouge1": 0.0,
+          "rouge2": 0.0,
+          "rougeL": 0.0,
+          "bertscore_precision": 0.679135,
+          "bertscore_recall": 0.620769,
+          "bertscore_f1": 0.648642,
+          "exact_match": 0.0,
+          "empty_predictions": 0,
+          "mean_prediction_chars": 143.0,
+          "mean_reference_chars": 1135.0,
+          "mean_token_nll": 10.380936,
+          "perplexity": 32239.1125,
+          "perplexity_tokens": 200
+        }
+      },
+      "by_difficulty": {
+        "Beginner": {
+          "n": 1,
+          "bleu_corpus": 0.0,
+          "bleu_sentence_mean": 0.0,
+          "rouge1": 0.0,
+          "rouge2": 0.0,
+          "rougeL": 0.0,
+          "bertscore_precision": 0.679135,
+          "bertscore_recall": 0.620769,
+          "bertscore_f1": 0.648642,
+          "exact_match": 0.0,
+          "empty_predictions": 0,
+          "mean_prediction_chars": 143.0,
+          "mean_reference_chars": 1135.0,
+          "mean_token_nll": 10.380936,
+          "perplexity": 32239.1125,
+          "perplexity_tokens": 200
+        },
+        "Intermediate": {
+          "n": 1,
+          "bleu_corpus": 0.0,
+          "bleu_sentence_mean": 0.013026,
+          "rouge1": 0.0,
+          "rouge2": 0.0,
+          "rougeL": 0.0,
+          "bertscore_precision": 0.607086,
+          "bertscore_recall": 0.662667,
+          "bertscore_f1": 0.63366,
+          "exact_match": 0.0,
+          "empty_predictions": 0,
+          "mean_prediction_chars": 126.0,
+          "mean_reference_chars": 60.0,
+          "mean_token_nll": 10.378718,
+          "perplexity": 32167.7082,
+          "perplexity_tokens": 18
+        }
+      },
+      "by_source": {
+        "common-pile/stackexchange": {
+          "n": 2,
+          "bleu_corpus": 0.0,
+          "bleu_sentence_mean": 0.006513,
+          "rouge1": 0.0,
+          "rouge2": 0.0,
+          "rougeL": 0.0,
+          "bertscore_precision": 0.643111,
+          "bertscore_recall": 0.641718,
+          "bertscore_f1": 0.641151,
+          "exact_match": 0.0,
+          "empty_predictions": 0,
+          "mean_prediction_chars": 134.5,
+          "mean_reference_chars": 597.5,
+          "mean_token_nll": 10.380753,
+          "perplexity": 32233.2107,
+          "perplexity_tokens": 218
+        }
+      }
+    }
+  },
+  "failures": []
+}

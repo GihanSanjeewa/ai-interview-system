@@ -1,0 +1,104 @@
+{
+  "candidates": {
+    "candidate_1_scratch_compact_transformer": {
+      "candidate_id": "candidate_1_scratch_compact_transformer",
+      "candidate_name": "Custom Scratch Compact Transformer",
+      "model_type": "scratch_trained",
+      "architecture": {
+        "type": "causal_transformer",
+        "num_layers": 4,
+        "d_model": 256,
+        "num_heads": 4,
+        "d_ff": 1024,
+        "activation": "gelu",
+        "max_seq_len": 512,
+        "vocab_size": 8000,
+        "dropout": 0.1
+      },
+      "tokenizer": {
+        "type": "custom_bpe",
+        "vocab_size": 8000,
+        "trained_on": "train.jsonl"
+      },
+      "initialization": "random",
+      "train_split": "train.jsonl",
+      "eval_split": "validation.jsonl",
+      "description": "4-layer compact Transformer trained strictly from scratch with random weight initialization and custom BPE tokenizer."
+    },
+    "candidate_2_scratch_scaled_transformer": {
+      "candidate_id": "candidate_2_scratch_scaled_transformer",
+      "candidate_name": "Custom Scratch Scaled Transformer",
+      "model_type": "scratch_trained",
+      "architecture": {
+        "type": "causal_transformer",
+        "num_layers": 6,
+        "d_model": 384,
+        "num_heads": 6,
+        "d_ff": 1536,
+        "activation": "gelu",
+        "max_seq_len": 512,
+        "vocab_size": 8000,
+        "dropout": 0.1
+      },
+      "tokenizer": {
+        "type": "custom_bpe",
+        "vocab_size": 8000,
+        "trained_on": "train.jsonl"
+      },
+      "initialization": "random",
+      "train_split": "train.jsonl",
+      "eval_split": "validation.jsonl",
+      "description": "6-layer scaled Transformer trained strictly from scratch with random weight initialization and custom BPE tokenizer."
+    },
+    "candidate_3_scratch_deep_transformer": {
+      "candidate_id": "candidate_3_scratch_deep_transformer",
+      "candidate_name": "Custom Scratch Deep Transformer",
+      "model_type": "scratch_trained",
+      "architecture": {
+        "type": "causal_transformer",
+        "num_layers": 8,
+        "d_model": 512,
+        "num_heads": 8,
+        "d_ff": 2048,
+        "activation": "gelu",
+        "max_seq_len": 512,
+        "vocab_size": 8000,
+        "dropout": 0.1
+      },
+      "tokenizer": {
+        "type": "custom_bpe",
+        "vocab_size": 8000,
+        "trained_on": "train.jsonl"
+      },
+      "initialization": "random",
+      "train_split": "train.jsonl",
+      "eval_split": "validation.jsonl",
+      "description": "8-layer deep Transformer trained strictly from scratch with random weight initialization and custom BPE tokenizer."
+    },
+    "candidate_4_scratch_efficient_transformer": {
+      "candidate_id": "candidate_4_scratch_efficient_transformer",
+      "candidate_name": "Custom Scratch Efficient SwiGLU Transformer",
+      "model_type": "scratch_trained",
+      "architecture": {
+        "type": "causal_transformer",
+        "num_layers": 4,
+        "d_model": 384,
+        "num_heads": 6,
+        "d_ff": 1536,
+        "activation": "swiglu",
+        "max_seq_len": 512,
+        "vocab_size": 8000,
+        "dropout": 0.1
+      },
+      "tokenizer": {
+        "type": "custom_bpe",
+        "vocab_size": 8000,
+        "trained_on": "train.jsonl"
+      },
+      "initialization": "random",
+      "train_split": "train.jsonl",
+      "eval_split": "validation.jsonl",
+      "description": "4-layer latency and throughput-optimized Transformer with SwiGLU activations and custom BPE tokenizer."
+    }
+  }
+}

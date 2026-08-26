@@ -1,0 +1,27 @@
+{
+  "specialization_method": "own_model_continued_training",
+  "description": "Second-stage task-specific continued training & learning rate warmup-decay specialization for the selected winning own Transformer architecture.",
+  "training": {
+    "epochs": 5,
+    "batch_size": 8,
+    "gradient_accumulation_steps": 2,
+    "learning_rate": 2e-4,
+    "min_learning_rate": 1e-5,
+    "lr_scheduler_type": "cosine",
+    "warmup_steps": 50,
+    "weight_decay": 0.01,
+    "max_seq_length": 512,
+    "gradient_clipping": 1.0,
+    "logging_steps": 25,
+    "save_strategy": "steps",
+    "save_steps": 50,
+    "save_total_limit": 3,
+    "evaluation_strategy": "steps",
+    "eval_steps": 50,
+    "early_stopping_patience": 3
+  },
+  "hardware_optimization": {
+    "mixed_precision": true,
+    "auto_reduce_batch_on_oom": true
+  }
+}

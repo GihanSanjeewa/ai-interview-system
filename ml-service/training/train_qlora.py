@@ -805,6 +805,164 @@ def gpu_info() -> dict[str, Any]:
     }
 
 
+#============================================================================
+# Checkpoints and crash recovery
+# ============================================================================
+
+CHECKPOINT_PREFIX = "checkpoint"
+
+# What a checkpoint needs on disk before `trainer.train(resume_from_checkpoint=...)`
+# can restore the full training state rather than just the weights. Written by
+# transformers' Trainer._save_checkpoint whenever save_only_model is False.
+RESUME_STATE_FILES = {
+    "trainer_state.json": "global step, epoch, log history",
+    "optimizer.pt": "optimizer moments",
+    "scheduler.pt": "LR schedule position",
+    "rng_state.pth": "python/numpy/torch RNG state",
+}
+
+
+def find_checkpoints(checkpoints_dir: Path) -> list[tuple[int, Path]]:
+    """Every resumable checkpoint under `checkpoints_dir`, oldest first.
+
+    A directory without `trainer_state.json` is skipped rather than returned: it
+    is what a crash *during* a save leaves behind, and handing one to
+    `resume_from_checkpoint` fails only after the model has already been loaded.
+    Skipping it is what lets an interrupted save fall back to the previous
+    checkpoint instead of losing the run.
+    """
+    if not checkpoints_dir.is_dir():
+        return []
+    found: list[tuple[int, Path]] = []
+    for entry in sorted(checkpoints_dir.iterdir()):
+        if not entry.is_dir() or not entry.name.startswith(CHECKPOINT_PREFIX + "-"):
+            continue
+        step_text = entry.name.rsplit("-", 1)[-1]
+        if not step_text.isdigit():
+            continue
+        if not (entry / "trainer_state.json").exists():
+            log.warning("ignoring %s: no trainer_state.json, so that save did not finish. "
+                        "An earlier checkpoint will be used instead.", entry.name)
+            continue
+        found.append((int(step_text), entry))
+    found.sort(key=lambda item: item[0])
+    return found
+
+
+def describe_checkpoint(path: Path) -> dict[str, Any]:
+    """Read a checkpoint's recorded training state and what it can restore."""
+    info: dict[str, Any] = {"path": str(path), "name": path.name}
+    try:
+        state = json.loads((path / "trainer_state.json").read_text(encoding="utf-8"))
+    except Exception as exc:
+        info["error"] = f"{type(exc).__name__}: {exc}"
+        return info
+
+    info.update({
+        "global_step": state.get("global_step"),
+        "epoch": state.get("epoch"),
+        "max_steps": state.get("max_steps"),
+        "train_batch_size": state.get("train_batch_size"),
+        "best_metric": state.get("best_metric"),
+        "logged_events": len(state.get("log_history") or []),
+    })
+    present = {name: (path / name).exists() for name in RESUME_STATE_FILES}
+    info["state_files"] = present
+    info["full_training_state"] = all(present.values())
+    info["adapter_present"] = any((path / name).exists() for name in
+                                  ("adapter_model.safetensors", "adapter_model.bin"))
+    return info
+
+
+def print_checkpoint_status(info: dict[str, Any], resuming: bool) -> None:
+    print()
+    print("=" * 60)
+    print("RESUMING FROM CHECKPOINT" if resuming else "CHECKPOINT INSPECTED")
+    print("=" * 60)
+    print(f"Found checkpoint: {info['name']}")
+    if resuming:
+        print(f"Resuming training from {info['name']}")
+    print(f"Current global step: {info.get('global_step')}")
+    print(f"Epoch at checkpoint: {info.get('epoch')}")
+    print(f"Planned total steps: {info.get('max_steps')}")
+    print("Restorable state:")
+    for name, description in RESUME_STATE_FILES.items():
+        mark = "yes" if info.get("state_files", {}).get(name) else "NO "
+        print(f"  [{mark}] {name:<22} {description}")
+    if not info.get("full_training_state"):
+        print()
+        print("WARNING: this checkpoint does not carry the full training state.")
+        print("Training will continue from the recorded global step, but the optimizer")
+        print("moments, LR-schedule position and RNG state that are missing get")
+        print("reinitialised, so the resumed run is NOT numerically identical to an")
+        print("uninterrupted one. Checkpoints written with --save_only_model behave")
+        print("this way; drop that flag for fully resumable checkpoints.")
+    print("=" * 60)
+
+
+def select_resume_checkpoint(args, checkpoints_dir: Path) -> tuple[str | None, dict[str, Any]]:
+    """Resolve --resume_from_checkpoint / --auto_resume into a concrete path.
+
+    An explicit --resume_from_checkpoint wins over --auto_resume and is a hard
+    error when it does not exist, because silently restarting a multi-hour run
+    from step 0 is the exact failure this is here to prevent.
+    """
+    record: dict[str, Any] = {"requested": args.resume_from_checkpoint,
+                              "auto_resume": bool(args.auto_resume),
+                              "checkpoints_dir": str(checkpoints_dir)}
+    available = find_checkpoints(checkpoints_dir)
+    record["available"] = [path.name for _, path in available]
+
+    if args.resume_from_checkpoint:
+        if args.auto_resume:
+            log.info("--resume_from_checkpoint was given explicitly; it takes precedence "
+                     "over --auto_resume")
+        path = Path(args.resume_from_checkpoint)
+        if not path.is_absolute():
+            path = (Path.cwd() / path).resolve()
+        if not path.is_dir():
+            raise SystemExit(
+                f"--resume_from_checkpoint is not a directory: {path}\n"
+                f"Checkpoints for this run live under {checkpoints_dir}\n"
+                f"Available: {[p.name for _, p in available] or 'none'}")
+        if not (path / "trainer_state.json").exists():
+            raise SystemExit(
+                f"{path} has no trainer_state.json, so it cannot be resumed from — the "
+                f"save that produced it did not finish.\n"
+                f"Complete checkpoints available: {[p.name for _, p in available] or 'none'}")
+        info = describe_checkpoint(path)
+        print_checkpoint_status(info, resuming=True)
+        record["resumed_from"] = str(path)
+        record["resumed_step"] = info.get("global_step")
+        record["checkpoint"] = info
+        return str(path), record
+
+    if not args.auto_resume:
+        return None, record
+
+    if not available:
+        print()
+        print(f"--auto_resume: no complete checkpoint under {checkpoints_dir} — "
+              f"starting a new training run from step 0.")
+        record["resumed_from"] = None
+        return None, record
+
+    step, path = available[-1]
+    info = describe_checkpoint(path)
+    if info.get("train_batch_size") not in (None, args.batch_size):
+        log.warning("checkpoint %s was written with per-device batch size %s but this run "
+                    "uses %s. Resuming across a batch-size change reproduces neither run.",
+                    path.name, info.get("train_batch_size"), args.batch_size)
+    print_checkpoint_status(info, resuming=True)
+    if len(available) > 1:
+        print("Older checkpoints kept for recovery: "
+              + ", ".join(p.name for _, p in available[:-1]))
+    record["resumed_from"] = str(path)
+    record["resumed_step"] = step
+    record["checkpoint"] = info
+    return str(path), record
+
+
 def resolve_optimizer(requested: str) -> str:
     """Fall back off the bitsandbytes optimisers when bitsandbytes is missing."""
     if "8bit" not in requested and "paged" not in requested:
@@ -1123,9 +1281,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no_system_prompt", action="store_true")
 
     parser.add_argument("--logging_steps", type=int, default=10)
-    parser.add_argument("--save_steps", type=int, default=200)
+    parser.add_argument("--save_steps", type=int, default=200,
+                        help="optimizer steps between checkpoints; at most this "
+                             "many steps are lost to a crash")
     parser.add_argument("--eval_steps", type=int, default=200)
-    parser.add_argument("--save_total_limit", type=int, default=2)
+    parser.add_argument("--save_total_limit", type=int, default=2,
+                        help="how many recent checkpoints to keep. Keep this >= 2 so "
+                             "a checkpoint corrupted by a crash mid-save can be "
+                             "recovered from the one before it")
     parser.add_argument("--optim", type=str, default="paged_adamw_8bit")
     parser.add_argument("--no_gradient_checkpointing", action="store_true")
     parser.add_argument("--no_grad_scaler", action="store_true",
@@ -1135,7 +1298,19 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no_4bit", action="store_true",
                         help="skip bitsandbytes quantisation — for CPU smoke tests "
                              "or small models; an 8B model will not fit on a T4 this way")
-    parser.add_argument("--resume_from_checkpoint", type=str, default=None)
+    parser.add_argument("--resume_from_checkpoint", type=str, default=None,
+                        help="path to a checkpoint-N directory to continue from; "
+                             "training resumes at that global step, not at 0")
+    parser.add_argument("--auto_resume", action="store_true",
+                        help="continue from the newest complete checkpoint under "
+                             "<output_dir>/checkpoints, or start a new run if there "
+                             "is none. Safe to pass on every launch — this is the "
+                             "flag to use after a Colab disconnect")
+    parser.add_argument("--save_only_model", action="store_true",
+                        help="write only the adapter into each checkpoint, omitting "
+                             "the optimizer/scheduler/RNG state. Smaller, but such a "
+                             "checkpoint CANNOT be fully resumed — leave this off "
+                             "unless disk is the binding constraint")
     parser.add_argument("--report_to", type=str, default="none")
 
     parser.add_argument("--inspect_dataset", action="store_true",
@@ -1227,6 +1402,10 @@ def train(argv: list[str] | None = None) -> int:
         output_dir = (Path.cwd() / output_dir).resolve()
     checkpoints_dir = output_dir / "checkpoints"
 
+    # Resolved before anything expensive happens so a bad --resume_from_checkpoint
+    # fails in seconds rather than after a multi-GB download.
+    resume_target, resume_record = select_resume_checkpoint(args, checkpoints_dir)
+
     metadata = {
         "base_model": args.base_model,
         "dataset": str(provenance.get("train_file", args.dataset)),
@@ -1249,6 +1428,7 @@ def train(argv: list[str] | None = None) -> int:
         "dataset_report": report.as_dict(),
         "dataset_provenance": provenance,
         "library_versions": versions,
+        "resume": resume_record,
     }
 
     # ── tokenizer + prompt rendering ─────────────────────────────────────────
@@ -1377,7 +1557,17 @@ def train(argv: list[str] | None = None) -> int:
         "max_length": args.max_seq_length,
         "packing": False,
         "dataset_num_proc": 1,
-        "save_only_model": True,   # checkpoints hold the adapter, not the 8B base
+        # False so each checkpoint also carries optimizer.pt, scheduler.pt and
+        # rng_state.pth. Without them `resume_from_checkpoint` restores the
+        # weights and the step counter but reinitialises the Adam moments, the LR
+        # schedule position and the RNG — which is a restart wearing a resume's
+        # clothes, and shows up as a loss spike on the first resumed step.
+        #
+        # This costs nothing in base-model weight: the trainer wraps a PeftModel,
+        # whose save_pretrained() writes the LoRA adapter only, so the frozen 4-bit
+        # base is never in a checkpoint either way. The extra bytes are the
+        # optimizer moments for the adapter parameters alone.
+        "save_only_model": bool(args.save_only_model),
     }
     if completion_only:
         wanted_config["completion_only_loss"] = True
@@ -1405,6 +1595,19 @@ def train(argv: list[str] | None = None) -> int:
           f"BF16: {sft_config.bf16}  "
           f"mixed_precision: {getattr(sft_config, 'mixed_precision', 'n/a')}")
 
+    if args.save_only_model:
+        log.warning("--save_only_model: checkpoints will contain the adapter but NOT the "
+                    "optimizer/scheduler/RNG state, so --resume_from_checkpoint cannot "
+                    "restore the full training state from them.")
+
+    steps_per_epoch = max(1, len(train_ds) // max(1, effective_batch))
+    print(f"Checkpointing:  every {args.save_steps} optimizer steps into {checkpoints_dir}")
+    print(f"                ~{steps_per_epoch} steps/epoch, keeping the newest "
+          f"{args.save_total_limit} checkpoints")
+    print(f"                full training state per checkpoint: "
+          f"{'no (--save_only_model)' if args.save_only_model else 'yes'}")
+    print(f"                after a crash, relaunch the same command with --auto_resume")
+
     peft_config = LoraConfig(
         r=args.lora_r,
         lora_alpha=args.lora_alpha,
@@ -1427,6 +1630,10 @@ def train(argv: list[str] | None = None) -> int:
         print(f"  trl SFTConfig fields set {len(config_kwargs)}"
               + (f", skipped {dropped}" if dropped else ""))
         print(f"  checkpoints would go to  {checkpoints_dir}")
+        print(f"  save_steps               {args.save_steps} "
+              f"(keep {args.save_total_limit}, full state="
+              f"{not args.save_only_model})")
+        print(f"  resume from              {resume_target or 'nothing (fresh run)'}")
         print()
         print("Stopping before the model is loaded (that step needs a CUDA GPU and")
         print("downloads several GB). Drop --dry_run to run the real thing.")
@@ -1543,10 +1750,14 @@ def train(argv: list[str] | None = None) -> int:
               "GradScaler-safe.")
 
     print()
-    print("Starting training...")
+    if resume_target:
+        print(f"Resuming training from {Path(resume_target).name} "
+              f"(global step {resume_record.get('resumed_step')})...")
+    else:
+        print("Starting training...")
     train_started = time.time()
     try:
-        result = trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
+        result = trainer.train(resume_from_checkpoint=resume_target)
     except torch.cuda.OutOfMemoryError as exc:
         return _report_oom(exc, args)
     except RuntimeError as exc:
@@ -1572,6 +1783,8 @@ def train(argv: list[str] | None = None) -> int:
             except OverflowError:
                 metrics["eval"]["perplexity"] = float("inf")
     metrics["train_runtime_seconds"] = round(train_seconds, 2)
+    metrics["resumed_from"] = resume_target
+    metrics["final_global_step"] = trainer.state.global_step
     metrics["total_runtime_seconds"] = round(time.time() - started, 2)
     metrics["log_history"] = trainer.state.log_history
 
@@ -1594,6 +1807,12 @@ def train(argv: list[str] | None = None) -> int:
     print("=" * 60)
     print(f"Output:              {output_dir}")
     print(f"Adapter:             {output_dir / 'adapter_model.safetensors'}")
+    print(f"Final global step:   {trainer.state.global_step}")
+    if resume_target:
+        print(f"Resumed from:        {Path(resume_target).name} "
+              f"(step {resume_record.get('resumed_step')})")
+    print(f"Checkpoints kept:    "
+          f"{', '.join(path.name for _, path in find_checkpoints(checkpoints_dir)) or 'none'}")
     print(f"Training samples:    {len(train_examples)}")
     print(f"Validation samples:  {len(eval_examples)}")
     print(f"Training time:       {hours:d}h {minutes:02d}m {seconds:02d}s")

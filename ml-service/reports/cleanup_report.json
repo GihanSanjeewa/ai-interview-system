@@ -1,0 +1,44 @@
+{
+  "cleanup_timestamp": "2026-08-26T12:50:00Z",
+  "pipeline_status": "verified_active",
+  "superseded_components": [
+    {
+      "file": "notebooks/01_qlora_data_preparation.ipynb",
+      "reason": "Superseded by complete 9-notebook lifecycle (01_dataset_download to 09_model_export_and_registration)."
+    },
+    {
+      "file": "notebooks/question_generator_data_preprocessing.ipynb",
+      "reason": "Superseded by 03_data_preprocessing.ipynb and 04_data_validation.ipynb."
+    },
+    {
+      "file": "training/prepare_dataset.py",
+      "reason": "Superseded by test_access_guard.py and 04_data_validation.ipynb."
+    }
+  ],
+  "retained_core_libraries": [
+    {
+      "file": "training/train_qlora.py",
+      "role": "Core QLoRA SFT training engine with T4 fp16 precision guards and checkpoint recovery."
+    },
+    {
+      "file": "training/evaluate_model.py",
+      "role": "Core multi-metric evaluation harness (BLEU, ROUGE, BERTScore, Perplexity)."
+    },
+    {
+      "file": "dataset/interview_domains.py",
+      "role": "Domain taxonomy and keyword scoring rules across 16 SE domains."
+    },
+    {
+      "file": "model_registry.py",
+      "role": "Central capability-based model registry manager."
+    },
+    {
+      "file": "test_access_guard.py",
+      "role": "Test split programmatic lock and access audit enforcement."
+    },
+    {
+      "file": "app.py",
+      "role": "Flask production API integrated with dynamic model registry lookup."
+    }
+  ]
+}

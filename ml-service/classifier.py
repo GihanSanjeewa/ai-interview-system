@@ -5,7 +5,13 @@ representing Beginner, Intermediate, and Advanced candidates.
 """
 
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
+
+try:
+    from sklearn.ensemble import RandomForestClassifier
+    SKLEARN_AVAILABLE = True
+except Exception:
+    SKLEARN_AVAILABLE = False
+    RandomForestClassifier = None
 
 # Global model instance
 _model = None
@@ -75,6 +81,10 @@ def train_classifier():
     y = np.array(y)
     
     # Train the Random Forest
+    if not SKLEARN_AVAILABLE or RandomForestClassifier is None:
+        _model = "heuristic"
+        return
+
     clf = RandomForestClassifier(n_estimators=100, max_depth=8, random_state=42)
     clf.fit(X, y)
     
@@ -90,6 +100,14 @@ def classify_candidate_performance(feature_vector: list) -> str:
     if _model is None:
         train_classifier()
         
+    if _model == "heuristic" or not SKLEARN_AVAILABLE:
+        avg_score = (feature_vector[1] + feature_vector[2]) / 2 if len(feature_vector) > 2 else 70
+        if avg_score < 55:
+            return "Beginner"
+        elif avg_score < 80:
+            return "Intermediate"
+        return "Advanced"
+
     try:
         # Reshape for prediction
         x_in = np.array(feature_vector).reshape(1, -1)
@@ -99,7 +117,7 @@ def classify_candidate_performance(feature_vector: list) -> str:
         print(f"Classifier prediction error: {e}")
         # Robust mathematical fallback logic if prediction fails
         # Blend confidence and fluency
-        avg_score = (feature_vector[1] + feature_vector[2]) / 2
+        avg_score = (feature_vector[1] + feature_vector[2]) / 2 if len(feature_vector) > 2 else 70
         if avg_score < 55:
             return "Beginner"
         elif avg_score < 80:
@@ -109,3 +127,4 @@ def classify_candidate_performance(feature_vector: list) -> str:
 
 # Initialize model on import
 train_classifier()
+

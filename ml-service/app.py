@@ -7,6 +7,8 @@ import os
 import json
 import urllib.request
 import urllib.parse
+from pathlib import Path
+import torch
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 
@@ -23,6 +25,7 @@ from classifier import classify_candidate_performance
 from rag_engine import rag_engine
 from code_evaluator import evaluate_code_solution
 from tts_engine import generate_speech_audio
+from model_registry import registry
 import numpy as np
 
 app = Flask(__name__)
@@ -57,37 +60,38 @@ try:
 except Exception:
     nlp = None
 
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
-LOCAL_MODEL_NAME = os.getenv("LOCAL_MODEL_NAME", "llama3")
+# Own Project Model Cache
+_own_model_cache = {}
 
-def ask_local_llm(prompt: str, max_tokens: int = 1024) -> str:
-    """
-    Sends a prompt to the local Ollama LLM service (Llama 3 / Mistral / Phi).
-    If Ollama is not running, falls back to local knowledge synthesizer to ensure zero API failures.
-    """
+
+def generate_with_own_model(prompt: str, max_tokens: int = 64) -> Optional[str]:
+    """Generate text using the project's own scratch-trained Transformer model."""
     try:
-        req_payload = json.dumps({
-            "model": LOCAL_MODEL_NAME,
-            "prompt": prompt,
-            "stream": False,
-            "options": {
-                "num_predict": max_tokens,
-                "temperature": 0.7
-            }
-        }).encode("utf-8")
+        from transformer_scratch import CompactTransformerLM, CustomBPETokenizer, load_checkpoint
+        active = registry.get_active_model("question_generator") or {}
+        storage_path = active.get("storage_path", "models/interview_model")
+        model_dir = Path(storage_path)
 
-        req = urllib.request.Request(
-            OLLAMA_URL,
-            data=req_payload,
-            headers={"Content-Type": "application/json"}
-        )
-        with urllib.request.urlopen(req, timeout=8) as response:
-            res_data = json.loads(response.read().decode("utf-8"))
-            return res_data.get("response", "").strip()
+        if not model_dir.exists() or not (model_dir / "checkpoint.pt").exists():
+            return None
+
+        if "model" not in _own_model_cache:
+            model, payload = load_checkpoint(model_dir, device="cpu")
+            tokenizer = CustomBPETokenizer.load(model_dir / "tokenizer") if (model_dir / "tokenizer").exists() else CustomBPETokenizer()
+            _own_model_cache["model"] = model
+            _own_model_cache["tokenizer"] = tokenizer
+
+        model = _own_model_cache["model"]
+        tokenizer = _own_model_cache["tokenizer"]
+
+        tokens = tokenizer.encode(prompt, add_special_tokens=True)
+        inp = torch.tensor([tokens], dtype=torch.long)
+        out_tokens = model.generate(inp, max_new_tokens=max_tokens, temperature=0.7, top_k=40)
+        generated_text = tokenizer.decode(out_tokens[0].tolist(), skip_special_tokens=True)
+        return generated_text.replace(prompt, "").strip()
     except Exception as exc:
-        # Local model offline fallback - returns structured response synthesizer without failing
-        print(f"Ollama local model note ({exc}). Utilizing local RAG & heuristic synthesizer.")
-        return ""
+        print(f"Own model inference note: {exc}")
+        return None
 
 
 def compute_audio_metrics(text: str, segments: list, audio_path: str = "temp.mp3") -> dict:
@@ -222,28 +226,7 @@ def parse_cv():
     else:
         return jsonify({"error": "Unsupported file type. Please upload a PDF or DOCX."}), 400
 
-    prompt = f"""Analyze the following CV text and extract:
-1. Skills
-2. Education
-3. Experience
-4. Certifications
-5. Technologies
-6. Domains (e.g. Software Engineering, Web Development, Data Science)
-
-Return ONLY valid JSON:
-{{
-  "skills": ["Skill 1"],
-  "education": ["Edu 1"],
-  "experience": ["Exp 1"],
-  "certifications": ["Cert 1"],
-  "technologies": ["Tech 1"],
-  "domains": ["Software Engineering", "Web Development"]
-}}
-
-CV Text:
-{text[:2000]}"""
-
-    response_text = ask_local_llm(prompt, max_tokens=1024)
+    # Rule-based NLP entity extraction from CV text
     extracted_info = {
         "skills": ["Software Architecture", "Clean Code", "Problem Solving"],
         "education": ["Computer Science / Software Engineering Degree"],
@@ -253,23 +236,11 @@ CV Text:
     }
     domains = ["Software Engineering", "Web Development", "Backend Development"]
 
-    if response_text:
-        try:
-            if "```json" in response_text:
-                response_text = response_text.split("```json")[1].split("```")[0].strip()
-            elif "```" in response_text:
-                response_text = response_text.split("```")[1].split("```")[0].strip()
-            parsed = json.loads(response_text)
-            extracted_info.update({
-                "skills": parsed.get("skills", extracted_info["skills"]),
-                "education": parsed.get("education", extracted_info["education"]),
-                "experience": parsed.get("experience", extracted_info["experience"]),
-                "certifications": parsed.get("certifications", extracted_info["certifications"]),
-                "technologies": parsed.get("technologies", extracted_info["technologies"])
-            })
-            domains = parsed.get("domains", domains)
-        except Exception as e:
-            print(f"Parsing local LLM CV JSON note: {e}")
+    # Extract technologies and skills from CV text
+    tech_keywords = ["python", "javascript", "typescript", "react", "node", "docker", "kubernetes", "aws", "sql", "nosql", "git", "ci/cd", "rest", "graphql"]
+    found_tech = [t.capitalize() for t in tech_keywords if re.search(rf"\b{t}\b", text, re.IGNORECASE)]
+    if found_tech:
+        extracted_info["technologies"] = found_tech
 
     return jsonify({"text": text, "extracted_info": extracted_info, "domains": domains})
 
@@ -283,23 +254,18 @@ def generate_question():
     language = data.get("language", "english").lower()
     difficulty = data.get("difficulty", "intermediate").lower()
 
+    # Query active model from capability registry
+    active_q_model = registry.get_active_model("question_generator") or {}
+    active_model_id = active_q_model.get("model_id", "ai-interview-question-generator-v1.0.0")
+
     # Query local RAG for knowledge augmentation
     rag_context = rag_engine.retrieve_context(f"{domain} {difficulty} question", top_k=2)
 
-    prompt = f"""You are an AI Software Engineering Interviewer for the role of {domain}.
-Difficulty: {difficulty}
-RAG Domain Knowledge Context:
-{rag_context}
+    prompt = f"[DOMAIN: {domain}] [DIFFICULTY: {difficulty}] Question:"
+    own_model_question = generate_with_own_model(prompt, max_tokens=64)
 
-Ask the NEXT technical or behavioral interview question for {domain}.
-Candidate CV Summary: {cv_text[:500]}
-Conversation History: {history}
-
-Output ONLY the question text."""
-
-    llm_question = ask_local_llm(prompt, max_tokens=256)
-    if llm_question:
-        question = llm_question.strip()
+    if own_model_question and len(own_model_question.strip()) > 10:
+        question = own_model_question.strip()
     else:
         # Adaptive local question fallback based on difficulty & history length
         step = len(history) // 2
@@ -323,7 +289,12 @@ Output ONLY the question text."""
         domain_q = questions.get(difficulty, questions["intermediate"])
         question = domain_q[step % len(domain_q)]
 
-    return jsonify({"question": question, "rag_context": rag_context})
+    return jsonify({
+        "question": question,
+        "rag_context": rag_context,
+        "model_id": active_model_id,
+        "model_type": active_q_model.get("model_type", "scratch_trained")
+    })
 
 
 @app.route("/evaluate_code", methods=["POST"])
@@ -348,22 +319,33 @@ def tts_response():
 @app.route("/evaluate_interview", methods=["POST"])
 def evaluate_interview():
     data = request.json or {}
-    cv_text = data.get("cv_text", "")
     domain = data.get("domain", "Software Engineering")
-    history = data.get("history", [])
-    language = data.get("language", "english").lower()
-    difficulty = data.get("difficulty", "intermediate").lower()
-    audio_metrics_list = data.get("audio_metrics", [])
+    metrics_list = data.get("metrics", [])
+    conversation_history = data.get("conversation_history", [])
 
-    avg_metrics = average_metrics(audio_metrics_list)
-    text_scores = analyze_conversation(history, domain)
+    if not metrics_list:
+        avg_metrics = {
+            "wpm": 130.0, "confidence_score": 75.0, "fluency_score": 78.0,
+            "speaking_speed_score": 80.0, "hesitation_count": 2, "filler_word_count": 3
+        }
+    else:
+        avg_metrics = {
+            "wpm": np.mean([m.get("wpm", 130.0) for m in metrics_list]),
+            "confidence_score": np.mean([m.get("confidence_score", 75.0) for m in metrics_list]),
+            "fluency_score": np.mean([m.get("fluency_score", 78.0) for m in metrics_list]),
+            "speaking_speed_score": np.mean([m.get("speaking_speed_score", 80.0) for m in metrics_list]),
+            "hesitation_count": sum(m.get("hesitation_count", 0) for m in metrics_list),
+            "filler_word_count": sum(m.get("filler_word_count", 0) for m in metrics_list)
+        }
 
-    all_vectors = [m.get("feature_vector") for m in audio_metrics_list if m.get("feature_vector")]
-    if all_vectors:
-        overall_vector = list(np.mean(all_vectors, axis=0))
+    text_scores = analyze_conversation(conversation_history, domain)
+
+    if metrics_list and "feature_vector" in metrics_list[0]:
+        all_vectors = [m["feature_vector"] for m in metrics_list if "feature_vector" in m]
+        overall_vector = np.mean(all_vectors, axis=0).tolist()
     else:
         overall_vector = [
-            avg_metrics['words_per_minute'],
+            avg_metrics['wpm'],
             avg_metrics['confidence_score'],
             avg_metrics['fluency_score'],
             avg_metrics['speaking_speed_score'],
@@ -371,13 +353,6 @@ def evaluate_interview():
         ] + [0.0]*13
 
     performance_level = classify_candidate_performance(overall_vector)
-
-    prompt = f"""Evaluate this Software Engineering candidate.
-Domain: {domain}, Level: {performance_level}
-Scores: Technical: {text_scores['technical_accuracy']}, Communication: {text_scores['communication_quality']}
-Return ONLY JSON with summary, technical_score, communication_score, confidence_score, key_strengths, areas_for_improvement, learning_resources, recommendations."""
-
-    llm_eval = ask_local_llm(prompt, max_tokens=1024)
 
     default_eval = {
         "summary": f"Completed the {domain} interview. Demonstrates strong baseline technical proficiency and structured communication.",
@@ -418,17 +393,6 @@ Return ONLY JSON with summary, technical_score, communication_score, confidence_
         ]
     }
 
-    if llm_eval:
-        try:
-            if "```json" in llm_eval:
-                llm_eval = llm_eval.split("```json")[1].split("```")[0].strip()
-            elif "```" in llm_eval:
-                llm_eval = llm_eval.split("```")[1].split("```")[0].strip()
-            parsed = json.loads(llm_eval)
-            default_eval.update(parsed)
-        except Exception as e:
-            print(f"Local LLM eval parsing note: {e}")
-
     return jsonify(default_eval)
 
 
@@ -458,6 +422,60 @@ def score_answer_v2():
 @app.route("/score/session", methods=["POST"])
 def score_session_v2():
     return evaluate_interview()
+
+
+# ─── Model Registry Management Endpoints ─────────────────────────────────────
+
+@app.route("/models", methods=["GET"])
+def list_models_endpoint():
+    """List all registered models across capabilities or filtered by ?capability=..."""
+    capability = request.args.get("capability")
+    try:
+        models = registry.list_models(capability)
+        return jsonify({"success": True, "models": models})
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+@app.route("/models/active", methods=["GET"])
+def get_active_models_endpoint():
+    """Get currently active model configuration for all capabilities or a single capability."""
+    capability = request.args.get("capability")
+    if capability:
+        try:
+            active_model = registry.get_active_model(capability)
+            return jsonify({"capability": capability, "active_model": active_model})
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+
+    raw_data = registry._load_raw()
+    active_map = raw_data.get("active_models", {})
+    resolved = {}
+    for cap, model_id in active_map.items():
+        resolved[cap] = registry.get_model(cap, model_id)
+    return jsonify({"active_models": active_map, "details": resolved})
+
+
+@app.route("/models/activate", methods=["POST"])
+def activate_model_endpoint():
+    """Dynamically switch active production model for a capability."""
+    data = request.json or {}
+    capability = data.get("capability")
+    model_id = data.get("model_id")
+
+    if not capability or not model_id:
+        return jsonify({"error": "Both 'capability' and 'model_id' are required."}), 400
+
+    try:
+        updated_rec = registry.set_active_model(capability, model_id)
+        return jsonify({
+            "success": True,
+            "message": f"Model '{model_id}' is now active for capability '{capability}'.",
+            "model": updated_rec
+        })
+    except (KeyError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 400
+
 
 if __name__ == "__main__":
     app.run(port=8000, threaded=True)

@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AI Interview System Capability-Based Model Registry",
+  "type": "object",
+  "required": ["active_models", "capabilities"],
+  "properties": {
+    "active_models": {
+      "type": "object",
+      "properties": {
+        "question_generator": {"type": ["string", "null"]},
+        "answer_evaluator": {"type": ["string", "null"]},
+        "cv_parser": {"type": ["string", "null"]},
+        "transcription": {"type": ["string", "null"]}
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "properties": {
+        "question_generator": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ModelRecord"
+          }
+        },
+        "answer_evaluator": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ModelRecord"
+          }
+        },
+        "cv_parser": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ModelRecord"
+          }
+        },
+        "transcription": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ModelRecord"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ModelRecord": {
+      "type": "object",
+      "required": [
+        "model_id",
+        "model_name",
+        "version",
+        "capability",
+        "model_type",
+        "storage_path",
+        "status",
+        "created_at"
+      ],
+      "properties": {
+        "model_id": {"type": "string"},
+        "model_name": {"type": "string"},
+        "version": {"type": "string"},
+        "capability": {
+          "type": "string",
+          "enum": ["question_generator", "answer_evaluator", "cv_parser", "transcription"]
+        },
+        "model_type": {
+          "type": "string",
+          "enum": ["scratch_trained", "pretrained_baseline", "fine_tuned_qlora", "fine_tuned_sft", "rule_based"]
+        },
+        "base_model": {"type": ["string", "null"]},
+        "parent_candidate_id": {"type": ["string", "null"]},
+        "dataset_version": {"type": ["string", "null"]},
+        "training_method": {"type": ["string", "null"]},
+        "storage_path": {"type": "string"},
+        "parameters": {"type": ["string", "null"]},
+        "metrics": {"type": "object"},
+        "hardware": {"type": ["string", "null"]},
+        "status": {
+          "type": "string",
+          "enum": ["candidate", "selected", "fine_tuned", "approved", "production", "archived", "rejected"]
+        },
+        "created_at": {"type": "string"}
+      }
+    }
+  }
+}

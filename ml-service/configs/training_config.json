@@ -1,0 +1,35 @@
+{
+  "experiment_name": "ai_interview_multi_candidate_training",
+  "seed": 42,
+  "data": {
+    "dataset_version": "v1.0-clean",
+    "train_split": "dataset/processed/train/train.jsonl",
+    "val_split": "dataset/processed/validation/validation.jsonl",
+    "test_split_locked": "dataset/processed/test/test.jsonl"
+  },
+  "scratch_training": {
+    "epochs": 3,
+    "batch_size": 8,
+    "gradient_accumulation_steps": 2,
+    "learning_rate": 5e-4,
+    "weight_decay": 0.01,
+    "warmup_steps": 100,
+    "max_seq_length": 512,
+    "save_steps": 250,
+    "eval_steps": 250,
+    "logging_steps": 50,
+    "fp16": true
+  },
+  "pretrained_baseline_eval": {
+    "batch_size": 4,
+    "max_seq_length": 512,
+    "max_new_tokens": 128,
+    "temperature": 0.2,
+    "top_p": 0.9,
+    "repetition_penalty": 1.1
+  },
+  "checkpoints": {
+    "base_dir": "checkpoints",
+    "max_to_keep": 3
+  }
+}

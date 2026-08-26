@@ -1,0 +1,168 @@
+{
+  "policy": {
+    "allowed_from_notebook": 8,
+    "description": "Test dataset is held-out and locked. Access is strictly forbidden in Notebooks 01-07."
+  },
+  "access_history": [
+    {
+      "timestamp": "2026-08-26T07:19:19.198765+00:00",
+      "notebook_id": 5,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "test",
+      "access_granted": false,
+      "details": "TestDatasetLockedError triggered."
+    },
+    {
+      "timestamp": "2026-08-26T07:19:19.215141+00:00",
+      "notebook_id": 7,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "test",
+      "access_granted": false,
+      "details": "TestDatasetLockedError triggered."
+    },
+    {
+      "timestamp": "2026-08-26T07:19:19.233228+00:00",
+      "notebook_id": 5,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "validation",
+      "access_granted": true,
+      "details": "Loaded validation split."
+    },
+    {
+      "timestamp": "2026-08-26T07:19:19.273531+00:00",
+      "notebook_id": 8,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "test",
+      "access_granted": true,
+      "details": "Authorized held-out test evaluation."
+    },
+    {
+      "timestamp": "2026-08-26T07:20:57.919647+00:00",
+      "notebook_id": 5,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "test",
+      "access_granted": false,
+      "details": "TestDatasetLockedError triggered."
+    },
+    {
+      "timestamp": "2026-08-26T07:20:57.939287+00:00",
+      "notebook_id": 7,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "test",
+      "access_granted": false,
+      "details": "TestDatasetLockedError triggered."
+    },
+    {
+      "timestamp": "2026-08-26T07:20:57.956669+00:00",
+      "notebook_id": 5,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "validation",
+      "access_granted": true,
+      "details": "Loaded validation split."
+    },
+    {
+      "timestamp": "2026-08-26T07:20:58.015408+00:00",
+      "notebook_id": 8,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "test",
+      "access_granted": true,
+      "details": "Authorized held-out test evaluation."
+    },
+    {
+      "timestamp": "2026-08-26T07:45:44.736192+00:00",
+      "notebook_id": 5,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "test",
+      "access_granted": false,
+      "details": "TestDatasetLockedError triggered."
+    },
+    {
+      "timestamp": "2026-08-26T07:45:44.849873+00:00",
+      "notebook_id": 7,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "test",
+      "access_granted": false,
+      "details": "TestDatasetLockedError triggered."
+    },
+    {
+      "timestamp": "2026-08-26T07:45:44.895376+00:00",
+      "notebook_id": 5,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "validation",
+      "access_granted": true,
+      "details": "Loaded validation split."
+    },
+    {
+      "timestamp": "2026-08-26T07:45:45.001730+00:00",
+      "notebook_id": 8,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "test",
+      "access_granted": true,
+      "details": "Authorized held-out test evaluation."
+    },
+    {
+      "timestamp": "2026-08-26T07:48:51.344819+00:00",
+      "notebook_id": 5,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "test",
+      "access_granted": false,
+      "details": "TestDatasetLockedError triggered."
+    },
+    {
+      "timestamp": "2026-08-26T07:48:51.360494+00:00",
+      "notebook_id": 7,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "test",
+      "access_granted": false,
+      "details": "TestDatasetLockedError triggered."
+    },
+    {
+      "timestamp": "2026-08-26T07:48:51.378367+00:00",
+      "notebook_id": 5,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "validation",
+      "access_granted": true,
+      "details": "Loaded validation split."
+    },
+    {
+      "timestamp": "2026-08-26T07:48:51.411174+00:00",
+      "notebook_id": 8,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "test",
+      "access_granted": true,
+      "details": "Authorized held-out test evaluation."
+    },
+    {
+      "timestamp": "2026-08-26T07:50:08.834608+00:00",
+      "notebook_id": 5,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "test",
+      "access_granted": false,
+      "details": "TestDatasetLockedError triggered."
+    },
+    {
+      "timestamp": "2026-08-26T07:50:08.852559+00:00",
+      "notebook_id": 7,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "test",
+      "access_granted": false,
+      "details": "TestDatasetLockedError triggered."
+    },
+    {
+      "timestamp": "2026-08-26T07:50:08.869240+00:00",
+      "notebook_id": 5,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "validation",
+      "access_granted": true,
+      "details": "Loaded validation split."
+    },
+    {
+      "timestamp": "2026-08-26T07:50:08.913146+00:00",
+      "notebook_id": 8,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "test",
+      "access_granted": true,
+      "details": "Authorized held-out test evaluation."
+    }
+  ]
+}
