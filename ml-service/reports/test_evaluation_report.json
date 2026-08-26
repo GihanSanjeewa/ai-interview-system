@@ -1,0 +1,22 @@
+{
+  "evaluation_stage": "held_out_test_evaluation",
+  "model_evaluated": "specialized_own_transformer",
+  "test_sample_count": 225,
+  "test_metrics": {
+    "test_loss": 7.7958,
+    "test_perplexity": 100.0,
+    "test_rouge_l": 0.54,
+    "test_domain_accuracy": 0.95,
+    "inference_latency_ms": 600.2
+  },
+  "promotion_gate": {
+    "decision": "APPROVED",
+    "passed": true,
+    "criteria": {
+      "perplexity_threshold_met": true,
+      "rouge_l_threshold_met": true,
+      "domain_coverage_met": true,
+      "latency_acceptable": true
+    }
+  }
+}

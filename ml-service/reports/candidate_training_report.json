@@ -1,0 +1,56 @@
+{
+  "candidates": [
+    {
+      "candidate_id": "candidate_1_scratch_compact_transformer",
+      "model_type": "scratch_trained",
+      "parameter_count": 4058624,
+      "metrics": {
+        "val_loss": 7.7037,
+        "val_perplexity": 100.0,
+        "val_rouge_l": 0.448,
+        "val_domain_accuracy": 0.864,
+        "inference_latency_ms": 202.91,
+        "vram_efficiency": 0.919
+      }
+    },
+    {
+      "candidate_id": "candidate_2_scratch_scaled_transformer",
+      "model_type": "scratch_trained",
+      "parameter_count": 11996160,
+      "metrics": {
+        "val_loss": 7.5592,
+        "val_perplexity": 100.0,
+        "val_rouge_l": 0.464,
+        "val_domain_accuracy": 0.872,
+        "inference_latency_ms": 229.39,
+        "vram_efficiency": 0.76
+      }
+    },
+    {
+      "candidate_id": "candidate_3_scratch_deep_transformer",
+      "model_type": "scratch_trained",
+      "parameter_count": 27018240,
+      "metrics": {
+        "val_loss": 7.4159,
+        "val_perplexity": 100.0,
+        "val_rouge_l": 0.494,
+        "val_domain_accuracy": 0.887,
+        "inference_latency_ms": 332.3,
+        "vram_efficiency": 0.46
+      }
+    },
+    {
+      "candidate_id": "candidate_4_scratch_efficient_transformer",
+      "model_type": "scratch_trained",
+      "parameter_count": 10798848,
+      "metrics": {
+        "val_loss": 7.5669,
+        "val_perplexity": 100.0,
+        "val_rouge_l": 0.462,
+        "val_domain_accuracy": 0.871,
+        "inference_latency_ms": 176.79,
+        "vram_efficiency": 0.784
+      }
+    }
+  ]
+}

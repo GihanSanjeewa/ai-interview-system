@@ -192,3 +192,18 @@ def verify_no_split_leakage(
         )
 
     return report
+
+
+def lock_test_dataset(test_dir: Path):
+    """Write an immutable test lock marker in the test split folder."""
+    t_path = Path(test_dir)
+    t_path.mkdir(parents=True, exist_ok=True)
+    lock_file = t_path / "test_lock.json"
+    lock_meta = {
+        "status": "LOCKED",
+        "authorized_notebook_id": 8,
+        "description": "Test dataset is strictly held out and cannot be accessed before Notebook 08.",
+        "locked_at": datetime.now(timezone.utc).isoformat()
+    }
+    lock_file.write_text(json.dumps(lock_meta, indent=2), encoding="utf-8")
+

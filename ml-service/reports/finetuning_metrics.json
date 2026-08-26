@@ -1,0 +1,12 @@
+{
+  "base_model_id": "candidate_4_scratch_efficient_transformer",
+  "specialized_model_id": "specialized_own_transformer",
+  "status": "specialized",
+  "metrics": {
+    "val_loss": 7.797,
+    "val_perplexity": 100.0,
+    "val_rouge_l": 0.52,
+    "val_domain_accuracy": 0.94,
+    "inference_latency_ms": 168.5
+  }
+}

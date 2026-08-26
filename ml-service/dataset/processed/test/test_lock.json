@@ -1,0 +1,6 @@
+{
+  "status": "LOCKED",
+  "authorized_notebook_id": 8,
+  "description": "Test dataset is strictly held out and cannot be accessed before Notebook 08.",
+  "locked_at": "2026-08-26T17:57:29.652001+00:00"
+}
