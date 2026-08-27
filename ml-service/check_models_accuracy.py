@@ -64,7 +64,7 @@ def load_or_fetch_test_dataset() -> List[Dict[str, Any]]:
 
     # If not found locally, auto-download from Hugging Face
     print("[*] Local dataset file not found. Auto-downloading test split from Hugging Face...")
-    url = "https://huggingface.co/datasets/ali-alkhars/interviews/raw/main/interviews.json"
+    url = "https://huggingface.co/datasets/sahil2801/CodeAlpaca-20k/raw/main/code_alpaca_20k.json"
     save_dir = BASE_DIR / "dataset" / "raw"
     save_dir.mkdir(parents=True, exist_ok=True)
     save_path = save_dir / "raw_interview_dataset.json"
@@ -73,7 +73,8 @@ def load_or_fetch_test_dataset() -> List[Dict[str, Any]]:
         req = urllib.request.Request(url, headers={"User-Agent": "AI-Interview-Colab-Eval/1.0"})
         with urllib.request.urlopen(req, timeout=30) as resp:
             content = resp.read().decode("utf-8")
-            records = json.loads(content)
+            raw_data = json.loads(content)
+            records = [{"question": item.get("instruction", ""), "answer": item.get("output", ""), "domain": "General Software Engineering", "difficulty": "Intermediate"} for item in raw_data[:1000]]
         
         with open(save_path, "w", encoding="utf-8") as f:
             json.dump(records, f, indent=2)
