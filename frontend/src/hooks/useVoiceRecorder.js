@@ -4,18 +4,20 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * Browser mic capture using MediaRecorder + Web Audio API for level metering.
  * Falls back to SpeechRecognition for live partial transcripts when available.
  */
-export function useVoiceRecorder({ onLevel } = {}) {
+export function useVoiceRecorder({ onLevel, onTranscript, language = "en-US" } = {}) {
   const [recording, setRecording] = useState(false);
   const [supported, setSupported] = useState(true);
   const [error, setError] = useState(null);
 
   const streamRef = useRef(null);
   const recorderRef = useRef(null);
+  const recognitionRef = useRef(null);
   const chunksRef = useRef([]);
   const ctxRef = useRef(null);
   const analyserRef = useRef(null);
   const rafRef = useRef(null);
   const startedAtRef = useRef(0);
+  const liveTranscriptRef = useRef("");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -29,6 +31,14 @@ export function useVoiceRecorder({ onLevel } = {}) {
       recorderRef.current?.state === "recording" && recorderRef.current?.stop();
     } catch {
       // ignore
+    }
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        // ignore
+      }
+      recognitionRef.current = null;
     }
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
@@ -52,10 +62,38 @@ export function useVoiceRecorder({ onLevel } = {}) {
       return;
     }
     try {
+      liveTranscriptRef.current = "";
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
       streamRef.current = stream;
+
+      // Browser Web Speech Recognition for instant live transcript
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        try {
+          const reco = new SpeechRecognition();
+          reco.continuous = true;
+          reco.interimResults = true;
+          reco.lang = language || "en-US";
+
+          reco.onresult = (event) => {
+            let fullText = "";
+            for (let i = 0; i < event.results.length; i++) {
+              fullText += event.results[i][0].transcript;
+            }
+            liveTranscriptRef.current = fullText;
+            onTranscript?.(fullText);
+          };
+          reco.onerror = (e) => {
+            console.warn("SpeechRecognition note:", e?.error);
+          };
+          reco.start();
+          recognitionRef.current = reco;
+        } catch (e) {
+          console.warn("SpeechRecognition init note:", e);
+        }
+      }
 
       // Audio meter
       const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -101,16 +139,17 @@ export function useVoiceRecorder({ onLevel } = {}) {
       setError(err?.message || "Mic access denied");
       stopInternal();
     }
-  }, [supported, onLevel]);
+  }, [supported, onLevel, onTranscript, language]);
 
   const stop = useCallback(
     () =>
       new Promise((resolve) => {
         const rec = recorderRef.current;
+        const liveText = liveTranscriptRef.current;
         if (!rec || rec.state !== "recording") {
           stopInternal();
           setRecording(false);
-          resolve(null);
+          resolve({ blob: null, durationMs: 0, transcript: liveText });
           return;
         }
         rec.onstop = () => {
@@ -120,7 +159,7 @@ export function useVoiceRecorder({ onLevel } = {}) {
           const durationMs = Date.now() - startedAtRef.current;
           stopInternal();
           setRecording(false);
-          resolve({ blob, durationMs });
+          resolve({ blob, durationMs, transcript: liveText });
         };
         rec.stop();
       }),
@@ -135,3 +174,4 @@ export function useVoiceRecorder({ onLevel } = {}) {
 
   return { recording, supported, error, start, stop, cancel };
 }
+

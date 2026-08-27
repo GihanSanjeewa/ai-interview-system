@@ -31,7 +31,20 @@ import numpy as np
 app = Flask(__name__)
 CORS(app)
 
-# Auto-detect ffmpeg path for current user if available
+# Auto-detect and bind ffmpeg binary
+try:
+    import imageio_ffmpeg
+    import shutil
+    src_exe = imageio_ffmpeg.get_ffmpeg_exe()
+    ffmpeg_dir = os.path.dirname(src_exe)
+    target_exe = os.path.join(ffmpeg_dir, "ffmpeg.exe")
+    if not os.path.exists(target_exe) and os.path.exists(src_exe):
+        shutil.copyfile(src_exe, target_exe)
+    if ffmpeg_dir not in os.environ.get("PATH", ""):
+        os.environ["PATH"] = ffmpeg_dir + os.pathsep + os.environ.get("PATH", "")
+except Exception as e:
+    print(f"Notice: imageio_ffmpeg auto-bind note ({e})")
+
 possible_ffmpeg_paths = [
     os.path.expanduser(r"~\AppData\Local\Microsoft\WinGet\Packages"),
     r"C:\ffmpeg\bin",
@@ -188,14 +201,16 @@ def transcribe_audio():
         print(f"whisper_si note: {exc}. Trying standard Whisper...")
         try:
             if whisper_model is not None:
-                whisper_args = {"language": lang_code} if lang_code else {}
+                whisper_args = {"language": lang_code, "fp16": False} if lang_code else {"fp16": False}
                 result = whisper_model.transcribe("temp.mp3", **whisper_args)
                 text = result.get("text", "")
                 segments = result.get("segments", [])
         except Exception as err2:
-            print(f"Whisper speech processing note ({err2}). Returning fallback transcript.")
-            text = request.form.get("transcript") or "Thank you for the question. I have experience working with software development, APIs, and databases."
+            print(f"Whisper speech processing error: {err2}")
+            text = request.form.get("transcript") or ""
             segments = []
+
+    text = text.strip()
 
     metrics = compute_audio_metrics(text, segments, audio_path="temp.mp3")
     return jsonify({"text": text, "metrics": metrics, "whisper": whisper_meta})

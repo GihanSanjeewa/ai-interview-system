@@ -84,7 +84,11 @@ export default function InterviewRoom({ session, onExit }) {
   const [metrics, setMetrics] = useState(initialMetrics);
   const startedRef = useRef(false);
 
-  const recorder = useVoiceRecorder({ onLevel: setAudioLevel });
+  const recorder = useVoiceRecorder({
+    onLevel: setAudioLevel,
+    onTranscript: (liveText) => setPartialAnswer(liveText),
+    language: language === "si" ? "si-LK" : "en-US"
+  });
 
   const currentQuestion = questions[step];
 
@@ -179,13 +183,17 @@ export default function InterviewRoom({ session, onExit }) {
     setSubmitting(true);
     try {
       const result = await recorder.stop();
-      let text = partialAnswer.trim();
+      let text = (result?.transcript || partialAnswer || "").trim();
       let durationMs = result?.durationMs;
       if (result?.blob && result.blob.size > 1024) {
         setTranscribing(true);
         try {
           const { text: stt } = await audioApi.transcribe(result.blob, language);
-          if (stt && stt.trim()) text = stt.trim();
+          if (stt && stt.trim()) {
+            text = stt.trim();
+          }
+        } catch (err) {
+          console.warn("Audio transcription fallback to live text:", err);
         } finally {
           setTranscribing(false);
         }
@@ -491,6 +499,17 @@ export default function InterviewRoom({ session, onExit }) {
                       {transcript.map((t, i) => (
                         <TranscriptItem key={i} t={t} user={user} />
                       ))}
+                      {recorder.recording && partialAnswer && (
+                        <div className="flex gap-3 text-xs opacity-95">
+                          <Avatar size="sm" name={user?.fullName || "You"} />
+                          <div className="bg-surface-2 border-token rounded-2xl rounded-tl-none border p-3.5">
+                            <p className="text-default leading-relaxed flex items-center gap-2">
+                              <span className="inline-block size-1.5 rounded-full bg-rose-500 animate-pulse" />
+                              {partialAnswer}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                       {transcribing && (
                         <div className="text-subtle flex items-center gap-2 text-xs">
                           <Loader2 className="size-3.5 animate-spin" /> Transcribing your answer…
