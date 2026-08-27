@@ -351,17 +351,21 @@ print("="*60)
     nb02_cells = [
         md("""# 02 — Dataset Inspection & Exploratory Data Analysis (EDA)
 ### AI Interview System — 100% Project-Owned ML Pipeline
-This notebook performs exploratory data analysis on the raw dataset:
-1. Schema inspection and data type validation.
-2. Descriptive statistics for numerical and text fields (question length, answer length).
-3. Class and domain balance analysis across difficulty levels.
-4. Exporting high-resolution distribution plots to `reports/figures/eda/`.
+This notebook performs exploratory data analysis using **Pandas & Seaborn**:
+1. **`data.head()`**: Preview sample dataset rows and feature columns.
+2. **`data.info()`**: Inspect schema types, non-null counts, and memory footprint.
+3. **`data.describe()`**: Compute statistical distributions (mean, std, min, quartiles, max).
+4. **`data.isnull().sum()`**: Tally missing values across all columns.
+5. **`sns.heatmap(corr_matrix)`**: Visualize feature correlations (question length, answer length, difficulty, domain).
+6. **Class & Domain Distribution**: Plot category breakdowns across difficulty tiers and technical domains.
 """),
-        code("""# Cell 1: Environment Setup & Project Workspace Auto-Detection
+        code("""# Cell 1: Environment Setup & Load DataFrame (`data`)
 import os
 import sys
 import json
+import pandas as pd
 import numpy as np
+import seaborn as sns
 import matplotlib.pyplot as plt
 from pathlib import Path
 
@@ -399,52 +403,72 @@ FIGURES_EDA_DIR.mkdir(parents=True, exist_ok=True)
 with open(RAW_DATASET_FILE, "r", encoding="utf-8") as f:
     records = json.load(f)
 
-print(f"Loaded {len(records)} raw records for EDA.")
-"""),
-        code("""# Cell 2: Descriptive Statistics & Text Length Distributions
-q_lengths = [len(r.get("question", "")) for r in records]
-a_lengths = [len(r.get("answer", "")) for r in records]
-q_words = [len(r.get("question", "").split()) for r in records]
-a_words = [len(r.get("answer", "").split()) for r in records]
+# Load into Pandas DataFrame
+data = pd.DataFrame(records)
 
-eda_stats = {
-    "total_records": len(records),
-    "question_char_length": {
-        "min": int(np.min(q_lengths)),
-        "mean": float(np.mean(q_lengths)),
-        "median": float(np.median(q_lengths)),
-        "max": int(np.max(q_lengths))
-    },
-    "question_word_count": {
-        "min": int(np.min(q_words)),
-        "mean": float(np.mean(q_words)),
-        "median": float(np.median(q_words)),
-        "max": int(np.max(q_words))
-    },
-    "answer_char_length": {
-        "min": int(np.min(a_lengths)),
-        "mean": float(np.mean(a_lengths)),
-        "max": int(np.max(a_lengths))
-    }
-}
+# Feature engineering: compute text metrics and encoded numerical representations
+data["q_char_len"] = data["question"].fillna("").astype(str).str.len()
+data["q_word_count"] = data["question"].fillna("").astype(str).str.split().str.len()
+data["a_char_len"] = data["answer"].fillna("").astype(str).str.len()
+data["a_word_count"] = data["answer"].fillna("").astype(str).str.split().str.len()
+data["difficulty_encoded"] = data["difficulty"].map({"Beginner": 1, "Intermediate": 2, "Advanced": 3}).fillna(2).astype(int)
+data["domain_encoded"] = data["domain"].astype("category").cat.codes
 
-print("=== EDA DESCRIPTIVE STATISTICS ===")
-print(json.dumps(eda_stats, indent=2))
+print(f"Loaded DataFrame with shape: {data.shape} ({data.shape[0]} rows, {data.shape[1]} columns)")
 """),
-        code("""# Cell 3: Visualizations & Plot Generation
-plt.figure(figsize=(10, 4))
-plt.hist(q_words, bins=25, color="#2563EB", edgecolor="black", alpha=0.8)
-plt.title("Question Word Count Distribution", fontsize=14, fontweight="bold")
-plt.xlabel("Number of Words")
-plt.ylabel("Frequency")
-plt.grid(axis="y", linestyle="--", alpha=0.7)
+        code("""# Cell 2: data.head() — Dataset Preview
+print("=== FIRST 5 ROWS (data.head()) ===")
+data.head()
+"""),
+        code("""# Cell 3: data.info() — Dataset Schema & Data Types
+print("=== DATASET INFO (data.info()) ===")
+data.info()
+"""),
+        code("""# Cell 4: data.describe() — Statistical Summary
+print("=== DESCRIPTIVE STATISTICS (data.describe()) ===")
+data[["q_char_len", "q_word_count", "a_char_len", "a_word_count", "difficulty_encoded", "domain_encoded"]].describe()
+"""),
+        code("""# Cell 5: data.isnull().sum() — Missing Values Check
+print("=== MISSING VALUES COUNT (data.isnull().sum()) ===")
+print(data.isnull().sum())
+"""),
+        code("""# Cell 6: Correlation Matrix & Heatmap
+corr_metrix = data[["q_char_len", "q_word_count", "a_char_len", "a_word_count", "difficulty_encoded", "domain_encoded"]].corr()
+
+plt.figure(figsize=(10, 8))
+sns.heatmap(corr_metrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, cbar=True)
+plt.title("Correlation Heat Map", fontsize=14, fontweight="bold", pad=12)
 plt.tight_layout()
 
-chart_path = FIGURES_EDA_DIR / "question_length_distribution.png"
-plt.savefig(chart_path, dpi=300)
-plt.close()
-print(f"Saved EDA chart to: {chart_path}")
-print("Stage 02 Completed Successfully.")
+# Save figure to reports/figures/eda/
+heat_path = FIGURES_EDA_DIR / "correlation_heatmap.png"
+plt.savefig(heat_path, dpi=300)
+print(f"Saved correlation heatmap to: {heat_path}")
+plt.show()
+"""),
+        code("""# Cell 7: Category & Difficulty Distribution Plots
+fig, axes = plt.subplots(1, 2, figsize=(16, 5))
+
+# Difficulty distribution
+sns.countplot(data=data, x="difficulty", order=["Beginner", "Intermediate", "Advanced"], palette="coolwarm", ax=axes[0], hue="difficulty", legend=False)
+axes[0].set_title("Difficulty Level Distribution", fontsize=13, fontweight="bold")
+axes[0].set_xlabel("Difficulty")
+axes[0].set_ylabel("Count")
+
+# Domain distribution
+domain_order = data["domain"].value_counts().index
+sns.countplot(data=data, y="domain", order=domain_order, palette="mako", ax=axes[1], hue="domain", legend=False)
+axes[1].set_title("Domain Category Breakdown", fontsize=13, fontweight="bold")
+axes[1].set_xlabel("Number of Questions")
+axes[1].set_ylabel("Domain")
+
+plt.tight_layout()
+dist_path = FIGURES_EDA_DIR / "class_distribution.png"
+plt.savefig(dist_path, dpi=300)
+print(f"Saved class distribution plot to: {dist_path}")
+plt.show()
+
+print("Stage 02 (EDA & Dataset Inspection) Completed Successfully.")
 """)
     ]
 
