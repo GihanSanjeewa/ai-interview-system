@@ -670,11 +670,23 @@ def _score_one_answer(
     # a good self-introduction scored 42/100 for technical accuracy purely
     # because an introduction is not a technical exposition.
     NON_TECHNICAL_PHASES = {"greet", "behavior", "behavioural", "wrap"}
+    eval_result = None
     if phase.lower() in NON_TECHNICAL_PHASES:
         technical = None
     else:
-        technical = compute_technical_accuracy(
-            text, domain or "Software Engineering")
+        try:
+            from answer_evaluator_model import evaluator as neural_evaluator
+            eval_result = neural_evaluator.evaluate_answer(
+                question=q_text,
+                candidate_transcript=text,
+                expected_answer=expects,
+                domain=domain or "General"
+            )
+            technical = eval_result["technical_score"]
+            relevance = eval_result["relevance_score"]
+        except Exception as err:
+            print(f"Neural evaluator note: {err}")
+            technical = compute_technical_accuracy(text, domain or "Software Engineering")
 
     if audio:
         confidence = float(audio.get("confidence_score") or 0.0)
@@ -710,6 +722,11 @@ def _score_one_answer(
         "technical": None if technical is None else round(float(technical), 1),
         "fluency": round(fluency, 1),
         "pace": round(wpm, 1),
+        "verdict": eval_result.get("verdict") if eval_result else ("CORRECT" if (technical or 0) >= 70 else "PARTIALLY_CORRECT"),
+        "is_correct": eval_result.get("is_correct", True) if eval_result else True,
+        "key_concepts_covered": eval_result.get("key_concepts_covered", []) if eval_result else [],
+        "missing_concepts": eval_result.get("missing_concepts", []) if eval_result else [],
+        "feedback": eval_result.get("feedback", []) if eval_result else [],
         "intent": intent["intent"],
         "skipped": False,
         "audioMeasured": bool(audio),

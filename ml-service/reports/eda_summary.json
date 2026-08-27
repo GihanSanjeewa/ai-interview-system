@@ -1,147 +1,149 @@
 {
   "stage": "02_exploratory_data_analysis",
-  "generated_utc": "2026-08-27T10:51:28+00:00",
+  "generated_utc": "2026-08-27T11:20:34+00:00",
   "corpus": {
-    "rows": 2291,
+    "rows": 17289,
     "columns": 18,
-    "unique_questions": 2230,
-    "exact_duplicates": 61,
+    "unique_questions": 17227,
+    "exact_duplicates": 62,
     "near_duplicate_pairs": 18
   },
   "numeric_summary": {
     "q_char_len": {
-      "n": 2291.0,
-      "mean": 57.3828,
-      "std": 42.7333,
+      "n": 17289.0,
+      "mean": 97.2378,
+      "std": 49.5502,
       "min": 11.0,
-      "q1": 34.0,
-      "median": 47.0,
-      "q3": 64.0,
-      "max": 630.0,
-      "skew": 4.2806,
-      "kurtosis": 33.6852
+      "q1": 63.0,
+      "median": 89.0,
+      "q3": 122.0,
+      "max": 717.0,
+      "skew": 1.8292,
+      "kurtosis": 8.5661
     },
     "q_word_count": {
-      "n": 2291.0,
-      "mean": 9.3907,
-      "std": 6.4478,
+      "n": 17289.0,
+      "mean": 17.2809,
+      "std": 8.5903,
       "min": 2.0,
-      "q1": 6.0,
-      "median": 8.0,
-      "q3": 11.0,
+      "q1": 11.0,
+      "median": 16.0,
+      "q3": 22.0,
       "max": 100.0,
-      "skew": 4.8677,
-      "kurtosis": 42.2165
+      "skew": 1.5861,
+      "kurtosis": 6.3118
     },
     "q_sentence_count": {
-      "n": 2291.0,
-      "mean": 1.0856,
-      "std": 0.3722,
+      "n": 17289.0,
+      "mean": 1.1437,
+      "std": 0.6429,
       "min": 1.0,
       "q1": 1.0,
       "median": 1.0,
       "q3": 1.0,
-      "max": 8.0,
-      "skew": 6.859,
-      "kurtosis": 75.1841
+      "max": 34.0,
+      "skew": 16.0292,
+      "kurtosis": 563.9557
     },
     "q_avg_word_len": {
-      "n": 2291.0,
-      "mean": 6.013,
-      "std": 1.0999,
-      "min": 3.667,
-      "q1": 5.25,
-      "median": 5.857,
-      "q3": 6.6035,
-      "max": 17.0,
-      "skew": 1.155,
-      "kurtosis": 4.7848
+      "n": 17289.0,
+      "mean": 5.6744,
+      "std": 0.8599,
+      "min": 3.152,
+      "q1": 5.103,
+      "median": 5.556,
+      "q3": 6.1,
+      "max": 22.8,
+      "skew": 1.9097,
+      "kurtosis": 15.8334
     },
     "q_type_token_ratio": {
-      "n": 2291.0,
-      "mean": 0.979,
-      "std": 0.0504,
-      "min": 0.6087,
+      "n": 17289.0,
+      "mean": 0.9315,
+      "std": 0.0715,
+      "min": 0.3103,
+      "q1": 0.8889,
+      "median": 0.9375,
+      "q3": 1.0,
+      "max": 1.0,
+      "skew": -1.2353,
+      "kurtosis": 2.5294
+    },
+    "a_char_len": {
+      "n": 17289.0,
+      "mean": 160.5304,
+      "std": 161.9777,
+      "min": 1.0,
+      "q1": 59.0,
+      "median": 103.0,
+      "q3": 206.0,
+      "max": 2792.0,
+      "skew": 2.7936,
+      "kurtosis": 14.7903
+    },
+    "a_word_count": {
+      "n": 17289.0,
+      "mean": 24.7025,
+      "std": 25.807,
+      "min": 1.0,
+      "q1": 9.0,
+      "median": 15.0,
+      "q3": 31.0,
+      "max": 442.0,
+      "skew": 2.8827,
+      "kurtosis": 15.6419
+    },
+    "difficulty_encoded": {
+      "n": 17289.0,
+      "mean": 1.0183,
+      "std": 0.6129,
+      "min": 0.0,
       "q1": 1.0,
       "median": 1.0,
       "q3": 1.0,
-      "max": 1.0,
-      "skew": -2.7987,
-      "kurtosis": 8.8501
-    },
-    "a_char_len": {
-      "n": 2291.0,
-      "mean": 91.3828,
-      "std": 42.7333,
-      "min": 45.0,
-      "q1": 68.0,
-      "median": 81.0,
-      "q3": 98.0,
-      "max": 664.0,
-      "skew": 4.2806,
-      "kurtosis": 33.6852
-    },
-    "a_word_count": {
-      "n": 2291.0,
-      "mean": 13.3907,
-      "std": 6.4478,
-      "min": 6.0,
-      "q1": 10.0,
-      "median": 12.0,
-      "q3": 15.0,
-      "max": 104.0,
-      "skew": 4.8677,
-      "kurtosis": 42.2165
-    },
-    "difficulty_encoded": {
-      "n": 2291.0,
-      "mean": 0.7032,
-      "std": 0.6701,
-      "min": 0.0,
-      "q1": 0.0,
-      "median": 1.0,
-      "q3": 1.0,
       "max": 2.0,
-      "skew": 0.4292,
-      "kurtosis": -0.7897
+      "skew": -0.0101,
+      "kurtosis": -0.3389
     },
     "domain_encoded": {
-      "n": 2291.0,
-      "mean": 3.5059,
-      "std": 0.8698,
+      "n": 17289.0,
+      "mean": 4.8836,
+      "std": 1.765,
       "min": 0.0,
-      "q1": 3.0,
-      "median": 4.0,
-      "q3": 4.0,
-      "max": 6.0,
-      "skew": -0.3608,
-      "kurtosis": 2.6552
+      "q1": 5.0,
+      "median": 6.0,
+      "q3": 6.0,
+      "max": 8.0,
+      "skew": -1.6293,
+      "kurtosis": 1.7257
     }
   },
   "class_balance": {
     "difficulty": {
       "classes": 3,
       "counts": {
-        "Beginner": 955,
-        "Intermediate": 1061,
-        "Advanced": 275
+        "Beginner": 3091,
+        "Intermediate": 10790,
+        "Advanced": 3408
       },
-      "imbalance_ratio": 3.86,
-      "smallest_class": "Advanced",
-      "smallest_count": 275
+      "imbalance_ratio": 3.49,
+      "smallest_class": "Beginner",
+      "smallest_count": 3091
     },
     "domain": {
-      "classes": 7,
+      "classes": 9,
       "counts": {
-        "Frontend Development": 1010,
-        "General Software Engineering": 993,
+        "General Software Engineering": 9323,
+        "Frontend Development": 3904,
+        "Database Systems": 2113,
+        "Algorithms & Data Structures": 1151,
+        "Backend & Web APIs": 382,
+        "DevOps & Cloud": 220,
         "Software Engineering": 111,
-        "Database Systems": 59,
-        "System Design": 52,
-        "DevOps & Cloud": 52,
+        "System Design": 71,
         "Data Science & ML": 14
       },
-      "imbalance_ratio": 72.14,
+      "imbalance_ratio": 665.93,
       "smallest_class": "Data Science & ML",
       "smallest_count": 14
     }
@@ -149,89 +151,49 @@
   "correlation": {
     "strong_pairs": [
       {
-        "a": "q_word_count",
-        "b": "a_word_count",
-        "r": 1.0
-      },
-      {
-        "a": "q_char_len",
-        "b": "a_char_len",
-        "r": 1.0
-      },
-      {
-        "a": "q_char_len",
-        "b": "a_word_count",
-        "r": 0.9654
-      },
-      {
         "a": "q_char_len",
         "b": "q_word_count",
-        "r": 0.9654
-      },
-      {
-        "a": "q_word_count",
-        "b": "a_char_len",
-        "r": 0.9654
+        "r": 0.9456
       },
       {
         "a": "a_char_len",
         "b": "a_word_count",
-        "r": 0.9654
-      },
-      {
-        "a": "a_word_count",
-        "b": "difficulty_encoded",
-        "r": 0.7282
-      },
-      {
-        "a": "q_word_count",
-        "b": "difficulty_encoded",
-        "r": 0.7282
-      },
-      {
-        "a": "a_char_len",
-        "b": "difficulty_encoded",
-        "r": 0.72
-      },
-      {
-        "a": "q_char_len",
-        "b": "difficulty_encoded",
-        "r": 0.72
+        "r": 0.945
       }
     ],
     "label_leakage_detected": true
   },
   "vocabulary": {
-    "total_tokens": 21840,
-    "distinct_types": 2889,
-    "hapax_count": 1270,
-    "types_for_99pc_coverage": 2671,
-    "recommended_bpe_vocab": 4096
+    "total_tokens": 299636,
+    "distinct_types": 7897,
+    "hapax_count": 3322,
+    "types_for_99pc_coverage": 4901,
+    "recommended_bpe_vocab": 8192
   },
   "outliers": [
     {
       "variable": "q_char_len",
-      "Q1": 34.0,
-      "Q3": 64.0,
-      "IQR": 30.0,
-      "lower_fence": -11.0,
-      "upper_fence": 109.0,
+      "Q1": 63.0,
+      "Q3": 122.0,
+      "IQR": 59.0,
+      "lower_fence": -25.5,
+      "upper_fence": 210.5,
       "below": 0,
-      "above": 220,
-      "outliers": 220,
-      "outlier_%": 9.6
+      "above": 477,
+      "outliers": 477,
+      "outlier_%": 2.76
     },
     {
       "variable": "q_word_count",
-      "Q1": 6.0,
-      "Q3": 11.0,
-      "IQR": 5.0,
-      "lower_fence": -1.5,
-      "upper_fence": 18.5,
+      "Q1": 11.0,
+      "Q3": 22.0,
+      "IQR": 11.0,
+      "lower_fence": -5.5,
+      "upper_fence": 38.5,
       "below": 0,
-      "above": 122,
-      "outliers": 122,
-      "outlier_%": 5.33
+      "above": 351,
+      "outliers": 351,
+      "outlier_%": 2.03
     },
     {
       "variable": "q_sentence_count",
@@ -241,30 +203,30 @@
       "lower_fence": 1.0,
       "upper_fence": 1.0,
       "below": 0,
-      "above": 153,
-      "outliers": 153,
-      "outlier_%": 6.68
+      "above": 1617,
+      "outliers": 1617,
+      "outlier_%": 9.35
     },
     {
       "variable": "q_avg_word_len",
-      "Q1": 5.25,
-      "Q3": 6.6,
-      "IQR": 1.35,
-      "lower_fence": 3.22,
-      "upper_fence": 8.63,
-      "below": 0,
-      "above": 56,
-      "outliers": 56,
-      "outlier_%": 2.44
+      "Q1": 5.1,
+      "Q3": 6.1,
+      "IQR": 1.0,
+      "lower_fence": 3.61,
+      "upper_fence": 7.6,
+      "below": 8,
+      "above": 478,
+      "outliers": 486,
+      "outlier_%": 2.81
     }
   ],
   "cleaning_thresholds": {
     "min_words": 4,
-    "max_words": 33,
+    "max_words": 44,
     "max_sentences": 2,
     "reject_code_markers": true,
     "drop_exact_duplicates": true,
-    "estimated_retained": 2060,
-    "estimated_retention_pct": 89.92
+    "estimated_retained": 14749,
+    "estimated_retention_pct": 85.31
   }
 }
