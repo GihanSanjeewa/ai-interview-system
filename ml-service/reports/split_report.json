@@ -1,0 +1,113 @@
+{
+  "stage": "04_data_validation_and_splitting",
+  "generated_utc": "2026-08-27T09:37:22+00:00",
+  "seed": 42,
+  "ordering": "sha256(seed:id) \u2014 reproducible on any machine",
+  "stratification_key": "domain x difficulty",
+  "ratios_requested": {
+    "train": 0.8,
+    "validation": 0.1,
+    "test": 0.1
+  },
+  "sizes": {
+    "corpus": 1995,
+    "train": 1589,
+    "validation": 203,
+    "test": 203
+  },
+  "ratios_achieved": {
+    "train": 0.7965,
+    "validation": 0.1018,
+    "test": 0.1018
+  },
+  "strata": {
+    "count": 20,
+    "below_minimum": 0,
+    "minimum_size": 3
+  },
+  "class_coverage": {
+    "difficulty": {
+      "train": 3,
+      "validation": 3,
+      "test": 3,
+      "corpus": 3
+    },
+    "domain": {
+      "train": 7,
+      "validation": 7,
+      "test": 7,
+      "corpus": 7
+    }
+  },
+  "leakage": {
+    "exact": {
+      "train_vs_validation": 0,
+      "train_vs_test": 0,
+      "validation_vs_test": 0
+    },
+    "exact_total": 0,
+    "near_duplicate_pairs": 2,
+    "mean_best_match_similarity": 0.318,
+    "zero_exact_leakage": true
+  },
+  "length_by_split": {
+    "train": {
+      "n": 1589.0,
+      "mean": 8.818,
+      "std": 3.965,
+      "min": 4.0,
+      "q1": 6.0,
+      "median": 8.0,
+      "q3": 10.0,
+      "max": 33.0,
+      "skew": 1.579,
+      "kurtosis": 3.578
+    },
+    "validation": {
+      "n": 203.0,
+      "mean": 8.995,
+      "std": 3.948,
+      "min": 4.0,
+      "q1": 6.0,
+      "median": 8.0,
+      "q3": 11.0,
+      "max": 29.0,
+      "skew": 1.702,
+      "kurtosis": 4.916
+    },
+    "test": {
+      "n": 203.0,
+      "mean": 8.931,
+      "std": 3.983,
+      "min": 4.0,
+      "q1": 6.0,
+      "median": 8.0,
+      "q3": 10.5,
+      "max": 26.0,
+      "skew": 1.476,
+      "kurtosis": 2.819
+    }
+  },
+  "test_lock": {
+    "sealed_utc": "2026-08-27T09:37:22+00:00",
+    "file": "test.jsonl",
+    "records": 203,
+    "bytes": 57926,
+    "sha256": "80d9e916352f81a16ac8fdda2e27552339d33164f2a044b5de2d130348616333",
+    "authorised_notebook_ids": [
+      8
+    ],
+    "policy": "The test split may be read only by Notebook 08 (held-out evaluation). Any other access invalidates the experiment, because a test score chosen after repeated inspection is a training score.",
+    "seed": 42,
+    "ratios": {
+      "train": 0.8,
+      "validation": 0.1,
+      "test": 0.1
+    }
+  },
+  "files": {
+    "train": "dataset\\processed\\splits\\train.jsonl",
+    "validation": "dataset\\processed\\splits\\validation.jsonl",
+    "test": "dataset\\processed\\splits\\test.jsonl"
+  }
+}

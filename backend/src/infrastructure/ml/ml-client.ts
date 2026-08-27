@@ -9,19 +9,166 @@ const http = axios.create({
   timeout: 60_000,
 });
 
+/**
+ * Thrown when the ML service cannot answer. The previous implementation
+ * swallowed every failure and substituted invented data — a fabricated CV with
+ * "JavaScript, TypeScript, React, Node.js", fixed answer scores, and a canned
+ * report — so an outage looked identical to a successful analysis. Failures now
+ * surface so the caller can mark the record FAILED and tell the user.
+ */
+export class MlServiceError extends Error {
+  constructor(
+    readonly operation: string,
+    readonly cause: unknown,
+  ) {
+    super(`ML service ${operation} failed: ${describe(cause)}`);
+    this.name = "MlServiceError";
+  }
+}
+
+function describe(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    if (err.code === "ECONNREFUSED") return "service unreachable";
+    const detail = (err.response?.data as { detail?: string } | undefined)?.detail;
+    return detail ?? err.message;
+  }
+  return err instanceof Error ? err.message : String(err);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CV analysis
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface CvContact {
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  links: string[];
+}
+
+export interface CvEducationEntry {
+  label: string;
+  degree: string | null;
+  field: string | null;
+  institution: string | null;
+  graduationYear: number | null;
+}
+
+export interface CvExperienceEntry {
+  label: string;
+  title: string | null;
+  organisation: string | null;
+  months: number | null;
+  current: boolean;
+}
+
+export interface CvTrackAnalysis {
+  track: string;
+  label: string;
+  matched: string[];
+  matchCount: number;
+  confidence: number;
+}
+
 export interface CvParsedResult {
+  contact: CvContact;
   skills: string[];
-  education: string[];
-  experience: string[];
-  certifications: string[];
   technologies: string[];
-  yearsTotal?: number;
+  demonstratedTechnologies: string[];
+  education: string[];
+  educationDetail: CvEducationEntry[];
+  experience: string[];
+  experienceDetail: CvExperienceEntry[];
+  certifications: string[];
+  projects: string[];
+  /** null when the CV states no dates — never guessed. */
+  yearsTotal: number | null;
+  seniority: string;
   readinessScore: number;
+  readinessBreakdown: Record<string, number>;
   suggestedTracks: string[];
+  trackAnalysis: CvTrackAnalysis[];
+  sectionsFound: string[];
+  extractionConfidence: number;
+  warnings: string[];
   rawText: string;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Interview planning & turn-taking
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** The candidate profile the planner reads. Mirrors the CV analyser output. */
+export interface InterviewProfile {
+  technologies?: string[];
+  skills?: string[];
+  demonstratedTechnologies?: string[];
+  education?: string[];
+  experience?: string[];
+  certifications?: string[];
+  projects?: string[];
+  yearsTotal?: number | null;
+  role?: string;
+}
+
+export interface PlannedQuestion {
+  ordinal: number;
+  text: string;
+  phase: string;
+  domain: string;
+  difficulty: string;
+  source: string;
+  expects: string[];
+}
+
+export interface InterviewPlan {
+  track: string;
+  trackLabel: string;
+  difficultyEntry: string;
+  poolSize: number;
+  cvGrounded: number;
+  questions: PlannedQuestion[];
+}
+
+export type TurnAction = "next" | "followup" | "repeat" | "easier" | "end";
+
+export type TurnIntent =
+  | "substantive"
+  | "thin"
+  | "dont_know"
+  | "clarify"
+  | "silent";
+
+export interface TurnDecision {
+  /** What the interview should do next. */
+  action: TurnAction;
+  /** What the interviewer says out loud before the next question. */
+  say: string;
+  intent: TurnIntent;
+  intentConfidence: number;
+  intentReason: string;
+  /** True when the answer must not count against technical accuracy. */
+  skipped: boolean;
+  /** A newly generated question, for `followup` and `easier`. */
+  followup: PlannedQuestion | null;
+  note: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Scoring
+// ─────────────────────────────────────────────────────────────────────────────
+
 export type PerformanceLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+
+/** Acoustic metrics measured by librosa at transcription time. */
+export interface AudioMetrics {
+  words_per_minute: number;
+  confidence_score: number;
+  fluency_score: number;
+  speaking_speed_score: number;
+  word_count: number;
+  filler_count: number;
+}
 
 export interface AnswerScore {
   confidence: number;
@@ -30,6 +177,10 @@ export interface AnswerScore {
   technical: number;
   fluency: number;
   pace: number;
+  intent: TurnIntent;
+  skipped: boolean;
+  /** False when confidence/fluency are text estimates rather than measured. */
+  audioMeasured: boolean;
   notes?: string[];
 }
 
@@ -40,6 +191,23 @@ export interface LearningResource {
   description?: string;
 }
 
+export interface SessionAnalytics {
+  answerCount: number;
+  answeredCount: number;
+  skippedCount: number;
+  coverage: number;
+  avgWords?: number;
+  totalWords?: number;
+  avgFillerRate?: number;
+  concreteExamples?: number;
+  structuredAnswers?: number;
+  hedgeTotal?: number;
+  trends?: Record<string, number | null>;
+  byDomain?: { domain: string; questions: number; technical: number | null }[];
+  byDifficulty?: { difficulty: string; questions: number; technical: number | null }[];
+  skippedQuestions?: { ordinal: number; question: string; domain: string; difficulty: string }[];
+}
+
 export interface SessionScore {
   overallScore: number;
   confidence: number;
@@ -48,189 +216,17 @@ export interface SessionScore {
   technical: number;
   fluency: number;
   pace: number;
+  paceScore: number;
+  paceWpm: number | null;
   performanceLevel: PerformanceLevel;
   strengths: string[];
   weaknesses: string[];
   suggestions: string[];
   resources: LearningResource[];
+  diagnosis: string[];
+  analytics: SessionAnalytics;
+  perQuestion: Record<string, unknown>[];
 }
-
-export const mlClient = {
-  async parseCv(filePath: string): Promise<CvParsedResult> {
-    const form = new FormData();
-    form.append("file", fs.createReadStream(filePath));
-    try {
-      const res = await http.post("/cv/parse", form, {
-        headers: form.getHeaders(),
-      });
-      const data = res.data ?? {};
-      const extracted = data.extracted_info ?? {};
-
-      const skills = Array.isArray(data.skills) ? data.skills : (Array.isArray(extracted.skills) ? extracted.skills : []);
-      const technologies = Array.isArray(data.technologies) ? data.technologies : (Array.isArray(extracted.technologies) ? extracted.technologies : []);
-      const education = Array.isArray(data.education) ? data.education : (Array.isArray(extracted.education) ? extracted.education : []);
-      const experience = Array.isArray(data.experience) ? data.experience : (Array.isArray(extracted.experience) ? extracted.experience : []);
-      const certifications = Array.isArray(data.certifications) ? data.certifications : (Array.isArray(extracted.certifications) ? extracted.certifications : []);
-      const suggestedTracks = Array.isArray(data.suggestedTracks) ? data.suggestedTracks : (Array.isArray(data.domains) ? data.domains : ["swe"]);
-      const readinessScore = typeof data.readinessScore === "number" ? data.readinessScore : 75;
-      const yearsTotal = typeof data.yearsTotal === "number" ? data.yearsTotal : 2.0;
-      const rawText = data.rawText || data.text || "";
-
-      return {
-        skills,
-        education,
-        experience,
-        certifications,
-        technologies,
-        yearsTotal,
-        readinessScore,
-        suggestedTracks,
-        rawText,
-      };
-    } catch (err: unknown) {
-      logger.warn({ err }, "ML CV parse failed; returning heuristic fallback");
-      return fallbackCv();
-    }
-  },
-
-  async scoreAnswer(args: {
-    question: string;
-    transcript: string;
-    language: string;
-  }): Promise<AnswerScore> {
-    try {
-      const res = await http.post("/score/answer", args);
-      return res.data as AnswerScore;
-    } catch (err) {
-      logger.warn({ err }, "ML score/answer failed; using heuristic");
-      return heuristicAnswerScore(args.transcript);
-    }
-  },
-
-  async scoreSession(args: {
-    answers: { question: string; transcript: string; metrics?: AnswerScore }[];
-    role: string;
-    language: string;
-  }): Promise<SessionScore> {
-    try {
-      const res = await http.post("/score/session", args);
-      const d = (res.data ?? {}) as Record<string, any>;
-      const tech = Number(d.technical ?? d.technical_score ?? 78);
-      const comm = Number(d.communication ?? d.communication_score ?? 80);
-      const rel = Number(d.relevance ?? d.response_relevance_score ?? 82);
-      const conf = Number(d.confidence ?? d.confidence_score ?? 78);
-      const fl = Number(d.fluency ?? d.fluency_score ?? 80);
-      const pace = Number(d.pace ?? d.speaking_speed_score ?? 135);
-      const overall = Number(
-        d.overallScore ?? Math.round((tech * 0.35) + (rel * 0.25) + (comm * 0.2) + (conf * 0.1) + (fl * 0.1))
-      );
-
-      const rawLevel = String(d.performanceLevel ?? d.performance_level ?? "").toUpperCase();
-      const performanceLevel: PerformanceLevel =
-        rawLevel === "ADVANCED" || rawLevel === "BEGINNER" ? rawLevel : "INTERMEDIATE";
-
-      const strengths = Array.isArray(d.strengths ?? d.key_strengths)
-        ? (d.strengths ?? d.key_strengths)
-        : ["Clear articulation of technical concepts", "Structured problem-solving responses"];
-
-      const weaknesses = Array.isArray(d.weaknesses ?? d.areas_for_improvement)
-        ? (d.weaknesses ?? d.areas_for_improvement)
-        : ["Provide deeper analysis of edge cases and trade-offs"];
-
-      const suggestions = Array.isArray(d.suggestions ?? d.recommendations)
-        ? (d.suggestions ?? d.recommendations).map((s: any) =>
-            typeof s === "string" ? s : s?.title || s?.rationale || "Continue regular mock practice"
-          )
-        : ["Practice system design architecture scenarios", "Review core data structures and concurrency"];
-
-      const resources = Array.isArray(d.resources ?? d.learning_resources)
-        ? (d.resources ?? d.learning_resources).map((r: any) => ({
-            title: r?.title || "Curated Learning Resource",
-            type: r?.type || "Guide",
-            url: r?.url,
-            description: r?.description || "Recommended material to strengthen technical skills.",
-          }))
-        : [
-            {
-              title: "System Design Primer",
-              type: "GitHub Repository",
-              url: "https://github.com/donnemartin/system-design-primer",
-              description: "Comprehensive guide to scaling high-throughput architectures.",
-            },
-          ];
-
-      return {
-        overallScore: overall,
-        confidence: conf,
-        communication: comm,
-        relevance: rel,
-        technical: tech,
-        fluency: fl,
-        pace,
-        performanceLevel,
-        strengths,
-        weaknesses,
-        suggestions,
-        resources,
-      };
-    } catch (err) {
-      logger.warn({ err }, "ML score/session failed; aggregating heuristically");
-      return aggregateHeuristic(args.answers);
-    }
-  },
-
-  async transcribe(
-    filePath: string,
-    language?: string
-  ): Promise<{ text: string; whisper?: WhisperMeta }> {
-    const form = new FormData();
-    form.append("file", fs.createReadStream(filePath));
-    if (language) form.append("language", language);
-    try {
-      const res = await http.post("/transcribe", form, {
-        headers: form.getHeaders(),
-      });
-      return {
-        text: (res.data.text as string) ?? "",
-        whisper: res.data.whisper as WhisperMeta | undefined,
-      };
-    } catch (err) {
-      logger.warn({ err }, "ML transcribe failed");
-      return { text: "" };
-    }
-  },
-
-  async evaluateCode(args: {
-    code: string;
-    language: string;
-    problem?: string;
-  }): Promise<{ score: number; correctness: number; quality: number; security: number; complexity: string; feedback: string[] }> {
-    try {
-      const res = await http.post("/evaluate_code", args);
-      return res.data;
-    } catch (err) {
-      logger.warn({ err }, "ML evaluate_code failed; using heuristic");
-      return {
-        score: 75,
-        correctness: 75,
-        quality: 75,
-        security: 90,
-        complexity: "O(N)",
-        feedback: ["Static code evaluation processed."]
-      };
-    }
-  },
-
-  async whisperInfo(): Promise<WhisperInfo | null> {
-    try {
-      const res = await http.get("/whisper/info");
-      return res.data as WhisperInfo;
-    } catch (err) {
-      logger.debug({ err }, "ML /whisper/info unavailable");
-      return null;
-    }
-  },
-};
 
 export interface WhisperMeta {
   model: string;
@@ -245,111 +241,234 @@ export interface WhisperInfo {
   si: { model: string; backend: string; label: string; finetuned: boolean };
 }
 
-// -------- fallbacks (keep API usable even if ML svc is down) --------
+// ─────────────────────────────────────────────────────────────────────────────
 
-function fallbackCv(): CvParsedResult {
-  return {
-    skills: ["JavaScript", "TypeScript", "React", "Node.js"],
-    education: [],
-    experience: [],
-    certifications: [],
-    technologies: ["React", "Node.js"],
-    readinessScore: 60,
-    suggestedTracks: ["react", "swe"],
-    rawText: "",
-  };
+export const mlClient = {
+  /** Parse and analyse a CV. Throws MlServiceError rather than inventing data. */
+  async parseCv(filePath: string): Promise<CvParsedResult> {
+    const form = new FormData();
+    form.append("file", fs.createReadStream(filePath));
+    try {
+      const res = await http.post("/cv/parse", form, {
+        headers: form.getHeaders(),
+      });
+      return normaliseCv(res.data ?? {});
+    } catch (err) {
+      logger.error({ err, filePath }, "ML CV parse failed");
+      throw new MlServiceError("CV parse", err);
+    }
+  },
+
+  /** Build a CV-grounded, adaptive interview plan. */
+  async planInterview(args: {
+    profile: InterviewProfile;
+    role: string;
+    track: string;
+    difficulty: string;
+    total: number;
+  }): Promise<InterviewPlan> {
+    try {
+      const res = await http.post("/interview/plan", args);
+      const plan = res.data as InterviewPlan;
+      if (!plan?.questions?.length) {
+        throw new Error("planner returned no questions");
+      }
+      return plan;
+    } catch (err) {
+      logger.error({ err, role: args.role }, "ML interview plan failed");
+      throw new MlServiceError("interview plan", err);
+    }
+  },
+
+  /**
+   * Decide the interviewer's next move for one turn.
+   *
+   * On failure this advances the interview rather than throwing — a live
+   * interview must never stall on a scoring outage.
+   */
+  async nextTurn(args: {
+    question: PlannedQuestion | { text: string; [k: string]: unknown };
+    answer: string;
+    answerScore?: AnswerScore;
+    history?: { intent?: string; question?: string }[];
+    profile?: InterviewProfile;
+    track?: string;
+    difficulty?: string;
+    followupsUsed?: number;
+    remaining?: number;
+  }): Promise<TurnDecision> {
+    try {
+      const res = await http.post("/interview/turn", args);
+      return res.data as TurnDecision;
+    } catch (err) {
+      logger.warn({ err }, "ML interview turn failed; advancing the plan");
+      return {
+        action: "next",
+        say: "Thank you. Let's move on to the next question.",
+        intent: "substantive",
+        intentConfidence: 0,
+        intentReason: "ml_unavailable",
+        skipped: false,
+        followup: null,
+        note: "fallback: turn decision unavailable",
+      };
+    }
+  },
+
+  /** Score one answer. Pass `audio` from transcribe() for measured delivery. */
+  async scoreAnswer(args: {
+    question: PlannedQuestion | { text: string; [k: string]: unknown } | string;
+    transcript: string;
+    language: string;
+    audio?: AudioMetrics | null;
+    domain?: string;
+  }): Promise<AnswerScore> {
+    try {
+      const res = await http.post("/score/answer", args);
+      return res.data as AnswerScore;
+    } catch (err) {
+      logger.error({ err }, "ML score/answer failed");
+      throw new MlServiceError("answer scoring", err);
+    }
+  },
+
+  /** Generate the full report from the session's real answers. */
+  async scoreSession(args: {
+    answers: {
+      question: PlannedQuestion | { text: string; [k: string]: unknown };
+      transcript: string;
+      metrics?: AnswerScore | null;
+      durationMs?: number | null;
+      intent?: string | null;
+      audio?: AudioMetrics | null;
+    }[];
+    role: string;
+    track?: string;
+    language: string;
+  }): Promise<SessionScore> {
+    try {
+      const res = await http.post("/score/session", args);
+      return res.data as SessionScore;
+    } catch (err) {
+      logger.error({ err, role: args.role }, "ML score/session failed");
+      throw new MlServiceError("session scoring", err);
+    }
+  },
+
+  /**
+   * Transcribe an audio answer.
+   *
+   * Returns the acoustic metrics alongside the text so the caller can pass
+   * them into scoreAnswer — previously these were computed and discarded, which
+   * is why confidence and fluency were constants in every report.
+   */
+  async transcribe(
+    filePath: string,
+    language?: string,
+  ): Promise<{ text: string; audio: AudioMetrics | null; whisper?: WhisperMeta }> {
+    const form = new FormData();
+    form.append("file", fs.createReadStream(filePath));
+    if (language) form.append("language", language);
+    try {
+      const res = await http.post("/transcribe", form, {
+        headers: form.getHeaders(),
+      });
+      return {
+        text: (res.data?.text as string) ?? "",
+        audio: (res.data?.metrics as AudioMetrics) ?? null,
+        whisper: res.data?.whisper as WhisperMeta | undefined,
+      };
+    } catch (err) {
+      logger.error({ err }, "ML transcribe failed");
+      throw new MlServiceError("transcription", err);
+    }
+  },
+
+  async evaluateCode(args: {
+    code: string;
+    language: string;
+    problem?: string;
+  }): Promise<{
+    score: number;
+    correctness: number;
+    quality: number;
+    security: number;
+    complexity: string;
+    feedback: string[];
+  }> {
+    try {
+      const res = await http.post("/evaluate_code", args);
+      return res.data;
+    } catch (err) {
+      logger.error({ err }, "ML evaluate_code failed");
+      throw new MlServiceError("code evaluation", err);
+    }
+  },
+
+  async whisperInfo(): Promise<WhisperInfo | null> {
+    try {
+      const res = await http.get("/whisper/info");
+      return res.data as WhisperInfo;
+    } catch (err) {
+      logger.debug({ err }, "ML /whisper/info unavailable");
+      return null;
+    }
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Response normalisation
+// ─────────────────────────────────────────────────────────────────────────────
+
+function strArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
 }
 
-function heuristicAnswerScore(transcript: string): AnswerScore {
-  const wc = transcript.trim().split(/\s+/).filter(Boolean).length;
-  const base = Math.min(95, 55 + Math.round(wc / 4));
-  return {
-    confidence: Math.max(50, base - 4),
-    communication: Math.min(95, base + 3),
-    relevance: Math.min(95, base + 1),
-    technical: base,
-    fluency: Math.min(95, base - 2),
-    pace: 84,
-  };
-}
+function normaliseCv(data: Record<string, any>): CvParsedResult {
+  const extracted = data.extracted_info ?? {};
+  const pick = (key: string) =>
+    strArray(data[key]).length ? strArray(data[key]) : strArray(extracted[key]);
 
-function pickLevel(score: number): PerformanceLevel {
-  if (score >= 80) return "ADVANCED";
-  if (score >= 60) return "INTERMEDIATE";
-  return "BEGINNER";
-}
-
-function aggregateHeuristic(
-  answers: { question: string; transcript: string; metrics?: AnswerScore }[]
-): SessionScore {
-  if (answers.length === 0) {
-    return zeroSession();
-  }
-  const m = answers.map((a) => a.metrics ?? heuristicAnswerScore(a.transcript));
-  const avg = (k: keyof AnswerScore) =>
-    Math.round(m.reduce((s, x) => s + (x[k] as number), 0) / m.length);
-
-  const confidence = avg("confidence");
-  const communication = avg("communication");
-  const relevance = avg("relevance");
-  const technical = avg("technical");
-  const fluency = avg("fluency");
-  const pace = avg("pace");
-  const overall = Math.round(
-    (confidence + communication + relevance + technical + fluency + pace) / 6
-  );
+  // yearsTotal is deliberately preserved as null when absent: the analyser
+  // returns null for a CV with no dated roles, and substituting a default here
+  // would reintroduce the invented "2 years" the old client reported.
+  const years =
+    typeof data.yearsTotal === "number" && Number.isFinite(data.yearsTotal)
+      ? data.yearsTotal
+      : null;
 
   return {
-    overallScore: overall,
-    confidence,
-    communication,
-    relevance,
-    technical,
-    fluency,
-    pace,
-    performanceLevel: pickLevel(overall),
-    strengths: [
-      "Structured answers with concrete examples",
-      "Maintained an even pace throughout the session",
-      "Stayed engaged across the full interview",
-    ],
-    weaknesses: [
-      "Some answers lacked depth on edge cases",
-      "Filler words appeared in the opening minutes",
-    ],
-    suggestions: [
-      "Drill 2–3 system-design walkthroughs this week",
-      "Record a 60-second self-intro and refine it daily",
-      "Pause for 2 seconds before answering hard questions",
-    ],
-    resources: [
-      {
-        title: "Designing Data-Intensive Applications",
-        type: "Book",
-        description: "Foundations every senior interviewer probes.",
-      },
-      {
-        title: "STAR method playbook",
-        type: "Article",
-        description: "Structure behavioral answers with concrete outcomes.",
-      },
-    ],
-  };
-}
-
-function zeroSession(): SessionScore {
-  return {
-    overallScore: 0,
-    confidence: 0,
-    communication: 0,
-    relevance: 0,
-    technical: 0,
-    fluency: 0,
-    pace: 0,
-    performanceLevel: "BEGINNER",
-    strengths: [],
-    weaknesses: ["No answers were recorded for this session."],
-    suggestions: ["Try a fresh mock interview and respond to at least 3 questions."],
-    resources: [],
+    contact: {
+      name: data.contact?.name ?? null,
+      email: data.contact?.email ?? null,
+      phone: data.contact?.phone ?? null,
+      links: strArray(data.contact?.links),
+    },
+    skills: pick("skills"),
+    technologies: pick("technologies"),
+    demonstratedTechnologies: strArray(data.demonstratedTechnologies),
+    education: pick("education"),
+    educationDetail: Array.isArray(data.educationDetail) ? data.educationDetail : [],
+    experience: pick("experience"),
+    experienceDetail: Array.isArray(data.experienceDetail) ? data.experienceDetail : [],
+    certifications: pick("certifications"),
+    projects: pick("projects"),
+    yearsTotal: years,
+    seniority: typeof data.seniority === "string" ? data.seniority : "unknown",
+    readinessScore:
+      typeof data.readinessScore === "number" ? Math.round(data.readinessScore) : 0,
+    readinessBreakdown:
+      typeof data.readinessBreakdown === "object" && data.readinessBreakdown
+        ? data.readinessBreakdown
+        : {},
+    suggestedTracks: strArray(data.suggestedTracks).length
+      ? strArray(data.suggestedTracks)
+      : strArray(data.domains),
+    trackAnalysis: Array.isArray(data.trackAnalysis) ? data.trackAnalysis : [],
+    sectionsFound: strArray(data.sectionsFound),
+    extractionConfidence:
+      typeof data.extractionConfidence === "number" ? data.extractionConfidence : 0,
+    warnings: strArray(data.warnings),
+    rawText: typeof data.rawText === "string" ? data.rawText : (data.text ?? ""),
   };
 }

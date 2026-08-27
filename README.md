@@ -6,12 +6,39 @@ An AI-powered voice interview preparation system for Sri Lankan job seekers. Upl
 
 ## What the System Does
 
-1. **CV Analysis** — Upload a PDF or DOCX resume; AI extracts your skills and suggests interview domains
-2. **Voice Interview** — AI asks questions aloud; you answer by speaking; your speech is transcribed automatically
-3. **ML Evaluation** — 6 metrics scored by real ML models (librosa audio analysis + spaCy NLP):
-   - Confidence Level · Fluency · Speaking Speed · Communication Quality · Response Relevance · Technical Accuracy
-4. **Performance Report** — Detailed report with scores, strengths, improvement areas, learning resources, and job recommendations
-5. **Interview History** — Review all past sessions and track progress over time
+1. **CV Analysis** — Upload a PDF or DOCX resume. A section-aware parser extracts
+   your contact details, technologies, education, roles and projects, computes
+   real tenure from date ranges, and ranks the six interview tracks by how much
+   evidence your CV actually supports. Fields it cannot find come back empty
+   with an explanation, never filled in with a guess.
+2. **Adaptive Interview** — Questions are planned per candidate: retrieved from a
+   labelled 8,000-question corpus by relevance to your CV, with the opening
+   questions grounded in your real projects and roles. There is no fixed
+   question list.
+3. **A Real Conversation** — The interviewer responds to what you actually say:
+   - Say *"I don't know"* → it acknowledges you and moves on, and the question
+     is recorded as declined rather than scored as wrong.
+   - Two gaps in a row → it drops to an easier question in the same area.
+   - A shallow answer → one follow-up probe, then it moves on.
+   - A strong answer → a deeper probe, grounded in a term you used.
+   - *"Could you repeat that?"* → it repeats the question without consuming it.
+4. **ML Evaluation** — 6 metrics from real measurement, not constants:
+   - Confidence · Fluency · Speaking Speed (librosa acoustic analysis)
+   - Communication · Response Relevance · Technical Accuracy (NLP)
+5. **Evidence-Backed Report** — Every score, strength, weakness, suggestion and
+   learning resource is derived from your session. Findings quote the
+   measurement behind them ("declined 2 of 5 questions, the gaps were in
+   Frontend Development"), and the report stores the full analytics so it can
+   show its working.
+6. **Interview History** — Review past sessions and track progress over time.
+
+### Design principle: no fabricated output
+
+Earlier versions of this system fell back to invented data when a component
+failed — a placeholder CV, fixed answer scores, and a canned report with the
+same strengths and weaknesses for every candidate. That is now removed
+throughout: a component that cannot produce a real answer reports the failure so
+the user is told, rather than being shown a plausible fiction.
 
 ---
 
@@ -28,9 +55,50 @@ An AI-powered voice interview preparation system for Sri Lankan job seekers. Upl
                               │  MySQL DB   │              │  Whisper (STT)   │
                               │  Port 3306  │              │  librosa (audio) │
                               └────────────┘              │  spaCy (NLP)     │
-                                                          │  Claude API (AI) │
+                                                          │  own Transformer │
                                                           └─────────────────┘
 ```
+
+### ML service modules
+
+| Module | Responsibility |
+|---|---|
+| `cv_analyzer.py` | Section-aware CV parsing: contact, skills, education, real tenure from date ranges, track ranking. Returns empty fields plus warnings when evidence is absent. |
+| `interview_engine.py` | The interviewer's brain. Plans a CV-grounded question set from the labelled corpus, classifies each turn (answered / declined / shallow / clarify / silent), and decides the next move. |
+| `report_generator.py` | Derives the report from the session: per-answer evidence, aggregation, findings traceable to measurements, resources selected by diagnosis. |
+| `text_analyzer.py` | Communication, relevance and technical-accuracy scoring. Relevance routes on question type — a behavioural prompt is not scored like a technical one. |
+| `audio_analyzer.py` | librosa acoustic features → vocal confidence, fluency, speaking pace. |
+| `transformer_scratch.py` | The project's own decoder-only Transformer and BPE tokenizer, both trained from zero. |
+
+### Models: trained from scratch, no pretrained weights
+
+The question generator is this project's own Transformer, trained from random
+initialisation by the nine-notebook pipeline in `ml-service/notebooks/`. No
+pretrained weights, adapters, or external LLMs are used — Notebook 01 includes an
+audit that fails if any weight file is found in the workspace.
+
+Because the training corpus is small for from-scratch language modelling,
+generated questions are gated on a quality check at runtime and the service falls
+back to retrieval over the labelled corpus when a generated question fails. This
+limitation is measured in Notebook 08 and recorded in the model card, not hidden.
+
+### The ML pipeline notebooks
+
+Run `ml-service/notebooks/01`–`09` in order. Each stage feeds the next through a
+report file in `ml-service/reports/`, and every figure is exported to
+`ml-service/reports/figures/` at 200 dpi.
+
+| # | Notebook | Produces |
+|---|---|---|
+| 01 | Dataset acquisition | provenance record, SHA-256, zero-pretrained-weights audit |
+| 02 | Exploratory analysis | 9 figures; the cleaning thresholds Stage 3 reads |
+| 03 | Preprocessing | cleaned corpus + before/after verification of each rule |
+| 04 | Validation & splitting | stratified 80/10/10, leakage tested, test split sealed |
+| 05 | Tokenizer & training | custom BPE + 4 from-scratch architectures, learning curves |
+| 06 | Comparison & selection | multi-criteria scorecard with sensitivity analysis |
+| 07 | Specialisation | continued training at LR/5, catastrophic-forgetting check |
+| 08 | Held-out evaluation | the single authorised test read, 5-criterion promotion gate |
+| 09 | Export & registration | packaged model, model card, registry entry, load verification |
 
 ---
 

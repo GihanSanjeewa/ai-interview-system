@@ -39,7 +39,11 @@ audioRouter.post(
     const tmp = path.join(dir, `${uuid()}-${req.file.originalname || "blob.webm"}`);
     await fs.writeFile(tmp, req.file.buffer);
 
-    const { text, whisper } = await mlClient.transcribe(tmp, language);
-    res.json({ text, whisper });
+    // `metrics` carries the librosa acoustic measurements (pace, vocal
+    // confidence, fluency). The client sends them back with the answer so
+    // those three scores are measured rather than assumed — previously they
+    // were computed here and discarded.
+    const { text, audio, whisper } = await mlClient.transcribe(tmp, language);
+    res.json({ text, metrics: audio, whisper });
   })
 );

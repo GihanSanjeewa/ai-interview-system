@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { v4 as uuid } from "uuid";
@@ -51,6 +52,15 @@ export const cvService = {
     return cv;
   },
 
+  /**
+   * Parse and analyse the CV.
+   *
+   * The full analysis is stored, including the diagnostics: which sections were
+   * found, how confident the extraction was, and what the analyser could NOT
+   * find. The interview planner reads `projects`, `demonstratedTechnologies` and
+   * `contact`, and the UI uses `warnings` to tell the user how to improve their
+   * CV rather than silently showing invented fields.
+   */
   async parseInBackground(cvId: string, absPath: string) {
     try {
       const parsed = await mlClient.parseCv(absPath);
@@ -59,14 +69,30 @@ export const cvService = {
         data: {
           status: "PARSED",
           rawText: parsed.rawText?.slice(0, 200_000),
+          // Cast to Prisma's JSON input type: the analyser returns typed
+          // interfaces, which are structurally valid JSON but lack the index
+          // signature Prisma's InputJsonObject requires.
           parsed: {
+            contact: parsed.contact,
             skills: parsed.skills,
-            education: parsed.education,
-            experience: parsed.experience,
-            certifications: parsed.certifications,
             technologies: parsed.technologies,
-            yearsTotal: parsed.yearsTotal ?? null,
-          },
+            demonstratedTechnologies: parsed.demonstratedTechnologies,
+            education: parsed.education,
+            educationDetail: parsed.educationDetail,
+            experience: parsed.experience,
+            experienceDetail: parsed.experienceDetail,
+            certifications: parsed.certifications,
+            projects: parsed.projects,
+            // null when the CV states no dates — the UI shows "not stated"
+            // rather than a fabricated figure.
+            yearsTotal: parsed.yearsTotal,
+            seniority: parsed.seniority,
+            readinessBreakdown: parsed.readinessBreakdown,
+            trackAnalysis: parsed.trackAnalysis,
+            sectionsFound: parsed.sectionsFound,
+            extractionConfidence: parsed.extractionConfidence,
+            warnings: parsed.warnings,
+          } as unknown as Prisma.InputJsonValue,
           readinessScore: parsed.readinessScore,
           suggestedTracks: parsed.suggestedTracks,
         },

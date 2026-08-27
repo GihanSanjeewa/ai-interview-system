@@ -1,0 +1,66 @@
+{
+  "stage": "09_model_export_and_registration",
+  "generated_utc": "2026-08-27T10:34:28+00:00",
+  "promotion_gate_approved": false,
+  "model": {
+    "model_id": "ai-interview-question-generator-v2.0.0",
+    "version": "2.0.0",
+    "status": "rejected",
+    "activated": false,
+    "architecture": "candidate_1_scratch_compact_transformer",
+    "parameters": 4339200
+  },
+  "package": {
+    "path": "models\\ai-interview-question-generator-v2.0.0",
+    "file_count": 3,
+    "total_bytes": 52207675,
+    "total_mb": 49.79,
+    "manifest_sha256": "4573fc242905df6b3688c83e657af2d2414c4e4466b20e5a4c1b5020dc505e08"
+  },
+  "model_card": "models\\ai-interview-question-generator-v2.0.0\\model_card.json",
+  "registry": {
+    "capability": "question_generator",
+    "registered": true,
+    "active_model": "ai-interview-question-generator-v1.0.0"
+  },
+  "verification": [
+    {
+      "check": "manifest integrity",
+      "passed": true,
+      "detail": "3 files verified"
+    },
+    {
+      "check": "checkpoint loads from the package",
+      "passed": true,
+      "detail": "4,339,200 parameters"
+    },
+    {
+      "check": "tokenizer loads and round-trips",
+      "passed": true,
+      "detail": "decoded: 'What is a database index?'"
+    },
+    {
+      "check": "forward pass produces finite logits",
+      "passed": true,
+      "detail": "shape (1, 33, 4096)"
+    },
+    {
+      "check": "generation produces output",
+      "passed": true,
+      "detail": "'D O M A I N: D I F F I C U L T Y: B e g i n n e r a '"
+    },
+    {
+      "check": "runtime quality gate evaluated",
+      "passed": true,
+      "detail": "score 0.00 vs threshold 0.45 -> would fall back to retrieval"
+    },
+    {
+      "check": "registry correctly withheld activation",
+      "passed": true,
+      "detail": "rejected model was not activated"
+    }
+  ],
+  "verification_passed": "7/7",
+  "deployment_ready": false,
+  "runtime_note": "The ML service reads model_registry.json at startup. When no model is active, interview_engine.QuestionPool serves questions by retrieval over the labelled dataset, so interviews function either way."
+}

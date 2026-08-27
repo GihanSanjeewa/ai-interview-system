@@ -1,0 +1,296 @@
+{"index": 4, "reason": "too_short", "detail": "3 words < 4", "question": "What is TypeScript?"}
+{"index": 7, "reason": "too_short", "detail": "3 words < 4", "question": "What are directives?"}
+{"index": 8, "reason": "too_short", "detail": "3 words < 4", "question": "What are components?"}
+{"index": 14, "reason": "too_short", "detail": "3 words < 4", "question": "What is metadata?"}
+{"index": 25, "reason": "too_short", "detail": "3 words < 4", "question": "What is interpolation?"}
+{"index": 29, "reason": "too_short", "detail": "3 words < 4", "question": "What are pipes?"}
+{"index": 36, "reason": "too_short", "detail": "3 words < 4", "question": "What are observables?"}
+{"index": 41, "reason": "too_short", "detail": "3 words < 4", "question": "What is RxJS?"}
+{"index": 42, "reason": "too_short", "detail": "3 words < 4", "question": "What is subscribing?"}
+{"index": 46, "reason": "too_short", "detail": "3 words < 4", "question": "What is multicasting?"}
+{"index": 78, "reason": "too_short", "detail": "3 words < 4", "question": "What is JIT?"}
+{"index": 79, "reason": "too_short", "detail": "3 words < 4", "question": "What is AOT?"}
+{"index": 85, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I use arrow functions in AOT?"}
+{"index": 87, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I use any javascript feature for expression syntax in AOT?"}
+{"index": 88, "reason": "too_short", "detail": "3 words < 4", "question": "What is folding?"}
+{"index": 89, "reason": "too_short", "detail": "3 words < 4", "question": "What are macros?"}
+{"index": 99, "reason": "too_short", "detail": "3 words < 4", "question": "What is zone?"}
+{"index": 101, "reason": "too_short", "detail": "3 words < 4", "question": "What is codelyzer?"}
+{"index": 114, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I use AOT compilation with Ivy?"}
+{"index": 149, "reason": "too_short", "detail": "3 words < 4", "question": "What is NgUpgrade?"}
+{"index": 159, "reason": "too_short", "detail": "3 words < 4", "question": "What is schematic"}
+{"index": 177, "reason": "context_dependent_phrasing", "detail": "", "question": "How can I use interceptor for an entire application?"}
+{"index": 184, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I translate text without creating an element?"}
+{"index": 185, "reason": "context_dependent_phrasing", "detail": "", "question": "How can I translate attribute?"}
+{"index": 193, "reason": "too_short", "detail": "3 words < 4", "question": "What is TestBed?"}
+{"index": 194, "reason": "too_short", "detail": "3 words < 4", "question": "What is protractor?"}
+{"index": 195, "reason": "too_short", "detail": "3 words < 4", "question": "What is collection?"}
+{"index": 199, "reason": "duplicate", "detail": "", "question": "What is router state?"}
+{"index": 200, "reason": "context_dependent_phrasing", "detail": "", "question": "How can I use SASS in angular project?"}
+{"index": 240, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I share services using modules?"}
+{"index": 242, "reason": "too_short", "detail": "3 words < 4", "question": "What is ngcc?"}
+{"index": 244, "reason": "too_short", "detail": "3 words < 4", "question": "What is ngzone?"}
+{"index": 245, "reason": "too_short", "detail": "3 words < 4", "question": "What is NoopZone?"}
+{"index": 281, "reason": "too_short", "detail": "3 words < 4", "question": "What is VueJS"}
+{"index": 307, "reason": "too_short", "detail": "3 words < 4", "question": "What are props?"}
+{"index": 311, "reason": "too_short", "detail": "3 words < 4", "question": "What are slots?"}
+{"index": 330, "reason": "too_short", "detail": "3 words < 4", "question": "What are filters?"}
+{"index": 337, "reason": "too_short", "detail": "3 words < 4", "question": "What are mixins?"}
+{"index": 359, "reason": "duplicate", "detail": "", "question": "What are dynamic components?"}
+{"index": 381, "reason": "too_short", "detail": "3 words < 4", "question": "What is vuex?"}
+{"index": 394, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I use runtime builds for all templates?"}
+{"index": 396, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I use CSS modules for preprocessors?"}
+{"index": 420, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I use strict mode in production environment?"}
+{"index": 438, "reason": "too_short", "detail": "3 words < 4", "question": "What are mutations?"}
+{"index": 450, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I use styled components in vuejs?"}
+{"index": 459, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I perform mutations directly in strict mode?"}
+{"index": 470, "reason": "too_short", "detail": "3 words < 4", "question": "What are presets?"}
+{"index": 474, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I use local presets?"}
+{"index": 485, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I use dynamic directive null value for slots?"}
+{"index": 495, "reason": "too_short", "detail": "3 words < 4", "question": "What is vuetify?"}
+{"index": 503, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I use computed property in another computed property?"}
+{"index": 504, "reason": "context_dependent_phrasing", "detail": "", "question": "How can I use imported constant in template section?"}
+{"index": 512, "reason": "too_short", "detail": "3 words < 4", "question": "What is React?"}
+{"index": 514, "reason": "too_short", "detail": "3 words < 4", "question": "What is JSX?"}
+{"index": 548, "reason": "too_short", "detail": "3 words < 4", "question": "What is context?"}
+{"index": 552, "reason": "too_short", "detail": "3 words < 4", "question": "What is reconciliation?"}
+{"index": 557, "reason": "too_short", "detail": "3 words < 4", "question": "What are fragments?"}
+{"index": 570, "reason": "too_short", "detail": "3 words < 4", "question": "What is ReactDOMServer?"}
+{"index": 636, "reason": "context_dependent_phrasing", "detail": "", "question": "How to make AJAX call and In which component lifecycle methods should I make an AJAX call?"}
+{"index": 640, "reason": "contains_code_or_url", "detail": "", "question": "What are the \\<Router> components of React Router v4?"}
+{"index": 649, "reason": "too_short", "detail": "3 words < 4", "question": "What is React-Intl?"}
+{"index": 658, "reason": "too_short", "detail": "3 words < 4", "question": "What is Jest?"}
+{"index": 661, "reason": "too_short", "detail": "3 words < 4", "question": "What is Flux?"}
+{"index": 662, "reason": "too_short", "detail": "3 words < 4", "question": "What is Redux?"}
+{"index": 666, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I dispatch an action in reducer?"}
+{"index": 677, "reason": "context_dependent_phrasing", "detail": "", "question": "Should I keep all component's state in Redux store?"}
+{"index": 684, "reason": "too_short", "detail": "3 words < 4", "question": "What is redux-saga?"}
+{"index": 703, "reason": "too_short", "detail": "3 words < 4", "question": "What is Flow?"}
+{"index": 714, "reason": "too_short", "detail": "3 words < 4", "question": "What is Relay?"}
+{"index": 723, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I import an SVG file as react component?"}
+{"index": 728, "reason": "context_dependent_phrasing", "detail": "", "question": "Do I need to keep all my state into Redux? Should I ever use react internal state?"}
+{"index": 735, "reason": "too_short", "detail": "3 words < 4", "question": "What are hooks?"}
+{"index": 759, "reason": "too_short", "detail": "3 words < 4", "question": "What is code-splitting?"}
+{"index": 781, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I use web components in react application?"}
+{"index": 811, "reason": "context_dependent_phrasing", "detail": "", "question": "Do I need to rewrite all my class components with hooks?"}
+{"index": 818, "reason": "too_short", "detail": "3 words < 4", "question": "What is formik?"}
+{"index": 825, "reason": "too_short", "detail": "3 words < 4", "question": "What is MobX?"}
+{"index": 827, "reason": "context_dependent_phrasing", "detail": "", "question": "Should I learn ES6 before learning ReactJS?"}
+{"index": 830, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I use javascript urls in react16.9?"}
+{"index": 855, "reason": "contains_code_or_url", "detail": "", "question": "What is the difference between == and === operators"}
+{"index": 870, "reason": "too_short", "detail": "3 words < 4", "question": "What is memoization"}
+{"index": 871, "reason": "too_short", "detail": "3 words < 4", "question": "What is Hoisting"}
+{"index": 873, "reason": "too_short", "detail": "3 words < 4", "question": "What are closures"}
+{"index": 874, "reason": "too_short", "detail": "3 words < 4", "question": "What are modules"}
+{"index": 880, "reason": "too_short", "detail": "3 words < 4", "question": "What is IndexedDB"}
+{"index": 910, "reason": "too_short", "detail": "3 words < 4", "question": "What is promise.all"}
+{"index": 921, "reason": "too_short", "detail": "3 words < 4", "question": "What is eval"}
+{"index": 925, "reason": "too_short", "detail": "3 words < 4", "question": "What is isNaN"}
+{"index": 946, "reason": "too_short", "detail": "3 words < 4", "question": "What are events"}
+{"index": 947, "reason": "too_short", "detail": "3 words < 4", "question": "Who created javascript"}
+{"index": 951, "reason": "too_short", "detail": "3 words < 4", "question": "What is BOM"}
+{"index": 956, "reason": "too_short", "detail": "3 words < 4", "question": "What is ECMAScript"}
+{"index": 957, "reason": "too_short", "detail": "3 words < 4", "question": "What is JSON"}
+{"index": 962, "reason": "too_short", "detail": "3 words < 4", "question": "What are PWAs"}
+{"index": 1011, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I use reserved words as identifiers"}
+{"index": 1046, "reason": "multi_part", "detail": "3 sentences", "question": "What is the main difference between Object.values and Object.entries method"}
+{"index": 1066, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I add getters and setters using defineProperty method"}
+{"index": 1077, "reason": "too_short", "detail": "3 words < 4", "question": "What is nodejs"}
+{"index": 1097, "reason": "too_short", "detail": "3 words < 4", "question": "What is typescript"}
+{"index": 1114, "reason": "too_short", "detail": "3 words < 4", "question": "What is Minification"}
+{"index": 1130, "reason": "context_dependent_phrasing", "detail": "", "question": "How do I modify the url without reloading the page"}
+{"index": 1142, "reason": "too_short", "detail": "3 words < 4", "question": "What is jQuery"}
+{"index": 1149, "reason": "context_dependent_phrasing", "detail": "", "question": "What is the output of below for loops"}
+{"index": 1151, "reason": "too_short", "detail": "3 words < 4", "question": "What is ES6"}
+{"index": 1152, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I redeclare let and const variables"}
+{"index": 1168, "reason": "too_short", "detail": "3 words < 4", "question": "What is collation"}
+{"index": 1170, "reason": "context_dependent_phrasing", "detail": "", "question": "What is the output of below spread operator array"}
+{"index": 1171, "reason": "too_short", "detail": "3 words < 4", "question": "Is PostMessage secure"}
+{"index": 1174, "reason": "context_dependent_phrasing", "detail": "", "question": "Can I avoid using postMessages completely"}
+{"index": 1175, "reason": "too_short", "detail": "3 words < 4", "question": "Is postMessages synchronous"}
+{"index": 1182, "reason": "too_short", "detail": "3 words < 4", "question": "What is ArrayBuffer"}
+{"index": 1183, "reason": "context_dependent_phrasing", "detail": "", "question": "What is the output of below string expression"}
+{"index": 1195, "reason": "context_dependent_phrasing", "detail": "", "question": "What is the output of below console statement with unary operator"}
+{"index": 1199, "reason": "context_dependent_phrasing", "detail": "", "question": "What is the output of below function calls"}
+{"index": 1227, "reason": "too_short", "detail": "3 words < 4", "question": "What is AJAX"}
+{"index": 1234, "reason": "too_short", "detail": "3 words < 4", "question": "What is microtask"}
+{"index": 1239, "reason": "too_short", "detail": "3 words < 4", "question": "What is heap"}
+{"index": 1244, "reason": "too_short", "detail": "3 words < 4", "question": "What is babel"}
+{"index": 1247, "reason": "too_short", "detail": "3 words < 4", "question": "What is RxJS"}
+{"index": 1251, "reason": "duplicate", "detail": "", "question": "What is an observable"}
+{"index": 1255, "reason": "too_short", "detail": "3 words < 4", "question": "What is deno"}
+{"index": 1264, "reason": "multi_part", "detail": "3 sentences", "question": "What are the differences between for...of and for...in statements"}
+{"index": 1280, "reason": "too_short", "detail": "3 words < 4", "question": "What is debouncing?"}
+{"index": 1281, "reason": "too_short", "detail": "3 words < 4", "question": "What is throttling?"}
+{"index": 1297, "reason": "context_dependent_phrasing", "detail": "", "question": "What is the purpose of the this keyword in JavaScript?"}
+{"index": 1300, "reason": "too_short", "detail": "3 words < 4", "question": "What is bytecode?"}
+{"index": 1302, "reason": "contains_code_or_url", "detail": "", "question": "What are the important differences between C++ and Java?"}
+{"index": 1310, "reason": "too_short", "detail": "3 words < 4", "question": "What is casting?"}
+{"index": 1316, "reason": "context_dependent_phrasing", "detail": "", "question": "How do you solve above problem?"}
+{"index": 1349, "reason": "too_short", "detail": "3 words < 4", "question": "What is polymorphism?"}
+{"index": 1351, "reason": "too_short", "detail": "3 words < 4", "question": "What is coupling?"}
+{"index": 1352, "reason": "too_short", "detail": "3 words < 4", "question": "What is cohesion?"}
+{"index": 1353, "reason": "too_short", "detail": "3 words < 4", "question": "What is encapsulation?"}
+{"index": 1381, "reason": "context_dependent_phrasing", "detail": "", "question": "Will finally be executed in the program below?"}
+{"index": 1399, "reason": "duplicate", "detail": "", "question": "What is an enum?"}
+{"index": 1411, "reason": "too_short", "detail": "3 words < 4", "question": "What is tokenizing?"}
+{"index": 1413, "reason": "too_short", "detail": "3 words < 4", "question": "What is serialization?"}
+{"index": 1431, "reason": "multi_part", "detail": "3 sentences", "question": "What is linkedList? What interfaces does it implement? How is it different from an ArrayList?"}
+{"index": 1464, "reason": "too_short", "detail": "3 words < 4", "question": "What are Generics?"}
+{"index": 1478, "reason": "too_short", "detail": "3 words < 4", "question": "What is executorservice?"}
+{"index": 1505, "reason": "duplicate", "detail": "", "question": "What is a consumer?"}
+{"index": 1513, "reason": "too_long", "detail": "37 words > 33", "question": "The Law of Demeter (the Principle of Least Knowledge) states that each unit should have only limited knowledge"}
+{"index": 1514, "reason": "context_dependent_phrasing", "detail": "", "question": "Would you write code violating this principle, show why it is a bad design and then fix it?"}
+{"index": 1515, "reason": "too_long", "detail": "44 words > 33", "question": "Active-Record is the design pattern that promotes objects to include functions such as Insert, Update, and Del"}
+{"index": 1516, "reason": "too_long", "detail": "73 words > 33", "question": "Data-Mapper is a design pattern that promotes the use of a layer of Mappers that moves data between objects an"}
+{"index": 1517, "reason": "too_long", "detail": "41 words > 33", "question": "Tony Hoare who invented the null reference once said \"*I call it my billion-dollar mistake*\" since it led to \""}
+{"index": 1521, "reason": "multi_part", "detail": "3 sentences", "question": "Singleton is a design pattern that restricts the instantiation of a class to one single object. Writing a Thre"}
+{"index": 1522, "reason": "context_dependent_phrasing", "detail": "", "question": "The ability to change implementation without affecting clients is called Data Abstraction. Produce an example "}
+{"index": 1525, "reason": "too_long", "detail": "67 words > 33", "question": "Is goto evil? You may have heard of the famous paper \"Go To Statement Considered Harmful\" by Edsger Dijkstra, "}
+{"index": 1526, "reason": "too_long", "detail": "47 words > 33", "question": "The robustness principle is a general design guideline for software that recommends \"*be conservative in what "}
+{"index": 1527, "reason": "too_long", "detail": "51 words > 33", "question": "Separation of Concerns is a design principle for separating a computer program into distinct areas, each one a"}
+{"index": 1528, "reason": "too_long", "detail": "41 words > 33", "question": "It is often said that one of the most important goals in Object-Oriented Design (and code design in general) i"}
+{"index": 1534, "reason": "multi_part", "detail": "3 sentences", "question": "Are comments in code useful? Some say they should be avoided as much as possible, and hopefully made unnecessa"}
+{"index": 1537, "reason": "too_long", "detail": "58 words > 33", "question": "C++ supports multiple inheritance, and Java allows a class to implement multiple interfaces. What impact does "}
+{"index": 1545, "reason": "multi_part", "detail": "3 sentences", "question": "What are higher-order functions? What are they useful for? Write one, in your preferred language."}
+{"index": 1546, "reason": "multi_part", "detail": "4 sentences", "question": "Write a loop, then transform it into a recursive function, using only immutable structures (i.e. avoid using v"}
+{"index": 1550, "reason": "too_long", "detail": "56 words > 33", "question": "There are a lot of different type systems. Let's talk about static and dynamic type systems, and about strong "}
+{"index": 1557, "reason": "multi_part", "detail": "3 sentences", "question": "Some languages, especially the ones that promote a functional approach, allow a technique called pattern match"}
+{"index": 1559, "reason": "contains_code_or_url", "detail": "", "question": "If `Cat` is an `Animal`, is `TakeCare<Cat>` a `TakeCare<Animal>`?"}
+{"index": 1561, "reason": "multi_part", "detail": "3 sentences", "question": "In the last years there has been a lot of hype around Node.js. What's your opinion on using a language that wa"}
+{"index": 1562, "reason": "too_long", "detail": "54 words > 33", "question": "* Pretend you have a time machine and pretend that you have the opportunity to go to a particular point in tim"}
+{"index": 1563, "reason": "context_dependent_phrasing", "detail": "", "question": "Imagine you want to remove the possibility to have null references in your preferred language: how would you a"}
+{"index": 1571, "reason": "contains_code_or_url", "detail": "", "question": "Why do databases treat null as a so special case? For example, why does ```SELECT * FROM table WHERE field = n"}
+{"index": 1572, "reason": "too_long", "detail": "35 words > 33", "question": "ACID is an acronym that refers to Atomicity, Consistency, Isolation and Durability, 4 properties guaranteed by"}
+{"index": 1574, "reason": "multi_part", "detail": "3 sentences", "question": "How is lazy loading achieved? When is it useful? What are its pitfalls?"}
+{"index": 1575, "reason": "too_long", "detail": "52 words > 33", "question": "The so called \"N + 1 problem\" is an issue that occurs when code needs to load the children of a parent-child r"}
+{"index": 1578, "reason": "too_long", "detail": "76 words > 33", "question": "Of of the Continuous Integration's techniques is called Blue-Green Deployment: it consists in having two produ"}
+{"index": 1580, "reason": "too_long", "detail": "51 words > 33", "question": "Brewer's Theorem, most commonly known as the CAP theorem, states that in the presence of a network partition ("}
+{"index": 1587, "reason": "too_short", "detail": "3 words < 4", "question": "What's a rebase?"}
+{"index": 1598, "reason": "too_long", "detail": "42 words > 33", "question": "If you are building a distributed system for scalability and robustness, what are the different things you'd t"}
+{"index": 1605, "reason": "too_short", "detail": "3 words < 4", "question": "What is agility?"}
+{"index": 1607, "reason": "context_dependent_phrasing", "detail": "", "question": "Say I'm your project manager, and I'm no expert in programming. Would you try explaining to me what legacy cod"}
+{"index": 1640, "reason": "too_long", "detail": "51 words > 33", "question": "The so called \"multitier architecture\" is an approach to design a client server system aimed to keep physicall"}
+{"index": 1642, "reason": "too_long", "detail": "78 words > 33", "question": "Someone gave the name \"The \"C10k problem\" to the problem of optimising network sockets to handle over 10.000 o"}
+{"index": 1644, "reason": "too_long", "detail": "100 words > 33", "question": "You may recall that Common Gateway Interface (CGI) is a standard protocol for web servers to execute programs "}
+{"index": 1661, "reason": "multi_part", "detail": "3 sentences", "question": "How do you write secure code? In your opinion, is it one of the developer's duties, or does it require a speci"}
+{"index": 1664, "reason": "context_dependent_phrasing", "detail": "", "question": "If not carefully handled, there is always a risk of logs containing sensitive information, such as passwords. "}
+{"index": 1666, "reason": "too_long", "detail": "38 words > 33", "question": "How would it be possible to detect SQL injection via static code analysis? I don't expect you to write an algo"}
+{"index": 1670, "reason": "context_dependent_phrasing", "detail": "", "question": "What's a man-in-the-middle Attack, and why does HTTPS help protect against it?"}
+{"index": 1678, "reason": "context_dependent_phrasing", "detail": "", "question": "Immutability is the practice of setting values once, at the moment of their creation, and never changing them."}
+{"index": 1687, "reason": "context_dependent_phrasing", "detail": "", "question": "As a software engineer you want both to innovate and to be predictable. How those two goals can coexist in the"}
+{"index": 1691, "reason": "context_dependent_phrasing", "detail": "", "question": "What did you learn this week?"}
+{"index": 1692, "reason": "context_dependent_phrasing", "detail": "", "question": "There is an aesthetic element to all design. The question is, is this aesthetic element your friend or your en"}
+{"index": 1696, "reason": "context_dependent_phrasing", "detail": "", "question": "Let's have a conversation about \"*reinventing the wheel*\", the \"*not invented here syndrome*\" and the \"*eating"}
+{"index": 1701, "reason": "too_long", "detail": "38 words > 33", "question": "What does an operating system do when it has got no custom code to run, and therefore it looks idle? I would l"}
+{"index": 1706, "reason": "multi_part", "detail": "3 sentences", "question": "\"People who like this also like... \". How would you implement this feature in an e-commerce shop?"}
+{"index": 1710, "reason": "multi_part", "detail": "3 sentences", "question": "Imagine there's a perfect clone of yourself. Imagine that that clone is your boss. Would you like to work for "}
+{"index": 1711, "reason": "too_short", "detail": "2 words < 4", "question": "Interview me."}
+{"index": 1715, "reason": "context_dependent_phrasing", "detail": "", "question": "You are my boss and I'm fired. Inform me."}
+{"index": 1716, "reason": "multi_part", "detail": "4 sentences", "question": "I want to refactor a legacy system. You want to rewrite it from scratch. Argument. Then, switch our roles."}
+{"index": 1766, "reason": "contains_code_or_url", "detail": "", "question": "What does ```* { box-sizing: border-box; }``` do? What are its advantages?"}
+{"index": 1786, "reason": "context_dependent_phrasing", "detail": "", "question": "What did you learn yesterday/this week?"}
+{"index": 1803, "reason": "context_dependent_phrasing", "detail": "", "question": "If you could master one technology this year, what would it be?"}
+{"index": 1822, "reason": "contains_code_or_url", "detail": "", "question": "Describe the difference between `<script>`, `<script async>` and `<script defer>`."}
+{"index": 1823, "reason": "contains_code_or_url", "detail": "", "question": "Why is it generally a good idea to position CSS `<link>`s between `<head></head>` and JS `<script>`s just befo"}
+{"index": 1825, "reason": "context_dependent_phrasing", "detail": "", "question": "Why you would use a `srcset` attribute in an image tag? Explain the process the browser uses when evaluating t"}
+{"index": 1829, "reason": "too_short", "detail": "3 words < 4", "question": "Explain event delegation."}
+{"index": 1830, "reason": "context_dependent_phrasing", "detail": "", "question": "Explain how `this` works in JavaScript."}
+{"index": 1831, "reason": "context_dependent_phrasing", "detail": "", "question": "Can you give an example of one of the ways that working with `this` has changed in ES6?"}
+{"index": 1833, "reason": "context_dependent_phrasing", "detail": "", "question": "What is the difference between a variable that is: `null`, `undefined` or undeclared? Also, how would you go a"}
+{"index": 1836, "reason": "multi_part", "detail": "3 sentences", "question": "Can you describe the main difference between the `Array.forEach()` loop and `Array.map()` methods and why you "}
+{"index": 1839, "reason": "contains_code_or_url", "detail": "", "question": "Explain the difference between: `function Person(){}`, `var person = Person()`, and `var person = new Person()"}
+{"index": 1840, "reason": "contains_code_or_url", "detail": "", "question": "Explain the differences on the usage of `foo` between `function foo() {}` and `var foo = function() {}`"}
+{"index": 1841, "reason": "multi_part", "detail": "4 sentences", "question": "Can you explain what `Function.call` and `Function.apply` do? What is the notable difference between the two?"}
+{"index": 1842, "reason": "too_short", "detail": "2 words < 4", "question": "Explain `Function.prototype.bind`."}
+{"index": 1844, "reason": "too_short", "detail": "2 words < 4", "question": "Explain \"hoisting\"."}
+{"index": 1846, "reason": "too_short", "detail": "3 words < 4", "question": "Describe event bubbling."}
+{"index": 1847, "reason": "too_short", "detail": "3 words < 4", "question": "Describe event capturing."}
+{"index": 1848, "reason": "duplicate", "detail": "", "question": "What is the difference between an \"attribute\" and a \"property\"?"}
+{"index": 1850, "reason": "contains_code_or_url", "detail": "", "question": "What is the difference between `==` and `===`?"}
+{"index": 1865, "reason": "contains_code_or_url", "detail": "", "question": "Can you offer a use case for the new arrow `=>` function syntax? How does this new syntax differ from other fu"}
+{"index": 1870, "reason": "context_dependent_phrasing", "detail": "", "question": "Can you give an example of a curry function and why this syntax offers an advantage?"}
+{"index": 1882, "reason": "context_dependent_phrasing", "detail": "", "question": "What is domain pre-fetching and how does it help with performance?"}
+{"index": 1911, "reason": "duplicate", "detail": "", "question": "What is the difference between Java and JavaScript?"}
+{"index": 1914, "reason": "context_dependent_phrasing", "detail": "", "question": "Explain the use of \"this\" keyword in JavaScript."}
+{"index": 1920, "reason": "contains_code_or_url", "detail": "", "question": "What is a virtual function in C++?"}
+{"index": 2001, "reason": "contains_code_or_url", "detail": "", "question": "Explain the difference between '==' and '===' in JavaScript."}
+{"index": 2015, "reason": "duplicate", "detail": "", "question": "Explain the concept of 'closure' in JavaScript."}
+{"index": 2016, "reason": "duplicate", "detail": "", "question": "Describe the use of Docker in a DevOps environment."}
+{"index": 2017, "reason": "duplicate", "detail": "", "question": "What is a 'race condition' in software development?"}
+{"index": 2018, "reason": "duplicate", "detail": "", "question": "How would you optimize a website's load time?"}
+{"index": 2019, "reason": "duplicate", "detail": "", "question": "What is the difference between SQL and NoSQL databases?"}
+{"index": 2020, "reason": "duplicate", "detail": "", "question": "Can you explain the concept of 'state' in React?"}
+{"index": 2021, "reason": "duplicate", "detail": "", "question": "What is continuous integration in DevOps?"}
+{"index": 2022, "reason": "duplicate", "detail": "", "question": "How do you implement a binary search algorithm?"}
+{"index": 2023, "reason": "duplicate", "detail": "", "question": "Describe the MVC architecture."}
+{"index": 2024, "reason": "duplicate", "detail": "", "question": "What are microservices and how do they differ from monolithic architectures?"}
+{"index": 2025, "reason": "contains_code_or_url", "detail": "", "question": "Explain the difference between '==' and '===' in JavaScript."}
+{"index": 2026, "reason": "duplicate", "detail": "", "question": "What is Kubernetes and how does it relate to containerization?"}
+{"index": 2027, "reason": "duplicate", "detail": "", "question": "Describe how you would implement a RESTful API in a back-end application."}
+{"index": 2028, "reason": "duplicate", "detail": "", "question": "What are the benefits of server-side rendering vs client-side rendering?"}
+{"index": 2029, "reason": "duplicate", "detail": "", "question": "How do NoSQL databases handle data scaling compared to traditional SQL databases?"}
+{"index": 2030, "reason": "duplicate", "detail": "", "question": "Explain the use of hooks in React."}
+{"index": 2031, "reason": "duplicate", "detail": "", "question": "What is Infrastructure as Code (IaC) and its significance in DevOps?"}
+{"index": 2032, "reason": "duplicate", "detail": "", "question": "Describe the process of memoization in programming."}
+{"index": 2033, "reason": "duplicate", "detail": "", "question": "What are the advantages of using a microservices architecture?"}
+{"index": 2034, "reason": "duplicate", "detail": "", "question": "Explain the SOLID principles in software engineering."}
+{"index": 2035, "reason": "duplicate", "detail": "", "question": "What is lazy loading in web development?"}
+{"index": 2036, "reason": "duplicate", "detail": "", "question": "Discuss the role of a load balancer in a distributed system."}
+{"index": 2037, "reason": "duplicate", "detail": "", "question": "How does indexing improve database query performance?"}
+{"index": 2038, "reason": "duplicate", "detail": "", "question": "Explain event delegation in JavaScript."}
+{"index": 2039, "reason": "duplicate", "detail": "", "question": "Explain the concept of 'closure' in JavaScript."}
+{"index": 2040, "reason": "duplicate", "detail": "", "question": "Describe the use of Docker in a DevOps environment."}
+{"index": 2062, "reason": "contains_code_or_url", "detail": "", "question": "Write a custom memory allocator for a C++ application."}
+{"index": 2097, "reason": "contains_code_or_url", "detail": "", "question": "Stack memory stores local variables and function calls; heap memory is for dynamic allocation. Stack operates "}
+{"index": 2101, "reason": "contains_code_or_url", "detail": "", "question": "An array has fixed size and stores elements in contiguous memory; a linked list consists of nodes with data an"}
+{"index": 2103, "reason": "contains_code_or_url", "detail": "", "question": "A binary search tree is hierarchical, maintaining order; a hash table maps keys to values for fast retrieval, "}
+{"index": 2108, "reason": "contains_code_or_url", "detail": "", "question": "Sorting algorithms vary in time/space complexity and stability. Quick Sort and Merge Sort are fast but more co"}
+{"index": 2114, "reason": "context_dependent_phrasing", "detail": "", "question": "\"this\" in JavaScript refers to the execution context, varying based on function calling, global scope, or even"}
+{"index": 2120, "reason": "contains_code_or_url", "detail": "", "question": "Virtual functions in C++ allow derived classes to override them, enabling runtime polymorphism and dynamic met"}
+{"index": 2122, "reason": "contains_code_or_url", "detail": "", "question": "SQL databases use structured query language with a predefined schema; NoSQL databases store schema-less data w"}
+{"index": 2126, "reason": "context_dependent_phrasing", "detail": "", "question": "Normalization organizes data into separate tables to reduce redundancy and improve integrity, following normal"}
+{"index": 2127, "reason": "contains_code_or_url", "detail": "", "question": "INNER JOIN returns matching rows from both tables; LEFT JOIN returns all rows from the left table and matching"}
+{"index": 2132, "reason": "contains_code_or_url", "detail": "", "question": "HTTP is an unsecured data transmission protocol; HTTPS is secure, encrypting data in transit using SSL/TLS."}
+{"index": 2138, "reason": "contains_code_or_url", "detail": "", "question": "GET requests retrieve data and include parameters in the URL; POST requests send data to the server, encapsula"}
+{"index": 2142, "reason": "contains_code_or_url", "detail": "", "question": "Black-box tests functionality without internal code knowledge; white-box tests internal code logic and structu"}
+{"index": 2145, "reason": "contains_code_or_url", "detail": "", "question": "CI involves frequent code integration and testing; CD extends CI by deploying changes to production automatica"}
+{"index": 2149, "reason": "contains_code_or_url", "detail": "", "question": "Manual testing is human-driven; suitable for exploratory and UX testing. Automated testing uses tools for repe"}
+{"index": 2152, "reason": "contains_code_or_url", "detail": "", "question": "Git is distributed, with local repository copies; SVN is centralized, requiring network connectivity for repos"}
+{"index": 2165, "reason": "contains_code_or_url", "detail": "", "question": "Monolithic is simple but less scalable; microservices offer scalability and flexibility but are complex to man"}
+{"index": 2166, "reason": "contains_code_or_url", "detail": "", "question": "Stateless services don't retain client data between requests; stateful services maintain client state, useful "}
+{"index": 2174, "reason": "contains_code_or_url", "detail": "", "question": "Hashing transforms passwords into hashes using algorithms; salting adds randomness, enhancing security against"}
+{"index": 2177, "reason": "contains_code_or_url", "detail": "", "question": "Least privilege limits access rights; defense in depth layers security. Both minimize attack surfaces and prov"}
+{"index": 2179, "reason": "context_dependent_phrasing", "detail": "", "question": "Secure data by encrypting at rest and in transit, using secure authentication, and following best practices."}
+{"index": 2200, "reason": "too_long", "detail": "34 words > 33", "question": "Microservices are a software development techniquea variant of the service-oriented architecture architectura"}
+{"index": 2201, "reason": "contains_code_or_url", "detail": "", "question": "'==' compares values after type conversion, while '===' compares both value and type."}
+{"index": 2215, "reason": "duplicate", "detail": "", "question": "A closure is a function that remembers its outer variables and can access them."}
+{"index": 2216, "reason": "duplicate", "detail": "", "question": "Docker allows for packaging applications in containers, facilitating consistent deployment across different en"}
+{"index": 2217, "reason": "duplicate", "detail": "", "question": "A race condition occurs when the system's behavior depends on the sequence or timing of other uncontrollable e"}
+{"index": 2218, "reason": "duplicate", "detail": "", "question": "Optimizations can include minimizing HTTP requests, using CDNs, compressing files, caching, etc."}
+{"index": 2219, "reason": "duplicate", "detail": "", "question": "SQL databases are structured, use SQL, and are better for complex queries. NoSQL databases are flexible, scale"}
+{"index": 2220, "reason": "duplicate", "detail": "", "question": "State in React is an object that holds some information that may change over the lifecycle of the component."}
+{"index": 2221, "reason": "duplicate", "detail": "", "question": "Continuous integration is the practice of automating the integration of code changes into a software project."}
+{"index": 2222, "reason": "duplicate", "detail": "", "question": "Binary search involves repeatedly dividing in half the portion of the list that could contain the item, until "}
+{"index": 2223, "reason": "duplicate", "detail": "", "question": "MVC architecture stands for Model-View-Controller, separating the application into three interconnected compon"}
+{"index": 2224, "reason": "too_long", "detail": "34 words > 33", "question": "Microservices are a software development techniquea variant of the service-oriented architecture architectura"}
+{"index": 2225, "reason": "contains_code_or_url", "detail": "", "question": "'==' compares values after type conversion, while '===' compares both value and type."}
+{"index": 2226, "reason": "duplicate", "detail": "", "question": "Kubernetes is an open-source platform for automating deployment, scaling, and operations of application contai"}
+{"index": 2227, "reason": "duplicate", "detail": "", "question": "A RESTful API is implemented by setting up HTTP routes (GET, POST, PUT, DELETE) and handling requests and resp"}
+{"index": 2228, "reason": "duplicate", "detail": "", "question": "Server-side rendering improves initial page load time and SEO, while client-side rendering is good for dynamic"}
+{"index": 2229, "reason": "duplicate", "detail": "", "question": "NoSQL databases are generally more scalable and provide superior performance for large-scale applications due "}
+{"index": 2230, "reason": "duplicate", "detail": "", "question": "Hooks are functions that let you 'hook into' React state and lifecycle features from function components."}
+{"index": 2231, "reason": "duplicate", "detail": "", "question": "IaC is the management of infrastructure (networks, virtual machines, load balancers, etc.) in a descriptive mo"}
+{"index": 2232, "reason": "duplicate", "detail": "", "question": "Memoization is an optimization technique used to speed up programs by storing the results of expensive functio"}
+{"index": 2233, "reason": "duplicate", "detail": "", "question": "Advantages include easier scalability, flexibility in choosing technology, better fault isolation, and improve"}
+{"index": 2234, "reason": "duplicate", "detail": "", "question": "SOLID stands for Single Responsibility, Open-Closed, Liskov Substitution, Interface Segregation, and Dependenc"}
+{"index": 2235, "reason": "duplicate", "detail": "", "question": "Lazy loading is a design pattern that delays loading of non-critical resources at page load time, reducing ini"}
+{"index": 2236, "reason": "duplicate", "detail": "", "question": "A load balancer distributes network or application traffic across multiple servers to enhance responsiveness a"}
+{"index": 2237, "reason": "duplicate", "detail": "", "question": "Indexing speeds up data retrieval operations by effectively creating a smaller, faster version of the database"}
+{"index": 2238, "reason": "duplicate", "detail": "", "question": "Event delegation refers to the practice of using a single event listener to manage all events of a specific ty"}
+{"index": 2239, "reason": "duplicate", "detail": "", "question": "A closure is a function that remembers its outer variables and can access them."}
+{"index": 2240, "reason": "duplicate", "detail": "", "question": "Docker allows for packaging applications in containers, facilitating consistent deployment across different en"}
+{"index": 2242, "reason": "contains_code_or_url", "detail": "", "question": "Use a recursive function to check the height of each subtree; return false if the difference is more than one."}
+{"index": 2244, "reason": "contains_code_or_url", "detail": "", "question": "Use collaborative filtering, content-based filtering, or hybrid methods; consider scalability and real-time pr"}
+{"index": 2261, "reason": "contains_code_or_url", "detail": "", "question": "Consider time series analysis, regression models, and reinforcement learning; pay attention to features and da"}
+{"index": 2275, "reason": "contains_code_or_url", "detail": "", "question": "Address latency, data loss, and bandwidth issues; optimize for long-distance and high-latency networks."}

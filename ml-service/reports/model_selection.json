@@ -1,0 +1,149 @@
+{
+  "stage": "06_model_comparison_and_selection",
+  "generated_utc": "2026-08-27T10:24:46+00:00",
+  "data_used": "validation split only \u2014 the test split was not read",
+  "selected": {
+    "candidate_id": "candidate_1_scratch_compact_transformer",
+    "label": "Compact",
+    "hypothesis": "Is a small model sufficient for this corpus?",
+    "composite_score": 81.34,
+    "val_loss": 6.31197,
+    "val_perplexity": 551.13,
+    "generalisation_gap": 1.95187,
+    "parameters": 4339200,
+    "best_epoch": 4,
+    "checkpoint": "checkpoints\\candidate_1_scratch_compact_transformer"
+  },
+  "criteria_weights": {
+    "val_loss": 0.45,
+    "gen_gap": 0.25,
+    "parameters": 0.15,
+    "instability": 0.15
+  },
+  "scorecard": [
+    {
+      "candidate_id": "candidate_1_scratch_compact_transformer",
+      "label": "Compact",
+      "val_loss": 6.31197,
+      "gen_gap": 1.95187,
+      "parameters": 4339200,
+      "instability": 0.02931,
+      "val_perplexity": 551.13,
+      "epochs_run": 7,
+      "best_epoch": 4,
+      "train_seconds": 201.8,
+      "norm_val_loss": 0.08141,
+      "norm_gen_gap": 0.0,
+      "norm_parameters": 0.0,
+      "norm_instability": 1.0,
+      "penalty": 0.18663,
+      "score": 81.34,
+      "rank": 1
+    },
+    {
+      "candidate_id": "candidate_2_scratch_scaled_transformer",
+      "label": "Scaled",
+      "val_loss": 6.34617,
+      "gen_gap": 2.11961,
+      "parameters": 12417024,
+      "instability": 0.02835,
+      "val_perplexity": 570.3,
+      "epochs_run": 6,
+      "best_epoch": 3,
+      "train_seconds": 392.0,
+      "norm_val_loss": 0.28689,
+      "norm_gen_gap": 0.54706,
+      "norm_parameters": 0.34758,
+      "norm_instability": 0.94013,
+      "penalty": 0.45902,
+      "score": 54.1,
+      "rank": 2
+    },
+    {
+      "candidate_id": "candidate_3_scratch_deep_transformer",
+      "label": "Deep",
+      "val_loss": 6.29842,
+      "gen_gap": 2.25849,
+      "parameters": 27579392,
+      "instability": 0.0277,
+      "val_perplexity": 543.71,
+      "epochs_run": 8,
+      "best_epoch": 6,
+      "train_seconds": 1301.4,
+      "norm_val_loss": 0.0,
+      "norm_gen_gap": 1.0,
+      "norm_parameters": 1.0,
+      "norm_instability": 0.89941,
+      "penalty": 0.53491,
+      "score": 46.51,
+      "rank": 3
+    },
+    {
+      "candidate_id": "candidate_4_scratch_efficient_transformer",
+      "label": "Efficient (SwiGLU)",
+      "val_loss": 6.46486,
+      "gen_gap": 2.12812,
+      "parameters": 11219712,
+      "instability": 0.01331,
+      "val_perplexity": 642.17,
+      "epochs_run": 6,
+      "best_epoch": 3,
+      "train_seconds": 656.2,
+      "norm_val_loss": 1.0,
+      "norm_gen_gap": 0.57482,
+      "norm_parameters": 0.29606,
+      "norm_instability": 0.0,
+      "penalty": 0.63811,
+      "score": 36.19,
+      "rank": 4
+    }
+  ],
+  "margin_over_runner_up": 27.240000000000002,
+  "sensitivity": {
+    "schemes": {
+      "declared": {
+        "val_loss": 0.45,
+        "gen_gap": 0.25,
+        "parameters": 0.15,
+        "instability": 0.15
+      },
+      "loss only": {
+        "val_loss": 1.0,
+        "gen_gap": 0.0,
+        "parameters": 0.0,
+        "instability": 0.0
+      },
+      "generalisation first": {
+        "val_loss": 0.3,
+        "gen_gap": 0.5,
+        "parameters": 0.1,
+        "instability": 0.1
+      },
+      "efficiency first": {
+        "val_loss": 0.3,
+        "gen_gap": 0.15,
+        "parameters": 0.45,
+        "instability": 0.1
+      },
+      "equal weights": {
+        "val_loss": 0.25,
+        "gen_gap": 0.25,
+        "parameters": 0.25,
+        "instability": 0.25
+      }
+    },
+    "winner_per_scheme": {
+      "declared": "Compact",
+      "loss only": "Deep",
+      "generalisation first": "Compact",
+      "efficiency first": "Compact",
+      "equal weights": "Compact"
+    },
+    "robust": false,
+    "distinct_winners": [
+      "Compact",
+      "Deep"
+    ]
+  },
+  "excluded_candidates": []
+}

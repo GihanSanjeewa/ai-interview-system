@@ -27,4 +27,8 @@ export class AppError extends Error {
   static internal(message = "Internal server error") {
     return new AppError(500, "internal", message);
   }
+  /** A dependency (the ML service) is down; the request may succeed on retry. */
+  static serviceUnavailable(message = "Service temporarily unavailable") {
+    return new AppError(503, "service_unavailable", message);
+  }
 }

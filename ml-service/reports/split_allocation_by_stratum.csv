@@ -1,0 +1,21 @@
+stratum,total,train,validation,test
+Data Science & ML | Advanced,5,3,1,1
+Data Science & ML | Intermediate,7,5,1,1
+Database Systems | Advanced,16,12,2,2
+Database Systems | Beginner,5,3,1,1
+Database Systems | Intermediate,21,17,2,2
+DevOps & Cloud | Advanced,9,7,1,1
+DevOps & Cloud | Beginner,6,4,1,1
+DevOps & Cloud | Intermediate,20,16,2,2
+Frontend Development | Advanced,27,21,3,3
+Frontend Development | Beginner,440,352,44,44
+Frontend Development | Intermediate,427,341,43,43
+General Software Engineering | Advanced,98,78,10,10
+General Software Engineering | Beginner,329,263,33,33
+General Software Engineering | Intermediate,436,348,44,44
+Software Engineering | Advanced,16,12,2,2
+Software Engineering | Beginner,32,26,3,3
+Software Engineering | Intermediate,53,43,5,5
+System Design | Advanced,10,8,1,1
+System Design | Beginner,11,9,1,1
+System Design | Intermediate,27,21,3,3

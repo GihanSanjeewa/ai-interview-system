@@ -82,46 +82,70 @@ export function attachInterviewGateway(httpServer: HttpServer) {
 
     socket.on(
       "answer:submit",
-      async (payload: { interviewId: string; questionId: string; transcript: string; durationMs?: number }) => {
+      async (payload: {
+        interviewId: string;
+        questionId: string;
+        transcript: string;
+        durationMs?: number;
+        audio?: Record<string, number>;
+      }) => {
+        const room = `interview:${payload.interviewId}`;
         try {
-          const { answer, nextQuestion } = await interviewService.submitAnswer(
+          const turn = await interviewService.submitAnswer(
             userId,
             payload.interviewId,
             {
               questionId: payload.questionId,
               transcript: payload.transcript,
               durationMs: payload.durationMs,
+              audio: payload.audio,
             }
           );
-          io.to(`interview:${payload.interviewId}`).emit("transcript:final", {
-            who: "user",
-            text: answer.transcript,
-          });
-          io.to(`interview:${payload.interviewId}`).emit("metric:update", answer.metrics);
 
-          if (nextQuestion === null) {
-            io.to(`interview:${payload.interviewId}`).emit("interview:ended", {
+          io.to(room).emit("transcript:final", {
+            who: "user",
+            text: payload.transcript,
+            intent: turn.intent,
+            skipped: turn.skipped,
+          });
+          if (turn.answer?.metrics) {
+            io.to(room).emit("metric:update", turn.answer.metrics);
+          }
+
+          // The interviewer reacts before asking anything else. This is what
+          // makes "I don't know" feel like a conversation rather than a form:
+          // the candidate hears an acknowledgement, then the next question.
+          io.to(room).emit("ai:state", { state: "thinking" });
+          io.to(room).emit("ai:say", {
+            text: turn.say,
+            action: turn.action,
+            intent: turn.intent,
+          });
+
+          // "Could you repeat that?" — re-ask the same question.
+          if (turn.action === "repeat" && turn.repeatQuestion) {
+            io.to(room).emit("ai:state", { state: "speaking" });
+            io.to(room).emit("question", { ...turn.repeatQuestion, repeated: true });
+            io.to(room).emit("ai:state", { state: "listening" });
+            return;
+          }
+
+          // A follow-up probe or an easier question generated for this turn.
+          const upcoming = turn.newQuestion ?? turn.nextQuestion;
+          if (!upcoming) {
+            io.to(room).emit("interview:ended", {
               interviewId: payload.interviewId,
               reportPending: true,
             });
             return;
           }
-          const q = await prisma.question.findFirst({
-            where: { interviewId: payload.interviewId, ordinal: nextQuestion },
+
+          io.to(room).emit("ai:state", { state: "speaking" });
+          io.to(room).emit("question", {
+            ...upcoming,
+            adaptive: Boolean(turn.newQuestion),
           });
-          if (q) {
-            io.to(`interview:${payload.interviewId}`).emit("ai:state", { state: "thinking" });
-            setTimeout(() => {
-              io.to(`interview:${payload.interviewId}`).emit("ai:state", { state: "speaking" });
-              io.to(`interview:${payload.interviewId}`).emit("question", {
-                id: q.id,
-                ordinal: q.ordinal,
-                text: q.text,
-                phase: q.phase,
-              });
-              io.to(`interview:${payload.interviewId}`).emit("ai:state", { state: "listening" });
-            }, 600);
-          }
+          io.to(room).emit("ai:state", { state: "listening" });
         } catch (err) {
           socket.emit("error", { message: (err as Error).message });
         }

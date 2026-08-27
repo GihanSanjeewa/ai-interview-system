@@ -1,56 +1,412 @@
 {
-  "candidates": [
+  "stage": "05_multi_candidate_training",
+  "generated_utc": "2026-08-27T10:23:33+00:00",
+  "policy": "All weights randomly initialised. No pretrained weights, adapters, or distillation were used.",
+  "reproducibility": {
+    "seed": 42,
+    "device": "cpu",
+    "torch_version": "2.12.1+cpu"
+  },
+  "tokenizer": {
+    "type": "custom byte-pair encoding, trained in-project",
+    "vocab_size": 4096,
+    "fitted_on": "training split only",
+    "training_questions": 1589,
+    "fit_seconds": 0.02,
+    "mean_fertility_train": 1.4549,
+    "mean_fertility_validation": 1.9601,
+    "path": "tokenizer"
+  },
+  "data": {
+    "train_sequences": 1589,
+    "validation_sequences": 203,
+    "max_seq_len": 35,
+    "batch_size": 8,
+    "training_tokens": 19745
+  },
+  "hyperparameters": {
+    "epochs_max": 8,
+    "learning_rate": 0.0003,
+    "weight_decay": 0.01,
+    "warmup_ratio": 0.1,
+    "grad_clip": 1.0,
+    "early_stopping_patience": 3,
+    "optimizer": "AdamW",
+    "schedule": "linear warm-up then cosine decay"
+  },
+  "architectures": [
     {
       "candidate_id": "candidate_1_scratch_compact_transformer",
-      "model_type": "scratch_trained",
-      "parameter_count": 4058624,
-      "metrics": {
-        "val_loss": 7.7037,
-        "val_perplexity": 100.0,
-        "val_rouge_l": 0.448,
-        "val_domain_accuracy": 0.864,
-        "inference_latency_ms": 202.91,
-        "vram_efficiency": 0.919
-      }
+      "label": "Compact",
+      "d_model": 256,
+      "layers": 4,
+      "heads": 4,
+      "d_ff": 1024,
+      "activation": "gelu",
+      "parameters": 4339200,
+      "parameters_m": 4.34,
+      "size_fp32_mb": 16.6,
+      "hypothesis": "Is a small model sufficient for this corpus?"
     },
     {
       "candidate_id": "candidate_2_scratch_scaled_transformer",
-      "model_type": "scratch_trained",
-      "parameter_count": 11996160,
-      "metrics": {
-        "val_loss": 7.5592,
-        "val_perplexity": 100.0,
-        "val_rouge_l": 0.464,
-        "val_domain_accuracy": 0.872,
-        "inference_latency_ms": 229.39,
-        "vram_efficiency": 0.76
-      }
+      "label": "Scaled",
+      "d_model": 384,
+      "layers": 6,
+      "heads": 6,
+      "d_ff": 1536,
+      "activation": "gelu",
+      "parameters": 12417024,
+      "parameters_m": 12.42,
+      "size_fp32_mb": 47.4,
+      "hypothesis": "Does width plus depth help?"
     },
     {
       "candidate_id": "candidate_3_scratch_deep_transformer",
-      "model_type": "scratch_trained",
-      "parameter_count": 27018240,
-      "metrics": {
-        "val_loss": 7.4159,
-        "val_perplexity": 100.0,
-        "val_rouge_l": 0.494,
-        "val_domain_accuracy": 0.887,
-        "inference_latency_ms": 332.3,
-        "vram_efficiency": 0.46
-      }
+      "label": "Deep",
+      "d_model": 512,
+      "layers": 8,
+      "heads": 8,
+      "d_ff": 2048,
+      "activation": "gelu",
+      "parameters": 27579392,
+      "parameters_m": 27.58,
+      "size_fp32_mb": 105.2,
+      "hypothesis": "Does capacity keep paying off, or overfit?"
     },
     {
       "candidate_id": "candidate_4_scratch_efficient_transformer",
-      "model_type": "scratch_trained",
-      "parameter_count": 10798848,
-      "metrics": {
-        "val_loss": 7.5669,
-        "val_perplexity": 100.0,
-        "val_rouge_l": 0.462,
-        "val_domain_accuracy": 0.871,
-        "inference_latency_ms": 176.79,
-        "vram_efficiency": 0.784
-      }
+      "label": "Efficient (SwiGLU)",
+      "d_model": 384,
+      "layers": 4,
+      "heads": 6,
+      "d_ff": 1536,
+      "activation": "swiglu",
+      "parameters": 11219712,
+      "parameters_m": 11.22,
+      "size_fp32_mb": 42.8,
+      "hypothesis": "Does a better activation beat extra depth?"
     }
-  ]
+  ],
+  "candidates": [
+    {
+      "candidate_id": "candidate_1_scratch_compact_transformer",
+      "label": "Compact",
+      "hypothesis": "Is a small model sufficient for this corpus?",
+      "parameters": 4339200,
+      "epochs_run": 7,
+      "best_epoch": 4,
+      "best_val_loss": 6.31197,
+      "best_val_perplexity": 551.13,
+      "final_train_loss": 4.36009,
+      "generalisation_gap": 1.95187,
+      "train_seconds": 201.8,
+      "checkpoint": "checkpoints\\candidate_1_scratch_compact_transformer",
+      "device": "cpu",
+      "trained": true
+    },
+    {
+      "candidate_id": "candidate_2_scratch_scaled_transformer",
+      "label": "Scaled",
+      "hypothesis": "Does width plus depth help?",
+      "parameters": 12417024,
+      "epochs_run": 6,
+      "best_epoch": 3,
+      "best_val_loss": 6.34617,
+      "best_val_perplexity": 570.3,
+      "final_train_loss": 4.22656,
+      "generalisation_gap": 2.11961,
+      "train_seconds": 392.0,
+      "checkpoint": "checkpoints\\candidate_2_scratch_scaled_transformer",
+      "device": "cpu",
+      "trained": true
+    },
+    {
+      "candidate_id": "candidate_3_scratch_deep_transformer",
+      "label": "Deep",
+      "hypothesis": "Does capacity keep paying off, or overfit?",
+      "parameters": 27579392,
+      "epochs_run": 8,
+      "best_epoch": 6,
+      "best_val_loss": 6.29842,
+      "best_val_perplexity": 543.71,
+      "final_train_loss": 4.03993,
+      "generalisation_gap": 2.25849,
+      "train_seconds": 1301.4,
+      "checkpoint": "checkpoints\\candidate_3_scratch_deep_transformer",
+      "device": "cpu",
+      "trained": true
+    },
+    {
+      "candidate_id": "candidate_4_scratch_efficient_transformer",
+      "label": "Efficient (SwiGLU)",
+      "hypothesis": "Does a better activation beat extra depth?",
+      "parameters": 11219712,
+      "epochs_run": 6,
+      "best_epoch": 3,
+      "best_val_loss": 6.46486,
+      "best_val_perplexity": 642.17,
+      "final_train_loss": 4.33673,
+      "generalisation_gap": 2.12812,
+      "train_seconds": 656.2,
+      "checkpoint": "checkpoints\\candidate_4_scratch_efficient_transformer",
+      "device": "cpu",
+      "trained": true
+    }
+  ],
+  "histories": {
+    "candidate_1_scratch_compact_transformer": {
+      "epoch": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "train_loss": [
+        7.924107026444255,
+        5.649334984911363,
+        5.033008216655488,
+        4.692143609522722,
+        4.511798468328715,
+        4.409398193582186,
+        4.360094255712133
+      ],
+      "val_loss": [
+        7.072726879609243,
+        6.5434675746328095,
+        6.452750659406707,
+        6.311967475840983,
+        6.361280733563277,
+        6.4079118113643085,
+        6.431871322129337
+      ],
+      "train_ppl": [
+        2763.095881965692,
+        284.1024705588938,
+        153.3937609994838,
+        109.08676879256988,
+        91.0854856524806,
+        82.21996810789214,
+        78.26451095265338
+      ],
+      "val_ppl": [
+        1179.3596251620233,
+        694.6913002805056,
+        634.4450370747535,
+        551.1282142601408,
+        578.9874103552481,
+        606.6256088327704,
+        621.3355798003145
+      ],
+      "lr": [
+        0.00029942361816970243,
+        0.00027987639791335464,
+        0.0002359990480832037,
+        0.00017601124233723685,
+        0.00011115067366738004,
+        5.3567864149406936e-05,
+        1.4049971721979857e-05
+      ],
+      "seconds": [
+        26.201968899928033,
+        28.889944199938327,
+        25.034907500026748,
+        24.82967339991592,
+        30.914973699953407,
+        35.968211099971086,
+        27.662612200016156
+      ]
+    },
+    "candidate_2_scratch_scaled_transformer": {
+      "epoch": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "train_loss": [
+        7.768274737844284,
+        5.406373989537395,
+        4.779646871713702,
+        4.483301363657139,
+        4.32855180554225,
+        4.226562327767932
+      ],
+      "val_loss": [
+        6.828987505319569,
+        6.453173253354203,
+        6.346168656969846,
+        6.3837971151695685,
+        6.441123830362017,
+        6.446406993609346
+      ],
+      "train_ppl": [
+        2364.388577360731,
+        222.82216557720835,
+        119.0622983550494,
+        88.52644878183327,
+        75.83438407358047,
+        68.48141042411528
+      ],
+      "val_ppl": [
+        924.2545357706182,
+        634.7132063668091,
+        570.3034895665094,
+        592.1719893075954,
+        627.1111705145472,
+        630.4330685407015
+      ],
+      "lr": [
+        0.00029942361816970243,
+        0.00027987639791335464,
+        0.0002359990480832037,
+        0.00017601124233723685,
+        0.00011115067366738004,
+        5.3567864149406936e-05
+      ],
+      "seconds": [
+        65.7701151999645,
+        62.6729790000245,
+        60.47283720015548,
+        64.60313179995865,
+        68.7560841999948,
+        65.19873230019584
+      ]
+    },
+    "candidate_3_scratch_deep_transformer": {
+      "epoch": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "train_loss": [
+        7.65691962848026,
+        5.2600773733724235,
+        4.64766264044558,
+        4.380487821662849,
+        4.223784300509544,
+        4.12385290932072,
+        4.064517265194335,
+        4.039933294195789
+      ],
+      "val_loss": [
+        6.746046838086,
+        6.315113064344595,
+        6.317529098560873,
+        6.343199731560613,
+        6.308818999160366,
+        6.298421860785598,
+        6.355664555659431,
+        6.358590622419708
+      ],
+      "train_ppl": [
+        2115.231683443473,
+        192.49638481552986,
+        104.34081832631709,
+        79.87698962837108,
+        68.29143120516792,
+        61.79688195082872,
+        58.23678881098709,
+        56.82255228499808
+      ],
+      "val_ppl": [
+        850.6891945658352,
+        552.8645663277575,
+        554.2019209336805,
+        568.6128120349778,
+        549.3957287058597,
+        543.713177617445,
+        575.7448280371651,
+        577.4319629718603
+      ],
+      "lr": [
+        0.00029942361816970243,
+        0.00027987639791335464,
+        0.0002359990480832037,
+        0.00017601124233723685,
+        0.00011115067366738004,
+        5.3567864149406936e-05,
+        1.4049971721979857e-05,
+        0.0
+      ],
+      "seconds": [
+        129.72205050010234,
+        136.02065859991126,
+        132.79939839988947,
+        128.75005099992268,
+        179.80388189991936,
+        193.1043413998559,
+        177.25115609983914,
+        215.59213829995133
+      ]
+    },
+    "candidate_4_scratch_efficient_transformer": {
+      "epoch": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "train_loss": [
+        7.775058260646086,
+        5.5424660835493125,
+        4.929675983074139,
+        4.6280917435693985,
+        4.446380747292098,
+        4.336734002950776
+      ],
+      "val_loss": [
+        6.834246418204565,
+        6.566963227729176,
+        6.464856091816822,
+        6.578207313343043,
+        6.547818138691898,
+        6.552813550110007
+      ],
+      "train_ppl": [
+        2380.4819844715753,
+        255.30683174117442,
+        138.33468229900836,
+        102.31862751929941,
+        85.31759859053662,
+        76.45742140570688
+      ],
+      "val_ppl": [
+        929.1279129592716,
+        711.206787390555,
+        642.1719429985638,
+        719.2487851240402,
+        697.7201831808034,
+        701.2143025663894
+      ],
+      "lr": [
+        0.00029942361816970243,
+        0.00027987639791335464,
+        0.0002359990480832037,
+        0.00017601124233723685,
+        0.00011115067366738004,
+        5.3567864149406936e-05
+      ],
+      "seconds": [
+        114.87964279996231,
+        108.48173199989833,
+        87.77787610003725,
+        123.26283170003444,
+        90.17853679996915,
+        127.8428613001015
+      ]
+    }
+  }
 }

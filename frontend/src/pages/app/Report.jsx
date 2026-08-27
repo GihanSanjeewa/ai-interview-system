@@ -196,7 +196,12 @@ export default function Report() {
 
   const perQuestionScores = (report.interview?.questions || []).map((q, i) => {
     const m = q.answer?.metrics;
-    if (!m) return { label: `Q${i + 1}`, value: 0 };
+    // A declined question is not a zero-scoring answer — it is an unanswered
+    // question, and the chart must not present the two as the same thing.
+    if (q.answer?.skipped || q.answer?.intent === "dont_know") {
+      return { label: `Q${i + 1}`, value: 0, skipped: true };
+    }
+    if (!m) return { label: `Q${i + 1}`, value: 0, unscored: true };
     const avg = Math.round(
       ((m.confidence ?? 0) +
         (m.communication ?? 0) +
@@ -205,8 +210,15 @@ export default function Report() {
         (m.fluency ?? 0)) /
         5
     );
-    return { label: `Q${i + 1}`, value: avg };
+    return { label: `Q${i + 1}`, value: avg, domain: q.domain };
   });
+
+  // Session measurements behind every score, written by the ML report generator.
+  const analytics = report.analytics || {};
+  const byDomain = Array.isArray(analytics.byDomain) ? analytics.byDomain : [];
+  const skippedQuestions = Array.isArray(analytics.skippedQuestions)
+    ? analytics.skippedQuestions
+    : [];
 
   const duration =
     report.interview?.startedAt && report.interview?.endedAt
@@ -390,6 +402,107 @@ export default function Report() {
           </div>
         </div>
       </div>
+
+      {/*
+        The evidence behind the scores. Every strength and weakness below is
+        derived from these measurements, so showing them lets the candidate see
+        the working rather than take the findings on trust.
+      */}
+      {analytics.answerCount > 0 && (
+        <div className="bg-surface border-token rounded-3xl border p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-default text-lg font-semibold">
+              What was measured
+            </h3>
+            <Badge variant="brand">
+              {analytics.answeredCount}/{analytics.answerCount} answered
+            </Badge>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Measure
+              label="Questions engaged"
+              value={`${Math.round((analytics.coverage ?? 0) * 100)}%`}
+              hint={
+                analytics.skippedCount
+                  ? `${analytics.skippedCount} declined`
+                  : "none declined"
+              }
+            />
+            <Measure
+              label="Average answer"
+              value={`${analytics.avgWords ?? 0} words`}
+              hint="60–120 is the target for technical answers"
+            />
+            <Measure
+              label="Concrete examples"
+              value={`${analytics.concreteExamples ?? 0} of ${analytics.answerCount}`}
+              hint="answers citing a project, number or example"
+            />
+            <Measure
+              label="Filler rate"
+              value={`${analytics.avgFillerRate ?? 0}%`}
+              hint="under 3% reads as fluent"
+            />
+          </div>
+
+          {/* Which topic areas were strong and which were weak. */}
+          {byDomain.length > 0 && (
+            <div className="mt-6">
+              <p className="text-subtle mb-3 text-[10px] uppercase tracking-wider">
+                Technical accuracy by topic
+              </p>
+              <div className="space-y-2">
+                {byDomain.map((d) => (
+                  <div key={d.domain} className="flex items-center gap-3">
+                    <span className="text-muted w-44 shrink-0 truncate text-xs">
+                      {d.domain}
+                    </span>
+                    <div className="bg-surface-2 h-2 flex-1 overflow-hidden rounded-full">
+                      <div
+                        className={cn(
+                          "h-full rounded-full",
+                          (d.technical ?? 0) >= 70
+                            ? "bg-emerald-500"
+                            : (d.technical ?? 0) >= 50
+                              ? "bg-amber-500"
+                              : "bg-rose-500"
+                        )}
+                        style={{ width: `${Math.max(2, d.technical ?? 0)}%` }}
+                      />
+                    </div>
+                    <span className="text-default w-16 shrink-0 text-right text-xs font-semibold">
+                      {d.technical == null ? "—" : Math.round(d.technical)}
+                    </span>
+                    <span className="text-subtle w-14 shrink-0 text-right text-[10px]">
+                      {d.questions} q
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Declined questions, named — these are the concrete study targets. */}
+          {skippedQuestions.length > 0 && (
+            <div className="mt-6 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
+              <p className="text-default mb-2 text-xs font-semibold">
+                Questions you declined — start here
+              </p>
+              <ul className="space-y-1.5">
+                {skippedQuestions.map((q) => (
+                  <li key={q.ordinal} className="text-muted text-xs leading-relaxed">
+                    <span className="text-amber-400">•</span> {q.question}
+                    {q.domain && (
+                      <span className="text-subtle"> · {q.domain}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Strengths / weaknesses */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -608,4 +721,14 @@ function wordCount(report) {
     if (t) total += t.trim().split(/\s+/).filter(Boolean).length;
   }
   return total.toLocaleString();
+}
+
+function Measure({ label, value, hint }) {
+  return (
+    <div className="bg-surface-2 border-token rounded-2xl border p-4">
+      <p className="text-subtle text-[10px] uppercase tracking-wider">{label}</p>
+      <p className="text-default mt-1 text-lg font-bold">{value}</p>
+      <p className="text-muted mt-1 text-[10px] leading-snug">{hint}</p>
+    </div>
+  );
 }

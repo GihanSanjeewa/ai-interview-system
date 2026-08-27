@@ -1,0 +1,150 @@
+{
+  "stage": "07_model_specialisation",
+  "generated_utc": "2026-08-27T10:34:09+00:00",
+  "policy": "Continued training of this project's own Stage 5 weights. No LoRA, adapters, or external fine-tuning frameworks.",
+  "base_model": {
+    "candidate_id": "candidate_1_scratch_compact_transformer",
+    "label": "Compact",
+    "checkpoint": "checkpoints\\candidate_1_scratch_compact_transformer",
+    "parameters": 4339200
+  },
+  "objective": {
+    "format": "<DOMAIN: {domain}> <DIFFICULTY: {difficulty}> {question}",
+    "purpose": "condition generation on the requested domain and difficulty",
+    "control_token_overhead_tokens": 48.36
+  },
+  "hyperparameters": {
+    "base_learning_rate": 0.0003,
+    "specialisation_learning_rate": 5.9999999999999995e-05,
+    "reduction_factor": 5,
+    "max_epochs": 6,
+    "patience": 2,
+    "weight_decay": 0.01,
+    "grad_clip": 1.0,
+    "rationale": "LR reduced to guard against catastrophic forgetting"
+  },
+  "history": {
+    "epoch": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "train_loss": [
+      NaN,
+      7.413233508705681,
+      6.553609209309469,
+      5.957190518977416,
+      5.517361113625108,
+      5.287354471171845,
+      5.218510115768136
+    ],
+    "val_loss": [
+      9.078468058513687,
+      6.999515726907543,
+      6.369110071242195,
+      5.849845014722592,
+      5.52825575256142,
+      5.398337347153761,
+      5.380132167663657
+    ],
+    "val_ppl": [
+      8764.528991708792,
+      1096.1022170682188,
+      583.5382902436235,
+      347.18056843209575,
+      251.7044929908525,
+      221.0386000561253,
+      217.05096064763956
+    ],
+    "lr": [
+      5.9999999999999995e-05,
+      5.598076211353314e-05,
+      4.5000000000000016e-05,
+      2.9999999999999987e-05,
+      1.499999999999998e-05,
+      4.019237886466837e-06,
+      0.0
+    ],
+    "seconds": [
+      0.0,
+      96.55865650018677,
+      65.67593310005032,
+      109.25910309981555,
+      93.04061929997988,
+      63.16804619994946,
+      71.51219839998521
+    ]
+  },
+  "epochs_run": 6,
+  "best_epoch": 6,
+  "comparison": {
+    "base_conditioned_loss": 9.07847,
+    "specialised_conditioned_loss": 5.38013,
+    "base_plain_loss": 6.33674,
+    "specialised_plain_loss": 5.91682,
+    "task_improvement": 3.69834,
+    "general_ability_change": 0.41992,
+    "catastrophic_forgetting_detected": false
+  },
+  "verdict": {
+    "specialisation_helped": true,
+    "promote_specialised": true,
+    "model_for_stage_8": "specialised",
+    "checkpoint_for_stage_8": "checkpoints\\specialized_model"
+  },
+  "generation_samples": [
+    {
+      "domain": "SQL",
+      "difficulty": "Beginner",
+      "generated": "D O M A I N: D I F F I C U L T Y: B e g i n n e r the a I D is a A are the differences of the differences and a t M a What is the the the a a for a of"
+    },
+    {
+      "domain": "OOP",
+      "difficulty": "Intermediate",
+      "generated": "D O M A I N: D I F F I C U L T Y: I n t e r m e d i a t e to of a A o F - Engineering F ( you difference a an using the the a using a s a, code?"
+    },
+    {
+      "domain": "System Design",
+      "difficulty": "Advanced",
+      "generated": "D O M A I N: D I F F I C U L T Y: A d v a n c e d a e l Engineering Explain a How do of the t G. a an? a in and be a - Angular?"
+    },
+    {
+      "domain": "Frontend Development",
+      "difficulty": "Intermediate",
+      "generated": "D O M A I N: F r o n t e n d D e v e l o p m e n t D I F F I C U L T Y: I n t e r m e d i a t e the What is the between a for the would to and between a a, for use of a v the of use a,"
+    }
+  ],
+  "generation_quality": [
+    {
+      "domain": "SQL",
+      "words": 52,
+      "distinct_word_ratio": 0.481,
+      "is_question_shaped": false
+    },
+    {
+      "domain": "OOP",
+      "words": 51,
+      "distinct_word_ratio": 0.549,
+      "is_question_shaped": true
+    },
+    {
+      "domain": "System Design",
+      "words": 45,
+      "distinct_word_ratio": 0.622,
+      "is_question_shaped": true
+    },
+    {
+      "domain": "Frontend Development",
+      "words": 70,
+      "distinct_word_ratio": 0.4,
+      "is_question_shaped": false
+    }
+  ],
+  "known_limitation": "The training corpus is small for from-scratch language modelling, so generation fluency is limited. The runtime mitigates this by gating generated questions on a quality check and falling back to retrieval over the labelled dataset.",
+  "train_seconds": 503.3,
+  "device": "cpu"
+}

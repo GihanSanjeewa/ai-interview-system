@@ -362,20 +362,94 @@ function CvDetail({ cv, onRemove, onStart, trackLabel }) {
         </div>
       )}
 
+      {/*
+        What the parser could NOT find. Shown because the analyser deliberately
+        returns empty fields rather than inventing content — so the user needs to
+        know a section is missing, and how to fix it.
+      */}
+      {Array.isArray(parsed.warnings) && parsed.warnings.length > 0 && (
+        <div className="bg-surface border-token rounded-3xl border border-amber-500/30 p-6">
+          <div className="mb-3 flex items-center gap-2">
+            <AlertCircle className="size-4.5 text-amber-400" />
+            <h3 className="text-default text-lg font-semibold">
+              Improve your CV
+            </h3>
+            {typeof parsed.extractionConfidence === "number" && (
+              <Badge variant="warning">
+                {Math.round(parsed.extractionConfidence * 100)}% extracted
+              </Badge>
+            )}
+          </div>
+          <p className="text-muted text-xs">
+            We only report what your CV actually says. These are the things we
+            could not find — adding them makes your interview questions sharper.
+          </p>
+          <ul className="mt-4 space-y-2">
+            {parsed.warnings.map((warning, i) => (
+              <li key={i} className="text-muted flex gap-2 text-xs leading-relaxed">
+                <span className="text-amber-400">•</span>
+                <span>{warning}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Experience summary — "not stated" rather than a fabricated figure. */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Stat
+          label="Experience"
+          value={
+            typeof parsed.yearsTotal === "number"
+              ? `${parsed.yearsTotal} yr${parsed.yearsTotal === 1 ? "" : "s"}`
+              : "Not stated"
+          }
+          hint={
+            typeof parsed.yearsTotal === "number"
+              ? "Computed from the date ranges on your CV"
+              : "Add date ranges like “Jan 2022 – Present”"
+          }
+        />
+        <Stat
+          label="Seniority"
+          value={parsed.seniority ? titleCase(parsed.seniority) : "Unknown"}
+          hint="Derived from total tenure"
+        />
+        <Stat
+          label="Demonstrated skills"
+          value={String((parsed.demonstratedTechnologies || []).length)}
+          hint="Backed by a role or project, not just listed"
+        />
+      </div>
+
       {/* Extracted info */}
       <div className="grid gap-4 sm:grid-cols-2">
         <Bucket title="Skills" items={parsed.skills} accent="brand" />
         <Bucket title="Technologies" items={parsed.technologies} accent="accent" />
         <Bucket title="Education" items={parsed.education} accent="emerald" />
         <Bucket title="Experience" items={parsed.experience} accent="amber" />
+        <Bucket title="Projects" items={parsed.projects} accent="brand" />
         <Bucket
           title="Certifications"
           items={parsed.certifications}
           accent="rose"
-          className="sm:col-span-2"
         />
       </div>
     </>
+  );
+}
+
+function titleCase(value) {
+  return String(value).charAt(0).toUpperCase() + String(value).slice(1);
+}
+
+function Stat({ label, value, hint }) {
+  return (
+    <div className="bg-surface border-token rounded-2xl border p-4">
+      <p className="text-subtle text-[10px] uppercase tracking-wider">{label}</p>
+      <p className="text-default mt-1 text-xl font-bold">{value}</p>
+      <p className="text-muted mt-1 text-[11px] leading-snug">{hint}</p>
+    </div>
   );
 }
 

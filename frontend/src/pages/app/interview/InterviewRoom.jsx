@@ -39,16 +39,24 @@ const PHASES = [
   { id: "wrap", label: "Wrap-up" },
 ];
 
+// No answer has been scored yet, so there is nothing to show. The previous
+// values (72/80/78/76/76/138) rendered as if the candidate had already been
+// measured before saying a word.
 const initialMetrics = {
-  confidence: 72,
-  communication: 80,
-  relevance: 78,
-  technical: 76,
-  fluency: 76,
-  pace: 138,
+  confidence: null,
+  communication: null,
+  relevance: null,
+  technical: null,
+  fluency: null,
+  pace: null,
 };
 
 const TTS_LANG = { en: "en-US", si: "si-LK" };
+
+/** Render a 0-100 metric, or an em dash when nothing has been measured yet. */
+function pct(value) {
+  return value == null ? "—" : `${Math.round(value)}%`;
+}
 
 export default function InterviewRoom({ session, onExit }) {
   const { user } = useAuth();
@@ -136,26 +144,73 @@ export default function InterviewRoom({ session, onExit }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /**
+   * Speak `text` and resolve when the voice finishes.
+   *
+   * Resolving on `onend` is what lets the interviewer say something and *then*
+   * ask the next question, instead of the two overlapping. Resolves immediately
+   * when speech synthesis is unavailable so the interview never blocks.
+   */
+  const speakAsync = useCallback(
+    (text, { cancelPrevious = true } = {}) =>
+      new Promise((resolve) => {
+        if (!text || typeof window === "undefined" || !window.speechSynthesis) {
+          resolve();
+          return;
+        }
+        setAiState("speaking");
+        if (cancelPrevious) window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = TTS_LANG[language] || "en-US";
+        utter.rate = 0.96;
+        utter.pitch = 1.0;
+        utter.volume = speakerOn ? 1 : 0;
+        let settled = false;
+        const done = () => {
+          if (settled) return;
+          settled = true;
+          resolve();
+        };
+        utter.onend = done;
+        utter.onerror = done;
+        // Some browsers drop `onend` for long utterances; cap the wait so a
+        // missed event cannot freeze the interview.
+        const guard = setTimeout(done, Math.min(30000, 400 + text.length * 90));
+        const clear = () => clearTimeout(guard);
+        utter.addEventListener?.("end", clear);
+        utter.addEventListener?.("error", clear);
+        window.speechSynthesis.speak(utter);
+      }),
+    [language, speakerOn]
+  );
+
   // TTS — speak the current question
   const speak = useCallback(
     (text) => {
-      if (!text) return;
-      if (typeof window === "undefined" || !window.speechSynthesis) {
+      if (!text) {
         setAiState("listening");
         return;
       }
-      setAiState("speaking");
-      window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = TTS_LANG[language] || "en-US";
-      utter.rate = 0.96;
-      utter.pitch = 1.0;
-      utter.volume = speakerOn ? 1 : 0;
-      utter.onend = () => setAiState("listening");
-      utter.onerror = () => setAiState("listening");
-      window.speechSynthesis.speak(utter);
+      void speakAsync(text).then(() => setAiState("listening"));
     },
-    [language, speakerOn]
+    [speakAsync]
+  );
+
+  /**
+   * Say the interviewer's line, then run `next` (which usually advances the
+   * question). Keeps the acknowledgement and the next question in order.
+   */
+  const speakThen = useCallback(
+    async (line, next) => {
+      setAiState("thinking");
+      if (line) await speakAsync(line);
+      if (next) {
+        next();
+      } else {
+        setAiState("listening");
+      }
+    },
+    [speakAsync]
   );
 
   // Speak whenever the question index changes
@@ -167,9 +222,14 @@ export default function InterviewRoom({ session, onExit }) {
 
   // Phase index
   const phaseIndex = useMemo(() => {
+    // Read the phase off the current question. Deriving it from step/total was
+    // wrong as soon as the interview started appending follow-up questions,
+    // because the denominator changed mid-round.
+    const idx = PHASES.findIndex((p) => p.id === currentQuestion?.phase);
+    if (idx >= 0) return idx;
     if (!questions.length) return 0;
     return Math.min(PHASES.length - 1, Math.floor((step / questions.length) * PHASES.length));
-  }, [step, questions.length]);
+  }, [currentQuestion, step, questions.length]);
 
   // Mic toggle controls live recording
   const startListening = useCallback(async () => {
@@ -178,65 +238,135 @@ export default function InterviewRoom({ session, onExit }) {
     await recorder.start();
   }, [micOn, recorder]);
 
+  /**
+   * Submit the answer, then let the interviewer respond before moving on.
+   *
+   * The backend returns what the interviewer says (`say`) plus what happens
+   * next (`action`). Saying "I don't know" now produces an acknowledgement and
+   * advances the interview; a shallow answer draws a follow-up; asking for a
+   * repeat re-asks the same question. Acoustic metrics from transcription are
+   * sent back so confidence, fluency and pace are measured, not assumed.
+   */
+  const submitTurn = useCallback(
+    async ({ text, durationMs, audio }) => {
+      if (!currentQuestion) return;
+      setSubmitting(true);
+      try {
+        setTranscript((tr) => [...tr, { who: "user", text: text || "(no answer)" }]);
+
+        const turn = await interviewApi.submitAnswer(interview.id, {
+          questionId: currentQuestion.id,
+          transcript: text,
+          durationMs,
+          audio: audio || undefined,
+        });
+
+        if (turn.answer?.metrics) {
+          const m = turn.answer.metrics;
+          setMetrics((prev) => ({
+            confidence: m.confidence ?? prev.confidence,
+            communication: m.communication ?? prev.communication,
+            relevance: m.relevance ?? prev.relevance,
+            technical: m.technical ?? prev.technical,
+            fluency: m.fluency ?? prev.fluency,
+            pace: m.pace ?? prev.pace,
+          }));
+        }
+        setPartialAnswer("");
+
+        // The interviewer reacts out loud first — this is the conversational bit.
+        if (turn.say) {
+          setTranscript((tr) => [...tr, { who: "ai", text: turn.say }]);
+        }
+
+        // "Could you repeat that?" — same question again, nothing consumed.
+        if (turn.action === "repeat") {
+          await speakThen(turn.say, () => speak(currentQuestion.text));
+          return;
+        }
+
+        // A follow-up probe or an easier question generated for this answer.
+        if (turn.newQuestion) {
+          setQuestions((qs) => {
+            const next = [...qs];
+            next.splice(step + 1, 0, turn.newQuestion);
+            return next;
+          });
+          await speakThen(turn.say, () => setStep((i) => i + 1));
+          return;
+        }
+
+        if (!turn.nextQuestion) {
+          await speakThen(turn.say, null);
+          await finishInterview();
+          return;
+        }
+
+        const nextIdx = questions.findIndex((q) => q.id === turn.nextQuestion.id);
+        if (nextIdx >= 0) {
+          await speakThen(turn.say, () => setStep(nextIdx));
+        } else {
+          // The plan grew server-side; append and advance.
+          setQuestions((qs) => [...qs, turn.nextQuestion]);
+          await speakThen(turn.say, () => setStep((i) => i + 1));
+        }
+      } catch (err) {
+        toast.error("Couldn't submit answer", err?.response?.data?.title);
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [currentQuestion, interview.id, questions, step, toast]
+  );
+
+  /** Stop recording, transcribe, and take the turn. */
   const stopAndSubmit = useCallback(async () => {
     if (!currentQuestion) return;
-    setSubmitting(true);
+    let result;
     try {
-      const result = await recorder.stop();
-      let text = (result?.transcript || partialAnswer || "").trim();
-      let durationMs = result?.durationMs;
-      if (result?.blob && result.blob.size > 1024) {
-        setTranscribing(true);
-        try {
-          const { text: stt } = await audioApi.transcribe(result.blob, language);
-          if (stt && stt.trim()) {
-            text = stt.trim();
-          }
-        } catch (err) {
-          console.warn("Audio transcription fallback to live text:", err);
-        } finally {
-          setTranscribing(false);
-        }
-      }
-      if (!text) {
-        toast.info("No answer captured", "Try again — talk for at least a few seconds.");
-        return;
-      }
-      setTranscript((tr) => [...tr, { who: "user", text }]);
-
-      const { answer, nextQuestion } = await interviewApi.submitAnswer(interview.id, {
-        questionId: currentQuestion.id,
-        transcript: text,
-        durationMs,
-      });
-      if (answer?.metrics) {
-        setMetrics((m) => ({
-          ...m,
-          confidence: answer.metrics.confidence ?? m.confidence,
-          communication: answer.metrics.communication ?? m.communication,
-          relevance: answer.metrics.relevance ?? m.relevance,
-          technical: answer.metrics.technical ?? m.technical,
-          fluency: answer.metrics.fluency ?? m.fluency,
-          pace: answer.metrics.pace ?? m.pace,
-        }));
-      }
-      setPartialAnswer("");
-
-      if (nextQuestion === null) {
-        await finishInterview();
-        return;
-      }
-      const nextIdx = questions.findIndex((q) => q.ordinal === nextQuestion);
-      if (nextIdx >= 0) {
-        setAiState("thinking");
-        setTimeout(() => setStep(nextIdx), 700);
-      }
-    } catch (err) {
-      toast.error("Couldn't submit answer", err?.response?.data?.title);
-    } finally {
-      setSubmitting(false);
+      result = await recorder.stop();
+    } catch {
+      result = null;
     }
-  }, [currentQuestion, recorder, partialAnswer, language, interview.id, questions]);
+    let text = (result?.transcript || partialAnswer || "").trim();
+    let audio = null;
+
+    if (result?.blob && result.blob.size > 1024) {
+      setTranscribing(true);
+      try {
+        const stt = await audioApi.transcribe(result.blob, language);
+        if (stt?.text?.trim()) text = stt.text.trim();
+        // Acoustic metrics measured by the ML service during transcription.
+        if (stt?.metrics) audio = stt.metrics;
+      } catch (err) {
+        console.warn("Audio transcription fell back to live text:", err);
+      } finally {
+        setTranscribing(false);
+      }
+    }
+
+    // An empty answer is a real outcome: the interviewer should respond to
+    // silence, not have the submission silently dropped.
+    await submitTurn({ text, durationMs: result?.durationMs, audio });
+  }, [
+    currentQuestion,
+    recorder,
+    partialAnswer,
+    language,
+    submitTurn,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ]);
+
+  /** Explicit "I don't know / skip" — the same path a spoken skip takes. */
+  const skipQuestion = useCallback(async () => {
+    try {
+      await recorder.stop();
+    } catch {
+      /* not recording */
+    }
+    await submitTurn({ text: "I don't know.", durationMs: 0, audio: null });
+  }, [recorder, submitTurn]);
 
   const finishInterview = useCallback(async () => {
     try {
@@ -421,29 +551,38 @@ export default function InterviewRoom({ session, onExit }) {
                     {transcribing ? "Transcribing…" : "Submit answer"}
                   </Button>
                 )}
+                {/*
+                  Routed through the same turn handler as a spoken "I don't
+                  know", so the interviewer acknowledges it and the report
+                  records the gap. Previously this advanced the step counter
+                  client-side only, leaving the question invisible to scoring.
+                */}
                 <Button
                   size="sm"
                   variant="ghost"
                   rightIcon={SkipForward}
-                  onClick={() => {
-                    if (step + 1 < questions.length) setStep(step + 1);
-                    else finishInterview();
-                  }}
-                  disabled={recorder.recording}
+                  onClick={skipQuestion}
+                  disabled={submitting || transcribing}
+                  title="Tell the interviewer you don't know this one"
                 >
-                  Skip
+                  I don't know
                 </Button>
               </div>
             </div>
 
             {/* Live metrics — proposal §3.3 */}
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
-              <MetricChip label="Confidence" value={`${Math.round(metrics.confidence)}%`} progress={metrics.confidence} tone="brand" />
-              <MetricChip label="Communication" value={`${Math.round(metrics.communication)}%`} progress={metrics.communication} tone="accent" />
-              <MetricChip label="Relevance" value={`${Math.round(metrics.relevance)}%`} progress={metrics.relevance} tone="emerald" />
-              <MetricChip label="Technical" value={`${Math.round(metrics.technical)}%`} progress={metrics.technical} tone="amber" />
-              <MetricChip label="Fluency" value={`${Math.round(metrics.fluency)}%`} progress={metrics.fluency} tone="rose" />
-              <MetricChip label="Pace" value={`${Math.round(metrics.pace)} wpm`} progress={Math.max(0, Math.min(100, ((metrics.pace - 60) / 1.2)))} tone="brand" />
+              <MetricChip label="Confidence" value={pct(metrics.confidence)} progress={metrics.confidence ?? 0} tone="brand" />
+              <MetricChip label="Communication" value={pct(metrics.communication)} progress={metrics.communication ?? 0} tone="accent" />
+              <MetricChip label="Relevance" value={pct(metrics.relevance)} progress={metrics.relevance ?? 0} tone="emerald" />
+              <MetricChip label="Technical" value={pct(metrics.technical)} progress={metrics.technical ?? 0} tone="amber" />
+              <MetricChip label="Fluency" value={pct(metrics.fluency)} progress={metrics.fluency ?? 0} tone="rose" />
+              <MetricChip
+                label="Pace"
+                value={metrics.pace == null ? "—" : `${Math.round(metrics.pace)} wpm`}
+                progress={metrics.pace == null ? 0 : Math.max(0, Math.min(100, (metrics.pace - 60) / 1.2))}
+                tone="brand"
+              />
             </div>
           </div>
 

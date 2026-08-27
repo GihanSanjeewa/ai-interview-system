@@ -1,0 +1,57 @@
+{
+  "stage": "01_dataset_acquisition",
+  "generated_utc": "2026-08-27T09:27:24+00:00",
+  "dataset": {
+    "identifier": "ali-alkhars/interviews",
+    "url": "https://huggingface.co/datasets/ali-alkhars/interviews/raw/main/interviews.json",
+    "access_type": "dataset repository (no model weights)",
+    "licence": "see dataset card",
+    "record_count": 2291,
+    "file": "raw_interview_dataset.json",
+    "file_bytes": 1044730,
+    "sha256": "6a75bedf5c6e9448675ff06a8d82a25b183d66393b9faf0fd00c842bdaf19ba6"
+  },
+  "label_columns": {
+    "domain": 7,
+    "difficulty": 3
+  },
+  "question_length_words": {
+    "n": 2291.0,
+    "mean": 9.391,
+    "std": 6.448,
+    "min": 2.0,
+    "q1": 6.0,
+    "median": 8.0,
+    "q3": 11.0,
+    "max": 100.0,
+    "skew": 4.868,
+    "kurtosis": 42.216
+  },
+  "answers_used_as_targets": false,
+  "hardware": {
+    "timestamp_utc": "2026-08-27T09:27:10+00:00",
+    "python_version": "3.14.5",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel",
+    "torch_version": "2.12.1+cpu",
+    "cuda_available": false,
+    "gpu_name": null,
+    "gpu_memory_gb": 0.0,
+    "gpu_count": 0,
+    "cpu_cores_physical": 8,
+    "ram_total_gb": null,
+    "selected_device": "cpu"
+  },
+  "policy_audit": {
+    "forbidden_extensions": [
+      ".bin",
+      ".h5",
+      ".onnx",
+      ".pb",
+      ".safetensors",
+      ".tflite"
+    ],
+    "violations": [],
+    "passed": true
+  }
+}

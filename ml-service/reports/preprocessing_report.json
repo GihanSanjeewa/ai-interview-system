@@ -1,0 +1,127 @@
+{
+  "stage": "03_data_preprocessing",
+  "generated_utc": "2026-08-27T09:34:56+00:00",
+  "thresholds_source": "reports\\eda_summary.json",
+  "thresholds_applied": {
+    "min_words": 4,
+    "max_words": 33,
+    "max_sentences": 2,
+    "reject_code_markers": true,
+    "drop_exact_duplicates": true,
+    "estimated_retained": 2060,
+    "estimated_retention_pct": 89.92
+  },
+  "counts": {
+    "input": 2291,
+    "accepted": 1995,
+    "rejected": 296,
+    "retention_pct": 87.08
+  },
+  "rejections_by_reason": {
+    "too_short": 99,
+    "context_dependent_phrasing": 63,
+    "duplicate": 56,
+    "contains_code_or_url": 39,
+    "too_long": 23,
+    "multi_part": 16
+  },
+  "label_imputation": {},
+  "length_before_after": {
+    "before": {
+      "n": 2291.0,
+      "mean": 9.391,
+      "std": 6.448,
+      "min": 2.0,
+      "q1": 6.0,
+      "median": 8.0,
+      "q3": 11.0,
+      "max": 100.0,
+      "skew": 4.868,
+      "kurtosis": 42.216
+    },
+    "after": {
+      "n": 1995.0,
+      "mean": 8.848,
+      "std": 3.964,
+      "min": 4.0,
+      "q1": 6.0,
+      "median": 8.0,
+      "q3": 10.0,
+      "max": 33.0,
+      "skew": 1.578,
+      "kurtosis": 3.607
+    }
+  },
+  "class_distribution_after": {
+    "difficulty": {
+      "Intermediate": 991,
+      "Beginner": 823,
+      "Advanced": 181
+    },
+    "domain": {
+      "Frontend Development": 894,
+      "General Software Engineering": 863,
+      "Software Engineering": 101,
+      "System Design": 48,
+      "Database Systems": 42,
+      "DevOps & Cloud": 35,
+      "Data Science & ML": 12
+    }
+  },
+  "integrity_checks": [
+    {
+      "check": "corpus is non-empty",
+      "passed": true,
+      "detail": "1,995 records"
+    },
+    {
+      "check": "every question has text",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "word counts inside the window",
+      "passed": true,
+      "detail": "range [4, 33]"
+    },
+    {
+      "check": "no question exceeds the sentence limit",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "no exact duplicates remain",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "every difficulty is canonical",
+      "passed": true,
+      "detail": "['Advanced', 'Beginner', 'Intermediate']"
+    },
+    {
+      "check": "every record has a domain",
+      "passed": true,
+      "detail": "7 distinct domains"
+    },
+    {
+      "check": "ids are unique",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "no question contains code markers",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "retention is plausible (50-100%)",
+      "passed": true,
+      "detail": "87.08%"
+    }
+  ],
+  "output_files": {
+    "clean_corpus": "dataset\\processed\\clean_interview_dataset.jsonl",
+    "rejections": "reports\\preprocessing_rejections.jsonl"
+  }
+}
