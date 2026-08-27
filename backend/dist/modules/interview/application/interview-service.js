@@ -129,10 +129,13 @@ exports.interviewService = {
                 payload: { interviewId: iv.id, userId },
             },
         });
-        // Inline scoring (synchronous) — replace with worker in Phase 2.
-        void scoring_service_1.scoringService.generateReport(iv.id).catch((err) => {
+        // Synchronous report generation so the report is ready immediately on redirect
+        try {
+            await scoring_service_1.scoringService.generateReport(iv.id);
+        }
+        catch (err) {
             logger_1.logger.error({ err, interviewId: iv.id }, "Report generation failed");
-        });
+        }
         return this.get(userId, id);
     },
 };

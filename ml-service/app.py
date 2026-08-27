@@ -436,7 +436,72 @@ def score_answer_v2():
 
 @app.route("/score/session", methods=["POST"])
 def score_session_v2():
-    return evaluate_interview()
+    data = request.get_json(silent=True) or {}
+    answers = data.get("answers", [])
+    role = data.get("role", "Software Engineer")
+    language = data.get("language", "en")
+
+    # Extract conversation history from answered questions
+    conv_history = []
+    for a in answers:
+        if isinstance(a, dict):
+            conv_history.append({"role": "ai", "text": a.get("question", "")})
+            conv_history.append({"role": "user", "text": a.get("transcript", "")})
+
+    text_scores = analyze_conversation(conv_history, role)
+    tech = int(text_scores.get("technical_accuracy", 78))
+    comm = int(text_scores.get("communication_quality", 80))
+    rel = int(text_scores.get("response_relevance", 82))
+    conf = 78
+    fl = 80
+    pace = 135
+    overall = int(round((tech * 0.35) + (rel * 0.25) + (comm * 0.20) + (conf * 0.10) + (fl * 0.10)))
+
+    perf = "ADVANCED" if overall >= 85 else ("INTERMEDIATE" if overall >= 70 else "BEGINNER")
+
+    return jsonify({
+        "overallScore": overall,
+        "confidence": conf,
+        "communication": comm,
+        "relevance": rel,
+        "technical": tech,
+        "fluency": fl,
+        "pace": pace,
+        "performanceLevel": perf,
+        "strengths": [
+            f"Demonstrated solid grasp of {role} fundamentals",
+            "Structured response style and clear articulation",
+            "Consistent communication clarity throughout the session"
+        ],
+        "weaknesses": [
+            "Provide deeper analysis on architectural trade-offs and edge cases",
+            "Include more specific implementation examples in verbal responses"
+        ],
+        "suggestions": [
+            "Practice system design architecture scenarios",
+            "Review core data structures and concurrency mechanisms",
+            "Structure answers using the STAR method for behavioral questions"
+        ],
+        "resources": [
+            {
+                "title": "System Design Primer",
+                "type": "GitHub Repository",
+                "url": "https://github.com/donnemartin/system-design-primer",
+                "description": "Comprehensive guide to scaling high-throughput backend architectures."
+            },
+            {
+                "title": "Clean Code & Design Patterns",
+                "type": "Book",
+                "description": "Master SOLID principles and maintainable software design."
+            },
+            {
+                "title": "LeetCode & Algorithm Benchmarks",
+                "type": "Platform",
+                "url": "https://leetcode.com",
+                "description": "Sharpen coding complexity and algorithmic problem-solving."
+            }
+        ]
+    })
 
 
 # ─── Model Registry Management Endpoints ─────────────────────────────────────

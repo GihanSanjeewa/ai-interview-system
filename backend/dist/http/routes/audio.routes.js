@@ -19,6 +19,11 @@ const upload = (0, multer_1.default)({
     limits: { fileSize: 20 * 1024 * 1024 },
 });
 exports.audioRouter = (0, express_1.Router)();
+// Public probe — used by the frontend to show the "Fine-tuned Sinhala" badge
+exports.audioRouter.get("/whisper/info", (0, async_handler_1.asyncHandler)(async (_req, res) => {
+    const info = await ml_client_1.mlClient.whisperInfo();
+    res.json({ info });
+}));
 exports.audioRouter.use(auth_1.requireAuth);
 exports.audioRouter.post("/transcribe", upload.single("audio"), (0, async_handler_1.asyncHandler)(async (req, res) => {
     if (!req.file)
@@ -28,12 +33,7 @@ exports.audioRouter.post("/transcribe", upload.single("audio"), (0, async_handle
     await promises_1.default.mkdir(dir, { recursive: true });
     const tmp = node_path_1.default.join(dir, `${(0, uuid_1.v4)()}-${req.file.originalname || "blob.webm"}`);
     await promises_1.default.writeFile(tmp, req.file.buffer);
-    try {
-        const text = await ml_client_1.mlClient.transcribe(tmp, language);
-        res.json({ text });
-    }
-    finally {
-        // Keep audio for now (could move to S3 + clean after retention window).
-    }
+    const { text, whisper } = await ml_client_1.mlClient.transcribe(tmp, language);
+    res.json({ text, whisper });
 }));
 //# sourceMappingURL=audio.routes.js.map

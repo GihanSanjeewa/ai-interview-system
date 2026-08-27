@@ -5,6 +5,7 @@ const express_1 = require("express");
 const async_handler_1 = require("@/http/middlewares/async-handler");
 const auth_1 = require("@/http/middlewares/auth");
 const interview_service_1 = require("@/modules/interview/application/interview-service");
+const ml_client_1 = require("@/infrastructure/ml/ml-client");
 const dto_1 = require("@/modules/interview/presentation/dto");
 exports.interviewRouter = (0, express_1.Router)();
 // Public: list available tracks (used by the setup screen)
@@ -33,6 +34,11 @@ exports.interviewRouter.post("/:id/answers", (0, async_handler_1.asyncHandler)(a
     const input = dto_1.SubmitAnswerDto.parse(req.body);
     const result = await interview_service_1.interviewService.submitAnswer(req.user.sub, req.params.id, input);
     res.status(201).json(result);
+}));
+exports.interviewRouter.post("/evaluate-code", (0, async_handler_1.asyncHandler)(async (req, res) => {
+    const { code, language, problem } = req.body;
+    const result = await ml_client_1.mlClient.evaluateCode({ code, language, problem });
+    res.json(result);
 }));
 exports.interviewRouter.post("/:id/end", (0, async_handler_1.asyncHandler)(async (req, res) => {
     const input = dto_1.EndInterviewDto.parse(req.body ?? {});
