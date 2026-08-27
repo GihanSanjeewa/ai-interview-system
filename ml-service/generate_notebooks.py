@@ -357,14 +357,41 @@ This notebook performs exploratory data analysis on the raw dataset:
 3. Class and domain balance analysis across difficulty levels.
 4. Exporting high-resolution distribution plots to `reports/figures/eda/`.
 """),
-        code("""# Cell 1: Environment Setup
+        code("""# Cell 1: Environment Setup & Project Workspace Auto-Detection
 import os
+import sys
 import json
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-WORKSPACE_DIR = Path(os.getcwd())
+# Auto-detect workspace root (supports Google Colab, local terminal, or notebooks/ subfolder)
+try:
+    from google.colab import drive
+    drive.mount('/content/drive', force_remount=False)
+    if Path('/content/ai-interview-system/ml-service').exists():
+        WORKSPACE_DIR = Path('/content/ai-interview-system/ml-service')
+    elif Path('/content/drive/MyDrive/ai-interview-system/ml-service').exists():
+        WORKSPACE_DIR = Path('/content/drive/MyDrive/ai-interview-system/ml-service')
+    else:
+        WORKSPACE_DIR = Path(os.getcwd())
+    print("[OK] Running in Google Colab:", WORKSPACE_DIR)
+except ImportError:
+    cwd = Path(os.getcwd())
+    if cwd.name == "notebooks":
+        WORKSPACE_DIR = cwd.parent
+    elif (cwd / "ml-service").exists():
+        WORKSPACE_DIR = cwd / "ml-service"
+    else:
+        WORKSPACE_DIR = cwd
+    print("[OK] Running in local environment:", WORKSPACE_DIR)
+
+WORKSPACE_DIR.mkdir(parents=True, exist_ok=True)
+os.chdir(WORKSPACE_DIR)
+if str(WORKSPACE_DIR) not in sys.path:
+    sys.path.insert(0, str(WORKSPACE_DIR))
+print(f"[OK] Working Directory set to: {WORKSPACE_DIR}")
+
 RAW_DATASET_FILE = WORKSPACE_DIR / "dataset" / "raw" / "raw_interview_dataset.json"
 FIGURES_EDA_DIR = WORKSPACE_DIR / "reports" / "figures" / "eda"
 FIGURES_EDA_DIR.mkdir(parents=True, exist_ok=True)
@@ -431,14 +458,41 @@ This notebook executes deterministic cleaning on the dataset:
 3. **Exact Duplicate Removal**: Deduplicates questions across domains while retaining original samples.
 4. **Exporting Preprocessed Artifacts**: Saves clean intermediate data to `dataset/preprocessed/preprocessed_dataset.json`.
 """),
-        code("""# Cell 1: Environment Setup
+        code("""# Cell 1: Environment Setup & Project Workspace Auto-Detection
 import os
+import sys
 import json
 import re
 from pathlib import Path
 from datetime import datetime, timezone
 
-WORKSPACE_DIR = Path(os.getcwd())
+# Auto-detect workspace root (supports Google Colab, local terminal, or notebooks/ subfolder)
+try:
+    from google.colab import drive
+    drive.mount('/content/drive', force_remount=False)
+    if Path('/content/ai-interview-system/ml-service').exists():
+        WORKSPACE_DIR = Path('/content/ai-interview-system/ml-service')
+    elif Path('/content/drive/MyDrive/ai-interview-system/ml-service').exists():
+        WORKSPACE_DIR = Path('/content/drive/MyDrive/ai-interview-system/ml-service')
+    else:
+        WORKSPACE_DIR = Path(os.getcwd())
+    print("[OK] Running in Google Colab:", WORKSPACE_DIR)
+except ImportError:
+    cwd = Path(os.getcwd())
+    if cwd.name == "notebooks":
+        WORKSPACE_DIR = cwd.parent
+    elif (cwd / "ml-service").exists():
+        WORKSPACE_DIR = cwd / "ml-service"
+    else:
+        WORKSPACE_DIR = cwd
+    print("[OK] Running in local environment:", WORKSPACE_DIR)
+
+WORKSPACE_DIR.mkdir(parents=True, exist_ok=True)
+os.chdir(WORKSPACE_DIR)
+if str(WORKSPACE_DIR) not in sys.path:
+    sys.path.insert(0, str(WORKSPACE_DIR))
+print(f"[OK] Working Directory set to: {WORKSPACE_DIR}")
+
 RAW_DATASET_FILE = WORKSPACE_DIR / "dataset" / "raw" / "raw_interview_dataset.json"
 PREPROCESSED_DIR = WORKSPACE_DIR / "dataset" / "preprocessed"
 PREPROCESSED_DIR.mkdir(parents=True, exist_ok=True)
@@ -514,14 +568,42 @@ This notebook enforces strict experimental integrity:
 3. Verifies ZERO data leakage across splits ($Train \\cap Val = 0, Train \\cap Test = 0, Val \\cap Test = 0$).
 4. **PROGRAMMATICALLY LOCKS `test.jsonl`**: Enforces that `test.jsonl` cannot be accessed by Notebooks 01–07.
 """),
-        code("""# Cell 1: Environment Setup & Splitting
+        code("""# Cell 1: Environment Setup & Project Workspace Auto-Detection
 import os
+import sys
 import json
 import random
 from pathlib import Path
+
+# Auto-detect workspace root (supports Google Colab, local terminal, or notebooks/ subfolder)
+try:
+    from google.colab import drive
+    drive.mount('/content/drive', force_remount=False)
+    if Path('/content/ai-interview-system/ml-service').exists():
+        WORKSPACE_DIR = Path('/content/ai-interview-system/ml-service')
+    elif Path('/content/drive/MyDrive/ai-interview-system/ml-service').exists():
+        WORKSPACE_DIR = Path('/content/drive/MyDrive/ai-interview-system/ml-service')
+    else:
+        WORKSPACE_DIR = Path(os.getcwd())
+    print("[OK] Running in Google Colab:", WORKSPACE_DIR)
+except ImportError:
+    cwd = Path(os.getcwd())
+    if cwd.name == "notebooks":
+        WORKSPACE_DIR = cwd.parent
+    elif (cwd / "ml-service").exists():
+        WORKSPACE_DIR = cwd / "ml-service"
+    else:
+        WORKSPACE_DIR = cwd
+    print("[OK] Running in local environment:", WORKSPACE_DIR)
+
+WORKSPACE_DIR.mkdir(parents=True, exist_ok=True)
+os.chdir(WORKSPACE_DIR)
+if str(WORKSPACE_DIR) not in sys.path:
+    sys.path.insert(0, str(WORKSPACE_DIR))
+print(f"[OK] Working Directory set to: {WORKSPACE_DIR}")
+
 from test_access_guard import verify_no_split_leakage, lock_test_dataset
 
-WORKSPACE_DIR = Path(os.getcwd())
 PREPROCESSED_FILE = WORKSPACE_DIR / "dataset" / "preprocessed" / "preprocessed_dataset.json"
 PROCESSED_DIR = WORKSPACE_DIR / "dataset" / "processed"
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
@@ -581,7 +663,7 @@ This notebook executes the core training workflow with **ZERO pretrained weights
 3. **Atomic Google Drive Checkpointing**: Automatically detects existing checkpoints to resume training on Colab reconnect without restarting from epoch 0.
 4. **Validation-Only Evaluation**: Evaluates all 4 candidates exclusively on `validation.jsonl` (`test.jsonl` is blocked).
 """),
-        code("""# Cell 1: Environment Setup & Data Loading
+        code("""# Cell 1: Environment Setup & Project Workspace Auto-Detection
 import os
 import sys
 import json
@@ -589,7 +671,33 @@ import time
 import torch
 from pathlib import Path
 
-WORKSPACE_DIR = Path(os.getcwd())
+# Auto-detect workspace root (supports Google Colab, local terminal, or notebooks/ subfolder)
+try:
+    from google.colab import drive
+    drive.mount('/content/drive', force_remount=False)
+    if Path('/content/ai-interview-system/ml-service').exists():
+        WORKSPACE_DIR = Path('/content/ai-interview-system/ml-service')
+    elif Path('/content/drive/MyDrive/ai-interview-system/ml-service').exists():
+        WORKSPACE_DIR = Path('/content/drive/MyDrive/ai-interview-system/ml-service')
+    else:
+        WORKSPACE_DIR = Path(os.getcwd())
+    print("[OK] Running in Google Colab:", WORKSPACE_DIR)
+except ImportError:
+    cwd = Path(os.getcwd())
+    if cwd.name == "notebooks":
+        WORKSPACE_DIR = cwd.parent
+    elif (cwd / "ml-service").exists():
+        WORKSPACE_DIR = cwd / "ml-service"
+    else:
+        WORKSPACE_DIR = cwd
+    print("[OK] Running in local environment:", WORKSPACE_DIR)
+
+WORKSPACE_DIR.mkdir(parents=True, exist_ok=True)
+os.chdir(WORKSPACE_DIR)
+if str(WORKSPACE_DIR) not in sys.path:
+    sys.path.insert(0, str(WORKSPACE_DIR))
+print(f"[OK] Working Directory set to: {WORKSPACE_DIR}")
+
 from test_access_guard import load_split_records
 from transformer_scratch import (
     CustomBPETokenizer,
@@ -740,11 +848,39 @@ This notebook selects the best candidate architecture:
 """),
         code("""# Cell 1: Load Reports & Normalize Metrics
 import os
+import sys
 import json
 from pathlib import Path
+
+# Auto-detect workspace root (supports Google Colab, local terminal, or notebooks/ subfolder)
+try:
+    from google.colab import drive
+    drive.mount('/content/drive', force_remount=False)
+    if Path('/content/ai-interview-system/ml-service').exists():
+        WORKSPACE_DIR = Path('/content/ai-interview-system/ml-service')
+    elif Path('/content/drive/MyDrive/ai-interview-system/ml-service').exists():
+        WORKSPACE_DIR = Path('/content/drive/MyDrive/ai-interview-system/ml-service')
+    else:
+        WORKSPACE_DIR = Path(os.getcwd())
+    print("[OK] Running in Google Colab:", WORKSPACE_DIR)
+except ImportError:
+    cwd = Path(os.getcwd())
+    if cwd.name == "notebooks":
+        WORKSPACE_DIR = cwd.parent
+    elif (cwd / "ml-service").exists():
+        WORKSPACE_DIR = cwd / "ml-service"
+    else:
+        WORKSPACE_DIR = cwd
+    print("[OK] Running in local environment:", WORKSPACE_DIR)
+
+WORKSPACE_DIR.mkdir(parents=True, exist_ok=True)
+os.chdir(WORKSPACE_DIR)
+if str(WORKSPACE_DIR) not in sys.path:
+    sys.path.insert(0, str(WORKSPACE_DIR))
+print(f"[OK] Working Directory set to: {WORKSPACE_DIR}")
+
 from ml_pipeline_utils import normalize_metrics
 
-WORKSPACE_DIR = Path(os.getcwd())
 CAND_REPORT_FILE = WORKSPACE_DIR / "reports" / "candidate_training_report.json"
 WEIGHTS_FILE = WORKSPACE_DIR / "configs" / "selection_weights.json"
 
@@ -800,11 +936,38 @@ This notebook executes second-stage task-specific specialization with **ZERO ext
 """),
         code("""# Cell 1: Load Best Model Checkpoint
 import os
+import sys
 import json
 import torch
 from pathlib import Path
 
-WORKSPACE_DIR = Path(os.getcwd())
+# Auto-detect workspace root (supports Google Colab, local terminal, or notebooks/ subfolder)
+try:
+    from google.colab import drive
+    drive.mount('/content/drive', force_remount=False)
+    if Path('/content/ai-interview-system/ml-service').exists():
+        WORKSPACE_DIR = Path('/content/ai-interview-system/ml-service')
+    elif Path('/content/drive/MyDrive/ai-interview-system/ml-service').exists():
+        WORKSPACE_DIR = Path('/content/drive/MyDrive/ai-interview-system/ml-service')
+    else:
+        WORKSPACE_DIR = Path(os.getcwd())
+    print("[OK] Running in Google Colab:", WORKSPACE_DIR)
+except ImportError:
+    cwd = Path(os.getcwd())
+    if cwd.name == "notebooks":
+        WORKSPACE_DIR = cwd.parent
+    elif (cwd / "ml-service").exists():
+        WORKSPACE_DIR = cwd / "ml-service"
+    else:
+        WORKSPACE_DIR = cwd
+    print("[OK] Running in local environment:", WORKSPACE_DIR)
+
+WORKSPACE_DIR.mkdir(parents=True, exist_ok=True)
+os.chdir(WORKSPACE_DIR)
+if str(WORKSPACE_DIR) not in sys.path:
+    sys.path.insert(0, str(WORKSPACE_DIR))
+print(f"[OK] Working Directory set to: {WORKSPACE_DIR}")
+
 from test_access_guard import load_split_records
 from transformer_scratch import CustomBPETokenizer, load_checkpoint, save_checkpoint
 
@@ -873,14 +1036,41 @@ This notebook executes the final evaluation stage:
 """),
         code("""# Cell 1: Load Test Split & Models
 import os
+import sys
 import json
 import torch
 from pathlib import Path
+
+# Auto-detect workspace root (supports Google Colab, local terminal, or notebooks/ subfolder)
+try:
+    from google.colab import drive
+    drive.mount('/content/drive', force_remount=False)
+    if Path('/content/ai-interview-system/ml-service').exists():
+        WORKSPACE_DIR = Path('/content/ai-interview-system/ml-service')
+    elif Path('/content/drive/MyDrive/ai-interview-system/ml-service').exists():
+        WORKSPACE_DIR = Path('/content/drive/MyDrive/ai-interview-system/ml-service')
+    else:
+        WORKSPACE_DIR = Path(os.getcwd())
+    print("[OK] Running in Google Colab:", WORKSPACE_DIR)
+except ImportError:
+    cwd = Path(os.getcwd())
+    if cwd.name == "notebooks":
+        WORKSPACE_DIR = cwd.parent
+    elif (cwd / "ml-service").exists():
+        WORKSPACE_DIR = cwd / "ml-service"
+    else:
+        WORKSPACE_DIR = cwd
+    print("[OK] Running in local environment:", WORKSPACE_DIR)
+
+WORKSPACE_DIR.mkdir(parents=True, exist_ok=True)
+os.chdir(WORKSPACE_DIR)
+if str(WORKSPACE_DIR) not in sys.path:
+    sys.path.insert(0, str(WORKSPACE_DIR))
+print(f"[OK] Working Directory set to: {WORKSPACE_DIR}")
+
 from test_access_guard import load_split_records
 from transformer_scratch import CustomBPETokenizer, load_checkpoint
 from ml_pipeline_utils import check_promotion_gate
-
-WORKSPACE_DIR = Path(os.getcwd())
 
 # AUTHORIZED FIRST ACCESS TO TEST DATASET
 test_records = load_split_records("test", notebook_id=8)
@@ -961,12 +1151,40 @@ This notebook finalizes production deployment:
 """),
         code("""# Cell 1: Verify Gate Approval & Register Model
 import os
+import sys
 import json
 from pathlib import Path
 from datetime import datetime, timezone
+
+# Auto-detect workspace root (supports Google Colab, local terminal, or notebooks/ subfolder)
+try:
+    from google.colab import drive
+    drive.mount('/content/drive', force_remount=False)
+    if Path('/content/ai-interview-system/ml-service').exists():
+        WORKSPACE_DIR = Path('/content/ai-interview-system/ml-service')
+    elif Path('/content/drive/MyDrive/ai-interview-system/ml-service').exists():
+        WORKSPACE_DIR = Path('/content/drive/MyDrive/ai-interview-system/ml-service')
+    else:
+        WORKSPACE_DIR = Path(os.getcwd())
+    print("[OK] Running in Google Colab:", WORKSPACE_DIR)
+except ImportError:
+    cwd = Path(os.getcwd())
+    if cwd.name == "notebooks":
+        WORKSPACE_DIR = cwd.parent
+    elif (cwd / "ml-service").exists():
+        WORKSPACE_DIR = cwd / "ml-service"
+    else:
+        WORKSPACE_DIR = cwd
+    print("[OK] Running in local environment:", WORKSPACE_DIR)
+
+WORKSPACE_DIR.mkdir(parents=True, exist_ok=True)
+os.chdir(WORKSPACE_DIR)
+if str(WORKSPACE_DIR) not in sys.path:
+    sys.path.insert(0, str(WORKSPACE_DIR))
+print(f"[OK] Working Directory set to: {WORKSPACE_DIR}")
+
 from model_registry import registry
 
-WORKSPACE_DIR = Path(os.getcwd())
 with open(WORKSPACE_DIR / "reports" / "fine_tuned_model_evaluation.json", "r", encoding="utf-8") as f:
     eval_report = json.load(f)
 
