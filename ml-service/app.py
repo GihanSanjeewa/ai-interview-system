@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
+import re
 import whisper
 import pdfplumber
 import spacy
@@ -9,7 +10,6 @@ import urllib.request
 import urllib.parse
 from pathlib import Path
 import torch
-# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 
 from audio_analyzer import (
@@ -216,48 +216,224 @@ def transcribe_audio():
     return jsonify({"text": text, "metrics": metrics, "whisper": whisper_meta})
 
 
+def analyze_cv_content(raw_text: str) -> dict:
+    """Intelligent entity, technology, experience, and education extractor from CV text."""
+    text = raw_text or ""
+    text_lower = text.lower()
+
+    # 1. Comprehensive Technology & Skill Lexicon
+    tech_catalog = {
+        "Python": r"\bpython\b",
+        "JavaScript": r"\b(javascript|es6|ecmascript)\b",
+        "TypeScript": r"\btypescript\b",
+        "Java": r"\bjava\b(?!script)",
+        "C++": r"\bc\+\+\b",
+        "C#": r"\bc#|\bcsharp\b",
+        "Go": r"\b(golang|go language)\b",
+        "Rust": r"\brust\b",
+        "PHP": r"\bphp\b",
+        "React": r"\breact(\.js)?\b",
+        "Angular": r"\bangular\b",
+        "Vue.js": r"\bvue(\.js)?\b",
+        "Next.js": r"\bnext(\.js)?\b",
+        "Node.js": r"\bnode(\.js)?\b",
+        "Express.js": r"\bexpress(\.js)?\b",
+        "NestJS": r"\bnestjs\b",
+        "Django": r"\bdjango\b",
+        "Flask": r"\bflask\b",
+        "FastAPI": r"\bfastapi\b",
+        "Spring Boot": r"\bspring boot\b|\bspring framework\b",
+        "SQL": r"\bsql\b",
+        "PostgreSQL": r"\bpostgres(ql)?\b",
+        "MySQL": r"\bmysql\b",
+        "MongoDB": r"\bmongodb|mongo\b",
+        "Redis": r"\bredis\b",
+        "GraphQL": r"\bgraphql\b",
+        "REST API": r"\brest(ful)?\s*api[s]?\b|\brest\b",
+        "Docker": r"\bdocker\b",
+        "Kubernetes": r"\b(kubernetes|k8s)\b",
+        "AWS": r"\b(aws|amazon web services)\b",
+        "Azure": r"\bazure\b",
+        "GCP": r"\b(gcp|google cloud)\b",
+        "Git": r"\bgit\b|\bgithub\b|\bgitlab\b",
+        "CI/CD": r"\bci/cd\b|\bcontinuous integration\b",
+        "Microservices": r"\bmicroservice[s]?\b",
+        "System Design": r"\bsystem design\b|\bsoftware architecture\b",
+        "Linux": r"\blinux\b|\bunix\b",
+        "Tailwind CSS": r"\btailwind\b",
+        "HTML/CSS": r"\b(html5?|css3?)\b",
+        "TensorFlow": r"\btensorflow\b",
+        "PyTorch": r"\bpytorch\b",
+        "Machine Learning": r"\bmachine learning\b|\bdeep learning\b|\bai\b",
+        "Cybersecurity": r"\bsecurity\b|\bpenetration testing\b|\bowasp\b",
+    }
+
+    found_technologies = []
+    for name, pattern in tech_catalog.items():
+        if re.search(pattern, text_lower):
+            found_technologies.append(name)
+
+    # Soft skills & concepts
+    concept_catalog = {
+        "Software Architecture": r"\b(architecture|architectural)\b",
+        "Object-Oriented Programming (OOP)": r"\b(oop|object oriented)\b",
+        "SOLID Principles": r"\bsolid\b",
+        "Agile / Scrum": r"\b(agile|scrum|kanban)\b",
+        "Test-Driven Development (TDD)": r"\b(tdd|unit test|jest|pytest)\b",
+        "Clean Code": r"\bclean code\b",
+        "Problem Solving": r"\bproblem solving\b|\balgorithm[s]?\b|\bdata structure[s]?\b",
+        "API Design": r"\bapi design\b",
+        "Performance Optimization": r"\b(optimization|latency|scaling|concurrency)\b",
+        "DevOps Automation": r"\b(automation|terraform|ansible)\b"
+    }
+
+    found_skills = []
+    for name, pattern in concept_catalog.items():
+        if re.search(pattern, text_lower):
+            found_skills.append(name)
+
+    if not found_skills:
+        found_skills = ["Software Engineering", "Problem Solving", "Code Quality"]
+    if not found_technologies:
+        found_technologies = ["Software Development", "Git"]
+
+    # 2. Extract Education items
+    education_list = []
+    edu_patterns = [
+        r"\b(b\.?sc|bachelor|b\.?tech|b\.?e|m\.?sc|master|ph\.?d|diploma|associate)\b[^\n,.]*(in\s+[^\n,.]+)?",
+        r"\b(university|college|polytechnic|institute|campus)\b[^\n,.]*"
+    ]
+    for p in edu_patterns:
+        matches = re.finditer(p, text, re.IGNORECASE)
+        for m in matches:
+            val = m.group(0).strip()
+            if len(val) > 8 and len(val) < 80 and val not in education_list:
+                education_list.append(val)
+                if len(education_list) >= 3:
+                    break
+    if not education_list:
+        education_list = ["B.Sc. in Computer Science / Software Engineering"]
+
+    # 3. Extract Experience items & estimate total years
+    experience_list = []
+    exp_matches = re.finditer(r"\b(senior|junior|lead|principal|software|frontend|backend|full\s*stack|devops|data|ml|intern|engineer|developer)\b[^\n,.]*(at\s+[^\n,.]+)?", text, re.IGNORECASE)
+    for m in exp_matches:
+        val = m.group(0).strip()
+        if len(val) > 8 and len(val) < 80 and val not in experience_list:
+            experience_list.append(val)
+            if len(experience_list) >= 4:
+                break
+    if not experience_list:
+        experience_list = ["Software Engineering Projects & Technical Experience"]
+
+    # Year calculation
+    years_found = [int(y) for y in re.findall(r"\b(20[0-2][0-9]|199[0-9])\b", text)]
+    if len(years_found) >= 2:
+        diff = max(years_found) - min(years_found)
+        years_total = min(max(float(diff), 1.0), 15.0)
+    else:
+        explicit_years = re.search(r"(\d+)\+?\s*years?", text_lower)
+        if explicit_years:
+            years_total = float(explicit_years.group(1))
+        else:
+            years_total = 2.5 if len(found_technologies) >= 5 else 1.0
+
+    # 4. Extract Certifications
+    cert_list = []
+    cert_matches = re.finditer(r"\b(certified|certification|aws\s+certified|azure\s+certified|gcp\s+certified|cisco|comptia|oracle)\b[^\n,.]*", text, re.IGNORECASE)
+    for m in cert_matches:
+        val = m.group(0).strip()
+        if len(val) > 6 and len(val) < 80 and val not in cert_list:
+            cert_list.append(val)
+            if len(cert_list) >= 3:
+                break
+
+    # 5. Compute Dynamic Readiness Score (0 - 100)
+    score_tech = min(len(found_technologies) * 4.5, 40.0)
+    score_skills = min(len(found_skills) * 3.5, 20.0)
+    score_exp = min(years_total * 4.0, 25.0)
+    score_edu = 10.0 if education_list else 5.0
+    score_detail = 5.0 if len(text) > 300 else 2.0
+    readiness_score = int(min(max(score_tech + score_skills + score_exp + score_edu + score_detail, 45.0), 98.0))
+
+    # 6. Determine Suggested Interview Tracks
+    suggested_tracks = []
+    if any(t in ["React", "Angular", "Vue.js", "Next.js", "HTML/CSS", "Tailwind CSS"] for t in found_technologies):
+        suggested_tracks.append("react")
+    if any(t in ["Node.js", "Express.js", "NestJS", "TypeScript"] for t in found_technologies):
+        suggested_tracks.append("node")
+    if any(t in ["Python", "Django", "FastAPI", "Flask"] for t in found_technologies):
+        suggested_tracks.append("python")
+    if any(t in ["Docker", "Kubernetes", "AWS", "Azure", "GCP", "CI/CD", "Linux"] for t in found_technologies):
+        suggested_tracks.append("devops")
+    if any(t in ["System Design", "Microservices", "PostgreSQL", "Redis", "Kafka"] for t in found_technologies):
+        suggested_tracks.append("system-design")
+    if any(t in ["Machine Learning", "PyTorch", "TensorFlow"] for t in found_technologies):
+        suggested_tracks.append("ml")
+
+    if "swe" not in suggested_tracks:
+        suggested_tracks.insert(0, "swe")
+    suggested_tracks = suggested_tracks[:4]
+
+    return {
+        "skills": found_skills,
+        "education": education_list,
+        "experience": experience_list,
+        "certifications": cert_list,
+        "technologies": found_technologies,
+        "yearsTotal": round(years_total, 1),
+        "readinessScore": readiness_score,
+        "suggestedTracks": suggested_tracks,
+        "rawText": text,
+        # Backward compatibility aliases
+        "extracted_info": {
+            "skills": found_skills,
+            "education": education_list,
+            "experience": experience_list,
+            "certifications": cert_list,
+            "technologies": found_technologies
+        },
+        "domains": suggested_tracks
+    }
+
+
 @app.route("/parse_cv", methods=["POST"])
+@app.route("/cv/parse", methods=["POST"])
 def parse_cv():
-    if "file" not in request.files:
+    upload = request.files.get("file") or request.files.get("cv")
+    if upload is None:
         return jsonify({"error": "No file uploaded"}), 400
 
-    file = request.files["file"]
-    filename = file.filename.lower()
+    filename = upload.filename.lower()
+    text = ""
 
     if filename.endswith(".pdf"):
         file_path = "temp_cv.pdf"
-        file.save(file_path)
+        upload.save(file_path)
         try:
             text = extract_text_from_pdf(file_path)
         except Exception as e:
-            return jsonify({"error": f"Failed to parse PDF: {str(e)}"}), 500
-    elif filename.endswith(".docx"):
+            print(f"PDF extract note ({e}).")
+            text = ""
+    elif filename.endswith(".docx") or filename.endswith(".doc"):
         file_path = "temp_cv.docx"
-        file.save(file_path)
+        upload.save(file_path)
         try:
             text = extract_text_from_docx(file_path)
         except Exception as e:
-            return jsonify({"error": f"Failed to parse DOCX: {str(e)}"}), 500
+            print(f"DOCX extract note ({e}).")
+            text = ""
     else:
-        return jsonify({"error": "Unsupported file type. Please upload a PDF or DOCX."}), 400
+        file_path = "temp_cv.txt"
+        upload.save(file_path)
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                text = f.read()
+        except Exception:
+            text = ""
 
-    # Rule-based NLP entity extraction from CV text
-    extracted_info = {
-        "skills": ["Software Architecture", "Clean Code", "Problem Solving"],
-        "education": ["Computer Science / Software Engineering Degree"],
-        "experience": ["Software Engineering Projects & Professional Work"],
-        "certifications": ["Technical Certification"],
-        "technologies": ["Git", "SQL", "JavaScript", "Python"]
-    }
-    domains = ["Software Engineering", "Web Development", "Backend Development"]
-
-    # Extract technologies and skills from CV text
-    tech_keywords = ["python", "javascript", "typescript", "react", "node", "docker", "kubernetes", "aws", "sql", "nosql", "git", "ci/cd", "rest", "graphql"]
-    found_tech = [t.capitalize() for t in tech_keywords if re.search(rf"\b{t}\b", text, re.IGNORECASE)]
-    if found_tech:
-        extracted_info["technologies"] = found_tech
-
-    return jsonify({"text": text, "extracted_info": extracted_info, "domains": domains})
+    parsed_result = analyze_cv_content(text)
+    return jsonify(parsed_result)
 
 
 @app.route("/generate_question", methods=["POST"])

@@ -23,8 +23,16 @@ import { useToast } from "@/context/ToastContext";
 import { formatDate, cn } from "@/lib/utils";
 
 const TRACK_LABEL = {
+  swe: "Software Engineering",
   software_engineering: "Software Engineering",
+  react: "React / Frontend",
   web_development: "Web Development",
+  node: "Node.js / Backend",
+  python: "Python / Backend",
+  devops: "DevOps & Cloud",
+  system_design: "System Design",
+  "system-design": "System Design",
+  ml: "Machine Learning & AI",
   data_science: "Data Science",
   networking: "Networking",
   ui_ux: "UI/UX",

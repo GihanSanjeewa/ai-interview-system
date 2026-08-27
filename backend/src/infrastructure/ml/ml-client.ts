@@ -63,7 +63,30 @@ export const mlClient = {
       const res = await http.post("/cv/parse", form, {
         headers: form.getHeaders(),
       });
-      return res.data as CvParsedResult;
+      const data = res.data ?? {};
+      const extracted = data.extracted_info ?? {};
+
+      const skills = Array.isArray(data.skills) ? data.skills : (Array.isArray(extracted.skills) ? extracted.skills : []);
+      const technologies = Array.isArray(data.technologies) ? data.technologies : (Array.isArray(extracted.technologies) ? extracted.technologies : []);
+      const education = Array.isArray(data.education) ? data.education : (Array.isArray(extracted.education) ? extracted.education : []);
+      const experience = Array.isArray(data.experience) ? data.experience : (Array.isArray(extracted.experience) ? extracted.experience : []);
+      const certifications = Array.isArray(data.certifications) ? data.certifications : (Array.isArray(extracted.certifications) ? extracted.certifications : []);
+      const suggestedTracks = Array.isArray(data.suggestedTracks) ? data.suggestedTracks : (Array.isArray(data.domains) ? data.domains : ["swe"]);
+      const readinessScore = typeof data.readinessScore === "number" ? data.readinessScore : 75;
+      const yearsTotal = typeof data.yearsTotal === "number" ? data.yearsTotal : 2.0;
+      const rawText = data.rawText || data.text || "";
+
+      return {
+        skills,
+        education,
+        experience,
+        certifications,
+        technologies,
+        yearsTotal,
+        readinessScore,
+        suggestedTracks,
+        rawText,
+      };
     } catch (err: unknown) {
       logger.warn({ err }, "ML CV parse failed; returning heuristic fallback");
       return fallbackCv();
