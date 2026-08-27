@@ -1,99 +1,79 @@
 import { motion } from "framer-motion";
-import { Quote, Star } from "lucide-react";
+import { Star, Trophy, Quote } from "lucide-react";
 import { SectionHeading } from "./Categories";
 
 const reviews = [
   {
-    name: "Tharindu Wijesinghe",
-    role: "Senior Engineer, Sysco LABS",
-    quote:
-      "Aria caught the things my friends were too polite to point out. I went from sweating in real interviews to actually enjoying them.",
-    rating: 5,
-    accent: "from-brand-500 to-violet-500",
+    name: "Alex Rivera",
+    role: "Senior Software Engineer",
+    company: "Landed role at Stripe",
+    text: "Aria's follow-up questions caught me completely off-guard on distributed transactions in the best way possible. The WPM pacing feedback helped me stop rushing my answers.",
+    score: 95,
+    tag: "Software Engineering",
   },
   {
-    name: "Anjali Perera",
-    role: "Software Engineer, WSO2",
-    quote:
-      "The 6-metric report is gold. I now know exactly which 3 things to work on every week, instead of generic 'be more confident'.",
-    rating: 5,
-    accent: "from-pink-500 to-rose-500",
+    name: "Priya Sharma",
+    role: "Full Stack Developer",
+    company: "Landed role at Microsoft",
+    text: "Being able to upload my actual resume and get probed on my exact tech stack made the experience 10x more realistic than generic leetcode flashcards.",
+    score: 92,
+    tag: "React / Node Loop",
   },
   {
-    name: "Dilanka Fernando",
-    role: "Tech Lead, IFS",
-    quote:
-      "We're using Inverview for our junior coaching internally. The system design persona is shockingly good.",
-    rating: 5,
-    accent: "from-cyan-500 to-sky-500",
-  },
-  {
-    name: "Sasha Karunaratne",
-    role: "PM → SWE switcher",
-    quote:
-      "I did 14 mock interviews here before switching careers. Got two offers in two weeks. This thing is unfair.",
-    rating: 5,
-    accent: "from-amber-400 to-orange-500",
-  },
-  {
-    name: "Ravindu de Silva",
-    role: ".NET Engineer, 99x",
-    quote:
-      "The behavioral round on Aria is uncomfortably realistic. Including the awkward silences. Loved it.",
-    rating: 5,
-    accent: "from-emerald-400 to-teal-500",
-  },
-  {
-    name: "Methuli Senanayake",
-    role: "Final-year CS student",
-    quote:
-      "Got my first internship offer after 3 weeks of daily mocks. The replay + transcript loop is a cheat code.",
-    rating: 5,
-    accent: "from-indigo-500 to-blue-500",
+    name: "Marcus Chen",
+    role: "Tech Lead Candidate",
+    company: "Landed role at Datadog",
+    text: "The behavioral feedback using the STAR framework gave me clear structure for leadership stories. Walked into my final on-site loop completely confident.",
+    score: 98,
+    tag: "System Design & Leadership",
   },
 ];
 
 export default function Testimonials() {
   return (
-    <section className="py-24">
+    <section className="py-24 relative overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         <SectionHeading
-          eyebrow="Loved by candidates"
-          title="Real interviews. Real results."
+          eyebrow="Success Stories"
+          title="From Practice Sessions to Real Offers"
+          subtitle="See how developers and engineering candidates worldwide used Inverview AI to conquer high-stakes interviews."
         />
 
-        <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-14 grid gap-6 md:grid-cols-3">
           {reviews.map((r, i) => (
             <motion.div
               key={r.name}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-30px" }}
-              transition={{ delay: i * 0.05 }}
-              className="bg-surface border-token group relative overflow-hidden rounded-2xl border p-6"
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="glass-card relative rounded-3xl p-6 sm:p-7 border border-token flex flex-col justify-between"
             >
-              <Quote className="text-brand-500/15 absolute right-4 top-4 size-20" />
-              <div className="relative">
-                <div className="flex items-center gap-1">
-                  {[...Array(r.rating)].map((_, j) => (
-                    <Star key={j} className="size-3.5 fill-amber-400 text-amber-400" />
-                  ))}
+              <div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1 text-amber-400">
+                    {[...Array(5)].map((_, j) => (
+                      <Star key={j} className="size-4 fill-amber-400" />
+                    ))}
+                  </div>
+                  <span className="rounded-full bg-brand-500/10 border border-brand-500/30 px-2.5 py-0.5 text-[10px] font-bold text-brand-300">
+                    {r.score}/100 Score
+                  </span>
                 </div>
-                <p className="text-default mt-4 text-sm leading-relaxed">
-                  "{r.quote}"
+
+                <p className="text-default mt-5 text-sm sm:text-base leading-relaxed italic">
+                  "{r.text}"
                 </p>
-                <div className="mt-6 flex items-center gap-3">
-                  <div
-                    className={`size-10 rounded-full bg-gradient-to-br ${r.accent} text-sm font-bold text-white grid place-items-center`}
-                  >
-                    {r.name.split(" ").map((p) => p[0]).slice(0, 2).join("")}
-                  </div>
-                  <div>
-                    <p className="text-default text-sm font-semibold">
-                      {r.name}
-                    </p>
-                    <p className="text-subtle text-xs">{r.role}</p>
-                  </div>
+              </div>
+
+              <div className="mt-6 pt-5 border-t border-token/60 flex items-center gap-3">
+                <div className="size-11 rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center text-white font-bold text-sm shadow">
+                  {r.name.split(" ").map(n => n[0]).join("")}
+                </div>
+                <div>
+                  <p className="text-default text-sm font-bold">{r.name}</p>
+                  <p className="text-brand-400 text-xs font-semibold">{r.company}</p>
+                  <p className="text-subtle text-[11px]">{r.role}</p>
                 </div>
               </div>
             </motion.div>

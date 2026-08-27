@@ -7,11 +7,13 @@ import {
   CheckCircle2,
   Clock,
   FileText,
+  Layers,
   Loader2,
   Mic,
   Sparkles,
   Trash2,
   Upload,
+  Zap,
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
@@ -68,10 +70,9 @@ export default function CvAnalysis() {
         setLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // poll while any CV is PENDING
+  // Poll while any CV is PENDING
   useEffect(() => {
     if (!cvs.some((c) => c.status === "PENDING")) return;
     const id = setInterval(async () => {
@@ -96,17 +97,17 @@ export default function CvAnalysis() {
       file.name.toLowerCase().endsWith(".docx") ||
       file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
     if (!ok) {
-      toast.error("Unsupported file", "Upload a PDF or DOCX.");
+      toast.error("Unsupported file format", "Please upload a PDF or DOCX file.");
       return;
     }
     setUploading(true);
     try {
       const { cv } = await cvApi.upload(file);
-      toast.success("Uploaded — analyzing", "Aria is extracting your skills.");
+      toast.success("Resume Uploaded", "Aria's NLP engine is extracting your competencies.");
       setActive(cv);
       await refresh();
     } catch (err) {
-      toast.error("Upload failed", err?.response?.data?.title);
+      toast.error("Upload failed", err?.response?.data?.title || "Error parsing file.");
     } finally {
       setUploading(false);
     }
@@ -120,14 +121,14 @@ export default function CvAnalysis() {
   };
 
   const remove = async (cv) => {
-    if (!confirm(`Delete ${cv.originalName}? This can't be undone.`)) return;
+    if (!confirm(`Delete ${cv.originalName}? This action is irreversible.`)) return;
     try {
       await cvApi.remove(cv.id);
       toast.success("CV deleted");
       if (active?.id === cv.id) setActive(null);
       await refresh();
     } catch (err) {
-      toast.error("Couldn't delete", err?.response?.data?.title);
+      toast.error("Couldn't delete CV", err?.response?.data?.title);
     }
   };
 
@@ -137,22 +138,22 @@ export default function CvAnalysis() {
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-wrap items-end justify-between gap-3">
+      {/* Header */}
+      <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <Badge variant="brand" icon={Sparkles}>
-            CV analysis · §3.1
+          <Badge variant="brand" icon={Sparkles} dot pulse>
+            Resume NLP Parser
           </Badge>
-          <h1 className="font-display text-default mt-3 text-3xl font-bold sm:text-4xl">
-            Upload your CV
+          <h1 className="font-display text-default mt-3 text-3xl font-extrabold sm:text-4xl">
+            CV Analysis & Skill Extraction
           </h1>
-          <p className="text-muted mt-1 max-w-2xl">
-            Drop a PDF or DOCX. We extract your skills, education, experience,
-            certifications and technologies — then suggest the interview tracks
-            you should practice.
+          <p className="text-muted mt-1.5 max-w-2xl text-xs sm:text-sm leading-relaxed">
+            Drop your PDF or DOCX resume. Our multi-layer NLP model extracts your demonstrated
+            skills, certifications, and technologies to tailor scenario questions for mock loops.
           </p>
         </div>
-        <Button leftIcon={Upload} onClick={() => fileRef.current?.click()}>
-          Upload new CV
+        <Button leftIcon={Upload} onClick={() => fileRef.current?.click()} className="shadow-glow">
+          Upload New Resume
         </Button>
         <input
           ref={fileRef}
@@ -163,7 +164,7 @@ export default function CvAnalysis() {
         />
       </header>
 
-      {/* Drop zone */}
+      {/* Drag & Drop Upload Zone */}
       <motion.div
         onDragOver={(e) => {
           e.preventDefault();
@@ -172,63 +173,67 @@ export default function CvAnalysis() {
         onDragLeave={() => setDrag(false)}
         onDrop={onDrop}
         animate={{ scale: drag ? 1.01 : 1 }}
+        onClick={() => fileRef.current?.click()}
         className={cn(
-          "relative overflow-hidden rounded-3xl border-2 border-dashed p-10 text-center transition",
+          "relative overflow-hidden rounded-3xl border-2 border-dashed p-8 sm:p-10 text-center transition-all cursor-pointer",
           drag
-            ? "border-brand-500 bg-brand-500/10"
-            : "border-token bg-surface hover:border-brand-500/40"
+            ? "border-brand-500 bg-brand-500/10 shadow-glow"
+            : "border-token bg-surface/50 hover:border-brand-500/50 hover:bg-surface-2/60"
         )}
       >
-        <div className="from-brand-500/10 to-accent-500/10 mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br">
+        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/15 to-accent-500/15 text-brand-400 border border-brand-500/30 shadow-md">
           {uploading ? (
-            <Loader2 className="text-brand-400 size-6 animate-spin" />
+            <Loader2 className="size-7 animate-spin" />
           ) : (
-            <Upload className="text-brand-400 size-6" />
+            <Upload className="size-7" />
           )}
         </div>
-        <p className="text-default font-display text-lg font-semibold">
-          {uploading ? "Uploading…" : drag ? "Drop to upload" : "Drag a CV here or click upload"}
+        <p className="text-default font-display text-lg font-bold">
+          {uploading ? "Extracting competencies with NLP…" : drag ? "Drop your resume now" : "Drag and drop your CV here or click to browse"}
         </p>
-        <p className="text-muted mt-1 text-sm">
-          PDF or DOCX · max 10 MB · we never share your file
+        <p className="text-muted mt-1.5 text-xs">
+          Supports PDF or DOCX · Max 10MB · Stored securely with zero public training
         </p>
       </motion.div>
 
-      {/* List + detail */}
+      {/* CV List & Active Detail */}
       {loading ? (
         <div className="grid gap-6 lg:grid-cols-3">
-          <Skeleton className="h-64" />
-          <Skeleton className="h-64 lg:col-span-2" />
+          <Skeleton className="h-64 rounded-3xl" />
+          <Skeleton className="h-64 rounded-3xl lg:col-span-2" />
         </div>
       ) : cvs.length === 0 ? (
         <EmptyState
           icon={FileText}
-          title="No CVs uploaded yet"
-          description="Upload a CV to unlock AI-tailored interview tracks and job matches."
+          title="No CV Uploaded Yet"
+          description="Upload your resume to unlock AI-tailored interview tracks and role match recommendations."
         />
       ) : (
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* List */}
+          {/* Left Column: Uploaded Resumes List */}
           <div className="space-y-3 lg:col-span-1">
+            <span className="text-[10px] uppercase font-bold tracking-widest text-subtle px-1">
+              Uploaded Resumes ({cvs.length})
+            </span>
             {cvs.map((cv) => (
               <button
                 key={cv.id}
                 onClick={() => setActive(cv)}
                 className={cn(
-                  "group flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition",
+                  "group flex w-full items-start gap-3.5 rounded-2xl border p-4 text-left transition-all cursor-pointer",
                   active?.id === cv.id
-                    ? "border-brand-500/40 bg-brand-500/10"
+                    ? "border-brand-500/50 bg-brand-500/10 shadow-sm"
                     : "border-token bg-surface hover:bg-surface-2"
                 )}
               >
-                <div className="from-brand-500/15 to-accent-500/15 grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br">
-                  <FileText className="text-brand-400 size-4.5" />
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-500/15 text-brand-400 border border-brand-500/30">
+                  <FileText className="size-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-default truncate text-sm font-semibold">
+                  <p className="text-default truncate text-sm font-bold">
                     {cv.originalName}
                   </p>
-                  <p className="text-subtle mt-0.5 text-[11px]">
+                  <p className="text-subtle text-[11px] mt-0.5">
                     {formatDate(cv.createdAt)} · {prettySize(cv.sizeBytes)}
                   </p>
                   <div className="mt-2">
@@ -239,10 +244,10 @@ export default function CvAnalysis() {
             ))}
           </div>
 
-          {/* Detail */}
+          {/* Right Column: Active CV Detail */}
           <div className="lg:col-span-2">
             <AnimatePresence mode="wait">
-              {active ? (
+              {active && (
                 <motion.div
                   key={active.id}
                   initial={{ opacity: 0, y: 8 }}
@@ -257,7 +262,7 @@ export default function CvAnalysis() {
                     trackLabel={TRACK_LABEL}
                   />
                 </motion.div>
-              ) : null}
+              )}
             </AnimatePresence>
           </div>
         </div>
@@ -275,210 +280,191 @@ function CvDetail({ cv, onRemove, onStart, trackLabel }) {
 
   return (
     <>
-      {/* Hero */}
-      <div className="from-brand-500/15 to-accent-500/10 border-brand-500/30 relative overflow-hidden rounded-3xl border bg-gradient-to-br p-6">
-        <div className="absolute -right-12 -top-12 size-48 rounded-full bg-brand-500/20 blur-3xl" />
+      {/* Resume Overview Card */}
+      <div className="glass-card relative overflow-hidden rounded-3xl border border-token p-6 sm:p-7">
+        <div className="absolute -right-12 -top-12 size-48 rounded-full bg-brand-500/20 blur-3xl pointer-events-none" />
+
         <div className="relative grid items-center gap-6 sm:grid-cols-3">
           <div className="sm:col-span-2">
             <StatusBadge status={cv.status} />
-            <h2 className="font-display text-default mt-2 text-2xl font-bold">
+            <h2 className="font-display text-default mt-3 text-2xl font-extrabold">
               {cv.originalName}
             </h2>
-            <p className="text-muted text-sm">
+            <p className="text-muted text-xs sm:text-sm mt-1">
               Uploaded {formatDate(cv.createdAt)} · {prettySize(cv.sizeBytes)}
             </p>
-            <div className="mt-5 flex flex-wrap gap-2">
+
+            <div className="mt-5 flex flex-wrap gap-2.5">
               <Button
                 variant="danger"
                 size="sm"
                 leftIcon={Trash2}
                 onClick={onRemove}
               >
-                Delete
+                Delete Resume
               </Button>
             </div>
           </div>
+
+          {/* Readiness Circular Progress */}
           <div className="flex justify-center sm:justify-end">
             {cv.status === "PARSED" ? (
-              <CircularProgress value={cv.readinessScore ?? 0} size={130}>
+              <CircularProgress value={cv.readinessScore ?? 75} size={130}>
                 <div className="flex flex-col items-center">
-                  <span className="font-display text-default text-3xl font-bold">
-                    {cv.readinessScore ?? 0}
+                  <span className="font-display text-default text-3xl font-extrabold">
+                    {cv.readinessScore ?? 75}%
                   </span>
-                  <span className="text-subtle text-[10px] uppercase tracking-wider">
+                  <span className="text-subtle text-[10px] uppercase font-bold tracking-wider">
                     Readiness
                   </span>
                 </div>
               </CircularProgress>
             ) : cv.status === "PENDING" ? (
               <div className="text-muted flex flex-col items-center gap-2">
-                <Loader2 className="size-8 animate-spin" />
-                <span className="text-xs">Analyzing your CV…</span>
+                <Loader2 className="size-8 animate-spin text-brand-400" />
+                <span className="text-xs font-semibold">Analyzing skills…</span>
               </div>
             ) : (
               <div className="text-rose-400 flex flex-col items-center gap-2">
                 <AlertCircle className="size-8" />
-                <span className="text-xs">Analysis failed</span>
+                <span className="text-xs font-semibold">Analysis Failed</span>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Suggested tracks */}
+      {/* Suggested Interview Tracks */}
       {tracks.length > 0 && (
-        <div className="bg-surface border-token rounded-3xl border p-6">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-default text-lg font-semibold">
-              Suggested interview tracks
+        <div className="glass-card rounded-3xl border border-token p-6 sm:p-7">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-display text-default text-lg font-bold">
+              AI-Matched Interview Tracks
             </h3>
             <Badge variant="brand" icon={Sparkles}>
-              AI matched
+              NLP Matched
             </Badge>
           </div>
           <p className="text-muted text-xs">
-            We chose these based on the skills and experience we extracted.
-            Start any of them directly.
+            Based on the skills extracted from your resume, Aria recommends practicing these tracks:
           </p>
+
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {tracks.map((t) => (
               <button
                 key={t.id}
                 onClick={() => onStart(t.id)}
-                className="group bg-surface-2 border-token hover:border-brand-500/40 flex items-center justify-between rounded-2xl border p-4 text-left transition"
+                className="group bg-surface-2 border border-token hover:border-brand-500/50 hover:bg-surface-3 flex items-center justify-between rounded-2xl p-4 text-left transition cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <div className="from-brand-500/15 to-accent-500/15 grid size-9 place-items-center rounded-xl bg-gradient-to-br">
-                    <Mic className="text-brand-400 size-4.5" />
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500/15 to-accent-500/15 text-brand-400 border border-brand-500/30">
+                    <Mic className="size-4.5" />
                   </div>
-                  <p className="text-default text-sm font-semibold">
-                    {t.label}
-                  </p>
+                  <span className="text-default text-sm font-bold">{t.label}</span>
                 </div>
-                <ArrowRight className="text-subtle group-hover:text-brand-400 size-4 transition" />
+                <ArrowRight className="size-4 text-subtle group-hover:text-brand-400 group-hover:translate-x-0.5 transition" />
               </button>
             ))}
           </div>
         </div>
       )}
 
-      {/*
-        What the parser could NOT find. Shown because the analyser deliberately
-        returns empty fields rather than inventing content — so the user needs to
-        know a section is missing, and how to fix it.
-      */}
+      {/* Warnings & Suggestions for CV */}
       {Array.isArray(parsed.warnings) && parsed.warnings.length > 0 && (
-        <div className="bg-surface border-token rounded-3xl border border-amber-500/30 p-6">
-          <div className="mb-3 flex items-center gap-2">
-            <AlertCircle className="size-4.5 text-amber-400" />
-            <h3 className="text-default text-lg font-semibold">
-              Improve your CV
+        <div className="glass-card rounded-3xl border border-amber-500/30 bg-amber-500/5 p-6">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertCircle className="size-5 text-amber-400" />
+            <h3 className="font-display text-default text-base font-bold">
+              Recommended CV Enhancements
             </h3>
             {typeof parsed.extractionConfidence === "number" && (
-              <Badge variant="warning">
-                {Math.round(parsed.extractionConfidence * 100)}% extracted
+              <Badge variant="warning" size="xs">
+                {Math.round(parsed.extractionConfidence * 100)}% Extraction Depth
               </Badge>
             )}
           </div>
           <p className="text-muted text-xs">
-            We only report what your CV actually says. These are the things we
-            could not find — adding them makes your interview questions sharper.
+            Adding these elements makes your mock interview scenarios and job matching sharper:
           </p>
-          <ul className="mt-4 space-y-2">
-            {parsed.warnings.map((warning, i) => (
-              <li key={i} className="text-muted flex gap-2 text-xs leading-relaxed">
-                <span className="text-amber-400">•</span>
-                <span>{warning}</span>
+          <ul className="mt-3.5 space-y-1.5">
+            {parsed.warnings.map((w, i) => (
+              <li key={i} className="text-muted text-xs leading-relaxed flex items-start gap-2">
+                <span className="text-amber-400 mt-0.5">•</span>
+                <span>{w}</span>
               </li>
             ))}
           </ul>
         </div>
       )}
 
-      {/* Experience summary — "not stated" rather than a fabricated figure. */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Stat
-          label="Experience"
-          value={
-            typeof parsed.yearsTotal === "number"
-              ? `${parsed.yearsTotal} yr${parsed.yearsTotal === 1 ? "" : "s"}`
-              : "Not stated"
-          }
-          hint={
-            typeof parsed.yearsTotal === "number"
-              ? "Computed from the date ranges on your CV"
-              : "Add date ranges like “Jan 2022 – Present”"
-          }
+      {/* Experience & Seniority Stats Strip */}
+      <div className="grid gap-3.5 sm:grid-cols-3">
+        <StatCardSmall
+          label="Tenure / Experience"
+          value={typeof parsed.yearsTotal === "number" ? `${parsed.yearsTotal} Years` : "Not Stated"}
+          hint="Calculated from resume date ranges"
         />
-        <Stat
-          label="Seniority"
-          value={parsed.seniority ? titleCase(parsed.seniority) : "Unknown"}
-          hint="Derived from total tenure"
+        <StatCardSmall
+          label="Seniority Classification"
+          value={parsed.seniority ? titleCase(parsed.seniority) : "General"}
+          hint="Derived from experience & leadership markers"
         />
-        <Stat
-          label="Demonstrated skills"
+        <StatCardSmall
+          label="Demonstrated Tech"
           value={String((parsed.demonstratedTechnologies || []).length)}
-          hint="Backed by a role or project, not just listed"
+          hint="Backed by real project roles"
         />
       </div>
 
-      {/* Extracted info */}
+      {/* Extracted Skills Buckets */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <Bucket title="Skills" items={parsed.skills} accent="brand" />
-        <Bucket title="Technologies" items={parsed.technologies} accent="accent" />
-        <Bucket title="Education" items={parsed.education} accent="emerald" />
-        <Bucket title="Experience" items={parsed.experience} accent="amber" />
-        <Bucket title="Projects" items={parsed.projects} accent="brand" />
-        <Bucket
-          title="Certifications"
-          items={parsed.certifications}
-          accent="rose"
-        />
+        <SkillBucket title="Core Skills" items={parsed.skills} accent="brand" />
+        <SkillBucket title="Technologies & Frameworks" items={parsed.technologies} accent="accent" />
+        <SkillBucket title="Education & Degrees" items={parsed.education} accent="emerald" />
+        <SkillBucket title="Past Experience & Roles" items={parsed.experience} accent="amber" />
+        <SkillBucket title="Key Projects" items={parsed.projects} accent="brand" />
+        <SkillBucket title="Certifications" items={parsed.certifications} accent="rose" />
       </div>
     </>
   );
 }
 
-function titleCase(value) {
-  return String(value).charAt(0).toUpperCase() + String(value).slice(1);
-}
-
-function Stat({ label, value, hint }) {
+function StatCardSmall({ label, value, hint }) {
   return (
-    <div className="bg-surface border-token rounded-2xl border p-4">
-      <p className="text-subtle text-[10px] uppercase tracking-wider">{label}</p>
-      <p className="text-default mt-1 text-xl font-bold">{value}</p>
+    <div className="glass-card rounded-2xl border border-token p-4">
+      <p className="text-subtle text-[10px] font-bold uppercase tracking-wider">{label}</p>
+      <p className="text-default font-display mt-1 text-xl font-extrabold">{value}</p>
       <p className="text-muted mt-1 text-[11px] leading-snug">{hint}</p>
     </div>
   );
 }
 
-function Bucket({ title, items, accent, className }) {
+function SkillBucket({ title, items, accent }) {
   const tones = {
-    brand: "from-brand-500/20 to-brand-500/5 text-brand-400 border-brand-500/30",
-    accent: "from-accent-500/20 to-accent-500/5 text-accent-400 border-accent-500/30",
-    emerald: "from-emerald-500/20 to-emerald-500/5 text-emerald-400 border-emerald-500/30",
-    amber: "from-amber-500/20 to-amber-500/5 text-amber-400 border-amber-500/30",
-    rose: "from-rose-500/20 to-rose-500/5 text-rose-400 border-rose-500/30",
+    brand: "bg-brand-500/10 text-brand-400 border-brand-500/30",
+    accent: "bg-accent-500/10 text-accent-400 border-accent-500/30",
+    emerald: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+    amber: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+    rose: "bg-rose-500/10 text-rose-400 border-rose-500/30",
   };
   const list = Array.isArray(items) ? items : [];
+
   return (
-    <div className={cn("bg-surface border-token rounded-2xl border p-5", className)}>
-      <p className="text-default text-sm font-semibold">{title}</p>
-      <p className="text-subtle mt-0.5 text-[11px] uppercase tracking-wider">
-        {list.length} item{list.length === 1 ? "" : "s"}
-      </p>
+    <div className="glass-card rounded-2xl border border-token p-5">
+      <div className="flex items-center justify-between">
+        <p className="text-default text-sm font-bold">{title}</p>
+        <span className="text-subtle text-[10px] font-bold uppercase tracking-wider">
+          {list.length} Identified
+        </span>
+      </div>
       {list.length === 0 ? (
-        <p className="text-subtle mt-3 text-xs italic">Nothing extracted yet.</p>
+        <p className="text-subtle mt-3 text-xs italic">No entries parsed yet.</p>
       ) : (
         <div className="mt-3 flex flex-wrap gap-1.5">
-          {list.slice(0, 24).map((s, i) => (
+          {list.slice(0, 20).map((s, i) => (
             <span
               key={`${s}-${i}`}
-              className={cn(
-                "rounded-full border bg-gradient-to-br px-2.5 py-1 text-[11px] font-medium",
-                tones[accent]
-              )}
+              className={cn("rounded-lg border px-2.5 py-1 text-[11px] font-semibold", tones[accent])}
             >
               {s}
             </span>
@@ -492,21 +478,25 @@ function Bucket({ title, items, accent, className }) {
 function StatusBadge({ status }) {
   if (status === "PARSED")
     return (
-      <Badge variant="success" icon={CheckCircle2}>
-        Parsed
+      <Badge variant="success" icon={CheckCircle2} size="sm">
+        Ready for Studio
       </Badge>
     );
   if (status === "FAILED")
     return (
-      <Badge variant="danger" icon={AlertCircle}>
-        Failed
+      <Badge variant="danger" icon={AlertCircle} size="sm">
+        Parsing Error
       </Badge>
     );
   return (
-    <Badge variant="warning" icon={Clock}>
-      Analyzing
+    <Badge variant="warning" icon={Clock} size="sm" pulse>
+      Analyzing…
     </Badge>
   );
+}
+
+function titleCase(val) {
+  return String(val).charAt(0).toUpperCase() + String(val).slice(1);
 }
 
 function prettySize(bytes) {

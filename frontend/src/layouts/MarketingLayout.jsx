@@ -1,7 +1,7 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, Menu, Sparkles, X } from "lucide-react";
 import Logo from "@/components/ui/Logo";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import Button from "@/components/ui/Button";
@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils";
 
 const links = [
   { to: "/#features", label: "Features" },
-  { to: "/#categories", label: "Categories" },
-  { to: "/#how", label: "How it works" },
-  { to: "/#pricing", label: "Pricing" },
+  { to: "/#categories", label: "Interview Tracks" },
+  { to: "/#preview", label: "Live Simulation" },
+  { to: "/#how", label: "How It Works" },
   { to: "/#faq", label: "FAQ" },
 ];
 
@@ -20,17 +20,17 @@ export default function MarketingLayout() {
   const { pathname, hash } = useLocation();
   const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
+    const onScroll = () => setScrolled(window.scrollY > 16);
     onScroll();
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
-    setOpen(false);
+    setMobileMenuOpen(false);
     if (hash) {
       const el = document.querySelector(hash);
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -38,104 +38,119 @@ export default function MarketingLayout() {
   }, [pathname, hash]);
 
   return (
-    <div className="bg-app text-default min-h-screen">
-      <motion.header
-        initial={false}
-        animate={{
-          paddingTop: scrolled ? 8 : 16,
-          paddingBottom: scrolled ? 8 : 16,
-        }}
+    <div className="bg-app text-default min-h-screen relative selection:bg-brand-500 selection:text-white">
+      {/* Top sticky navbar */}
+      <header
         className={cn(
-          "fixed inset-x-0 top-0 z-50 transition-all duration-300",
-          scrolled
-            ? "glass-strong border-b border-token"
-            : "bg-transparent"
+          "fixed inset-x-0 top-0 z-50 transition-all duration-300 px-4 lg:px-8 py-3",
+          scrolled ? "glass-strong border-b border-token shadow-lg shadow-black/5 py-2.5" : "bg-transparent"
         )}
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 lg:px-8">
-          <Link to="/">
-            <Logo />
+        <div className="mx-auto flex max-w-7xl items-center justify-between">
+          <Link to="/" className="flex items-center">
+            <Logo size="md" />
           </Link>
 
-          <nav className="hidden items-center gap-1 lg:flex">
+          {/* Desktop Nav */}
+          <nav className="hidden items-center gap-1 rounded-full border border-token/60 bg-surface/50 p-1.5 backdrop-blur-md lg:flex">
             {links.map((l) => (
               <a
                 key={l.to}
                 href={l.to}
-                className="text-muted hover:text-default rounded-xl px-4 py-2 text-sm font-medium transition"
+                className="text-muted hover:text-default hover:bg-surface-2 rounded-full px-4 py-1.5 text-xs font-semibold tracking-wide transition-all"
               >
                 {l.label}
               </a>
             ))}
           </nav>
 
-          <div className="hidden items-center gap-2 lg:flex">
+          {/* Desktop Actions */}
+          <div className="hidden items-center gap-2.5 lg:flex">
             <ThemeToggle />
             {user ? (
-              <Button
-                onClick={() => (window.location.href = "/app/dashboard")}
-                rightIcon={ArrowRight}
-              >
-                Open dashboard
-              </Button>
+              <Link to="/app/dashboard">
+                <Button size="sm" rightIcon={ArrowRight}>
+                  Open Studio
+                </Button>
+              </Link>
             ) : (
               <>
                 <Link
                   to="/login"
-                  className="text-default hover:bg-surface-2 inline-flex h-10 items-center rounded-2xl px-4 text-sm font-semibold transition"
+                  className="text-muted hover:text-default hover:bg-surface-2 inline-flex h-9 items-center rounded-xl px-4 text-xs font-semibold transition"
                 >
-                  Login
+                  Sign In
                 </Link>
                 <Link to="/register">
-                  <Button rightIcon={ArrowRight}>Get started</Button>
+                  <Button size="sm" rightIcon={ArrowRight}>
+                    Start Free Mock
+                  </Button>
                 </Link>
               </>
             )}
           </div>
 
+          {/* Mobile hamburger */}
           <div className="flex items-center gap-2 lg:hidden">
             <ThemeToggle />
             <button
-              onClick={() => setOpen((o) => !o)}
-              className="border-token bg-surface flex size-10 items-center justify-center rounded-xl border"
+              onClick={() => setMobileMenuOpen((o) => !o)}
+              className="border-token bg-surface hover:bg-surface-2 flex size-10 items-center justify-center rounded-xl border transition"
+              aria-label="Toggle menu"
             >
-              {open ? <X className="size-5" /> : <Menu className="size-5" />}
+              {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
             </button>
           </div>
         </div>
 
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="glass-strong mx-4 mt-3 rounded-2xl border p-4 lg:hidden"
-          >
-            <div className="flex flex-col gap-1">
-              {links.map((l) => (
-                <a
-                  key={l.to}
-                  href={l.to}
-                  className="text-muted hover:bg-surface-2 rounded-xl px-3 py-2.5 text-sm font-medium"
-                >
-                  {l.label}
-                </a>
-              ))}
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Link to="/login">
-                <Button variant="secondary" className="w-full">
-                  Login
-                </Button>
-              </Link>
-              <Link to="/register">
-                <Button className="w-full">Get started</Button>
-              </Link>
-            </div>
-          </motion.div>
-        )}
-      </motion.header>
+        {/* Mobile Dropdown */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+              className="glass-strong mx-auto mt-3 max-w-lg rounded-3xl border border-token p-5 shadow-2xl lg:hidden"
+            >
+              <div className="flex flex-col gap-1.5">
+                {links.map((l) => (
+                  <a
+                    key={l.to}
+                    href={l.to}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-muted hover:bg-surface-2 hover:text-default rounded-xl px-4 py-3 text-sm font-semibold transition"
+                  >
+                    {l.label}
+                  </a>
+                ))}
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2.5 border-t border-token pt-4">
+                {user ? (
+                  <Link to="/app/dashboard" className="col-span-2">
+                    <Button className="w-full" rightIcon={ArrowRight}>
+                      Open Studio
+                    </Button>
+                  </Link>
+                ) : (
+                  <>
+                    <Link to="/login">
+                      <Button variant="secondary" className="w-full">
+                        Sign In
+                      </Button>
+                    </Link>
+                    <Link to="/register">
+                      <Button className="w-full">Get Started</Button>
+                    </Link>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </header>
 
-      <main className="pt-16">
+      <main className="pt-20">
         <Outlet />
       </main>
 
@@ -146,64 +161,58 @@ export default function MarketingLayout() {
 
 function Footer() {
   return (
-    <footer className="border-t border-token mt-24">
+    <footer className="border-t border-token bg-surface/40 mt-32">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 lg:grid-cols-5 lg:px-8">
         <div className="lg:col-span-2">
-          <Logo />
-          <p className="text-muted mt-4 max-w-sm text-sm">
-            Inverview AI is a realistic mock-interview platform that helps
-            candidates land roles in tech, leadership and beyond.
+          <Logo size="lg" />
+          <p className="text-muted mt-4 max-w-sm text-sm leading-relaxed">
+            The next-generation AI interview simulator. Practice multi-modal
+            technical and behavioral mock interviews with instant speech telemetry
+            and personalized coaching.
           </p>
-          <div className="mt-5 flex items-center gap-3">
-            {[
-              {
-                name: "Twitter",
-                path: "M22 5.92a8.2 8.2 0 01-2.36.65 4.1 4.1 0 001.8-2.27 8.2 8.2 0 01-2.6 1A4.1 4.1 0 0011.8 9.3a11.65 11.65 0 01-8.45-4.3 4.1 4.1 0 001.27 5.48 4.07 4.07 0 01-1.86-.52v.05a4.1 4.1 0 003.29 4.03 4.1 4.1 0 01-1.86.07 4.1 4.1 0 003.83 2.85 8.23 8.23 0 01-6.07 1.7A11.62 11.62 0 008.29 20c7.55 0 11.68-6.26 11.68-11.69v-.53A8.34 8.34 0 0022 5.92z",
-              },
-              {
-                name: "LinkedIn",
-                path: "M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zM8.5 18h-3V9.5h3V18zM7 8.3a1.7 1.7 0 110-3.4 1.7 1.7 0 010 3.4zM18.5 18h-3v-4.3c0-1-.3-1.7-1.3-1.7s-1.5.7-1.5 1.7V18h-3V9.5h3v1.2c.5-.8 1.4-1.4 2.6-1.4 1.9 0 3.2 1.2 3.2 3.7V18z",
-              },
-              {
-                name: "GitHub",
-                path: "M12 .3a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.6-1.4-1.4-1.8-1.4-1.8-1.1-.8.1-.7.1-.7 1.2.1 1.9 1.3 1.9 1.3 1.1 1.9 2.9 1.4 3.6 1 .1-.8.4-1.4.8-1.7-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.4 1.3-3.3-.1-.3-.6-1.6.1-3.3 0 0 1-.3 3.3 1.3a11.4 11.4 0 016 0c2.3-1.6 3.3-1.3 3.3-1.3.7 1.7.2 3 .1 3.3.8.9 1.3 2 1.3 3.3 0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0012 .3z",
-              },
-            ].map((I) => (
-              <a
-                key={I.name}
-                href="#"
-                aria-label={I.name}
-                className="border-token bg-surface hover:bg-surface-2 flex size-10 items-center justify-center rounded-xl border transition"
-              >
-                <svg viewBox="0 0 24 24" className="size-4 fill-current">
-                  <path d={I.path} />
-                </svg>
-              </a>
-            ))}
+          <div className="mt-4 flex items-center gap-2">
+            <span className="flex size-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-xs font-semibold text-subtle">
+              Multi-modal AI Engine 4.7 Active
+            </span>
           </div>
         </div>
+
         {[
           {
-            title: "Product",
-            items: ["Features", "Pricing", "Roadmap", "Changelog"],
+            title: "Interview Tracks",
+            items: [
+              "Software Engineering",
+              "React & Frontend",
+              "Node.js & Backend",
+              "System Design",
+              "HR & Behavioral",
+              "Leadership",
+            ],
           },
           {
-            title: "Company",
-            items: ["About", "Careers", "Contact", "Press kit"],
+            title: "Capabilities",
+            items: [
+              "Multi-modal AI Aria",
+              "Speech & Prosody Telemetry",
+              "CV Skill Parser",
+              "6-Metric Performance Report",
+              "Automated Job Matching",
+            ],
           },
           {
             title: "Resources",
-            items: ["Blog", "Guides", "Support", "Status"],
+            items: ["Interview Prep Guides", "STAR Method Masterclass", "Tech Career Roadmap", "Privacy & Security"],
           },
         ].map((col) => (
           <div key={col.title}>
-            <p className="text-default text-sm font-semibold">{col.title}</p>
+            <p className="text-default text-xs font-bold uppercase tracking-wider">{col.title}</p>
             <ul className="mt-4 space-y-2.5">
               {col.items.map((i) => (
                 <li key={i}>
                   <a
-                    href="#"
-                    className="text-muted hover:text-default text-sm transition"
+                    href="#features"
+                    className="text-muted hover:text-brand-400 text-sm transition-colors"
                   >
                     {i}
                   </a>
@@ -213,18 +222,19 @@ function Footer() {
           </div>
         ))}
       </div>
+
       <div className="border-t border-token">
-        <div className="text-subtle mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-6 text-xs sm:flex-row lg:px-8">
-          <span>© {new Date().getFullYear()} Inverview AI. All rights reserved.</span>
-          <div className="flex items-center gap-5">
+        <div className="text-subtle mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-6 text-xs sm:flex-row lg:px-8">
+          <span>© {new Date().getFullYear()} Inverview AI. Free & open candidate coaching.</span>
+          <div className="flex items-center gap-6">
             <a href="#" className="hover:text-default transition">
-              Privacy
+              Privacy Policy
             </a>
             <a href="#" className="hover:text-default transition">
-              Terms
+              Terms of Service
             </a>
             <a href="#" className="hover:text-default transition">
-              Cookies
+              Security Notice
             </a>
           </div>
         </div>

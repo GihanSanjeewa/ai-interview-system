@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Bot, Loader2, Sparkles } from "lucide-react";
 import InterviewSetup from "./interview/InterviewSetup";
 import InterviewRoom from "./interview/InterviewRoom";
 import { interviewApi } from "@/services/api";
@@ -10,7 +10,7 @@ import { useToast } from "@/context/ToastContext";
 export default function Interview() {
   const toast = useToast();
   const [params, setParams] = useSearchParams();
-  const [session, setSession] = useState(null); // { interview }
+  const [session, setSession] = useState(null);
   const [creating, setCreating] = useState(false);
   const [prefill, setPrefill] = useState(null);
 
@@ -37,7 +37,7 @@ export default function Interview() {
       });
       setSession({ interview });
     } catch (err) {
-      toast.error("Couldn't create interview", err?.response?.data?.title);
+      toast.error("Couldn't initialize interview loop", err?.response?.data?.title);
     } finally {
       setCreating(false);
     }
@@ -50,10 +50,17 @@ export default function Interview() {
 
   if (creating) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="text-brand-400 size-8 animate-spin" />
-          <p className="text-muted text-sm">Setting up your interview room…</p>
+      <div className="flex min-h-[65vh] items-center justify-center">
+        <div className="glass-card rounded-3xl p-8 border border-token text-center max-w-sm flex flex-col items-center shadow-2xl">
+          <div className="flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/20 to-accent-500/20 text-brand-400 border border-brand-500/30 shadow-lg">
+            <Loader2 className="size-8 animate-spin" />
+          </div>
+          <h3 className="font-display text-default text-lg font-bold mt-5">
+            Preparing Studio Room
+          </h3>
+          <p className="text-muted text-xs mt-1.5 leading-relaxed">
+            Aria is loading your target scenario question bank and configuring speech telemetry…
+          </p>
         </div>
       </div>
     );
@@ -78,7 +85,7 @@ export default function Interview() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.35 }}
           >
             <InterviewRoom session={session} onExit={handleExit} />
           </motion.div>

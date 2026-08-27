@@ -2,10 +2,9 @@ import Hero from "./sections/Hero";
 import Trusted from "./sections/Trusted";
 import Categories from "./sections/Categories";
 import Features from "./sections/Features";
-import HowItWorks from "./sections/HowItWorks";
 import LiveInterviewPreview from "./sections/LiveInterviewPreview";
+import HowItWorks from "./sections/HowItWorks";
 import Testimonials from "./sections/Testimonials";
-import Pricing from "./sections/Pricing";
 import Faq from "./sections/Faq";
 import CtaBanner from "./sections/CtaBanner";
 
@@ -16,10 +15,11 @@ export default function LandingPage() {
       <Trusted />
       <Categories />
       <Features />
-      <LiveInterviewPreview />
+      <div id="preview">
+        <LiveInterviewPreview />
+      </div>
       <HowItWorks />
       <Testimonials />
-      <Pricing />
       <Faq />
       <CtaBanner />
     </>

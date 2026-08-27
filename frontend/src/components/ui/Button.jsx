@@ -5,23 +5,28 @@ import { cn } from "@/lib/utils";
 
 const variants = {
   primary:
-    "bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-[0_8px_30px_-8px_rgba(91,81,255,0.6)] hover:shadow-[0_10px_36px_-8px_rgba(91,81,255,0.8)] hover:brightness-110",
+    "bg-gradient-to-r from-brand-500 via-brand-600 to-accent-500 text-white shadow-lg shadow-brand-500/25 hover:shadow-xl hover:shadow-brand-500/40 hover:brightness-110 active:scale-[0.98]",
   secondary:
-    "bg-surface-2 text-default border border-token-strong hover:bg-surface",
-  ghost: "text-default hover:bg-surface-2",
+    "bg-surface-2 text-default border border-token hover:bg-surface-3 hover:border-token-strong active:scale-[0.98]",
+  ghost:
+    "text-default hover:bg-surface-2 hover:text-brand-400 active:scale-[0.98]",
   outline:
-    "border border-token-strong text-default hover:bg-surface-2",
+    "border border-token-strong bg-transparent text-default hover:bg-surface-2 hover:border-brand-500/50 active:scale-[0.98]",
   danger:
-    "bg-gradient-to-br from-rose-500 to-rose-700 text-white shadow-[0_6px_24px_-8px_rgba(244,63,94,0.55)] hover:brightness-110",
+    "bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40 hover:brightness-110 active:scale-[0.98]",
   glass:
-    "glass text-default hover:bg-white/10 dark:hover:bg-white/10",
+    "glass text-default hover:bg-surface-2 hover:border-brand-500/40 active:scale-[0.98]",
+  glow:
+    "relative overflow-hidden bg-gradient-to-r from-brand-500 to-accent-500 text-white shadow-glow hover:brightness-110",
 };
 
 const sizes = {
-  sm: "h-9 px-3 text-sm rounded-xl gap-1.5",
-  md: "h-11 px-5 text-sm rounded-2xl gap-2",
-  lg: "h-13 px-7 text-base rounded-2xl gap-2",
-  icon: "size-10 rounded-xl",
+  xs: "h-7 px-2.5 text-xs rounded-lg gap-1",
+  sm: "h-9 px-3.5 text-xs font-semibold rounded-xl gap-1.5",
+  md: "h-11 px-5 text-sm font-semibold rounded-2xl gap-2",
+  lg: "h-13 px-6 text-base font-semibold rounded-2xl gap-2.5",
+  icon: "size-10 rounded-xl p-0",
+  "icon-sm": "size-8 rounded-lg p-0",
 };
 
 const Button = forwardRef(function Button(
@@ -43,12 +48,12 @@ const Button = forwardRef(function Button(
   return (
     <Cmp
       ref={ref}
-      whileTap={asMotion ? { scale: 0.97 } : undefined}
-      whileHover={asMotion ? { y: -1 } : undefined}
-      transition={{ type: "spring", stiffness: 400, damping: 22 }}
+      whileTap={asMotion && !disabled && !loading ? { scale: 0.97 } : undefined}
+      whileHover={asMotion && !disabled && !loading ? { y: -1 } : undefined}
+      transition={{ type: "spring", stiffness: 450, damping: 25 }}
       className={cn(
-        "ring-focus inline-flex items-center justify-center font-semibold transition-all duration-200",
-        "disabled:cursor-not-allowed disabled:opacity-60",
+        "ring-focus inline-flex items-center justify-center select-none font-semibold transition-all duration-200 cursor-pointer",
+        "disabled:cursor-not-allowed disabled:opacity-50 disabled:pointer-events-none",
         variants[variant],
         sizes[size],
         className
@@ -57,12 +62,12 @@ const Button = forwardRef(function Button(
       {...props}
     >
       {loading ? (
-        <Loader2 className="size-4 animate-spin" />
+        <Loader2 className="size-4 animate-spin shrink-0" />
       ) : (
-        LeftIcon && <LeftIcon className="size-4" />
+        LeftIcon && <LeftIcon className="size-4 shrink-0" />
       )}
       {children}
-      {!loading && RightIcon && <RightIcon className="size-4" />}
+      {!loading && RightIcon && <RightIcon className="size-4 shrink-0" />}
     </Cmp>
   );
 });

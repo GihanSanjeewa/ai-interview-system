@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Mail } from "lucide-react";
+import { Lock, Mail, Sparkles } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { Input, Label, FieldError, PasswordInput } from "@/components/ui/Input";
@@ -21,8 +21,8 @@ export default function Login() {
 
   const validate = () => {
     const next = {};
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) next.email = "Enter a valid email.";
-    if (form.password.length < 6) next.password = "At least 6 characters.";
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) next.email = "Enter a valid email address.";
+    if (form.password.length < 6) next.password = "Password must be at least 6 characters.";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -33,7 +33,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login(form.email, form.password);
-      toast.success("Welcome back!", "Loading your workspace…");
+      toast.success("Welcome back!", "Loading your AI interview studio…");
       const dest = location.state?.from?.pathname || "/app/dashboard";
       navigate(dest, { replace: true });
     } catch (err) {
@@ -45,31 +45,32 @@ export default function Login() {
 
   return (
     <div>
-      <h1 className="font-display text-default text-3xl font-bold">
-        Welcome back
-      </h1>
-      <p className="text-muted mt-2 text-sm">
-        Pick up where you left off. Aria is warm and ready.
-      </p>
+      <div className="mb-6">
+        <h1 className="font-display text-default text-2xl sm:text-3xl font-extrabold">
+          Sign In to Studio
+        </h1>
+        <p className="text-muted mt-1.5 text-xs sm:text-sm">
+          Pick up where you left off. Aria is ready for your next session.
+        </p>
+      </div>
 
-      <div className="mt-8">
-        <SocialButtons />
-        <div className="my-6 flex items-center gap-3">
-          <span className="border-token h-px flex-1 border-t" />
-          <span className="text-subtle text-xs font-semibold uppercase tracking-widest">
-            or continue with email
-          </span>
-          <span className="border-token h-px flex-1 border-t" />
-        </div>
+      <SocialButtons />
+
+      <div className="my-5 flex items-center gap-3">
+        <span className="border-token h-px flex-1 border-t" />
+        <span className="text-subtle text-[10px] font-bold uppercase tracking-widest">
+          or sign in with email
+        </span>
+        <span className="border-token h-px flex-1 border-t" />
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <Label htmlFor="email">Email address</Label>
+          <Label htmlFor="email">Email Address</Label>
           <Input
             id="email"
             type="email"
-            placeholder="you@example.com"
+            placeholder="name@work-or-personal.com"
             leftIcon={Mail}
             value={form.email}
             onChange={setField("email")}
@@ -80,7 +81,7 @@ export default function Login() {
         </div>
 
         <div>
-          <div className="mb-1.5 flex items-center justify-between">
+          <div className="mb-1 flex items-center justify-between">
             <Label htmlFor="password" className="mb-0">
               Password
             </Label>
@@ -93,32 +94,24 @@ export default function Login() {
           </div>
           <PasswordInput
             id="password"
-            placeholder="••••••••"
+            placeholder="••••••••••••"
             value={form.password}
             onChange={setField("password")}
             autoComplete="current-password"
+            error={errors.password}
           />
           <FieldError>{errors.password}</FieldError>
         </div>
 
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            className="accent-brand-500 size-4 rounded"
-            defaultChecked
-          />
-          <span className="text-muted">Keep me signed in</span>
-        </label>
-
-        <Button type="submit" size="lg" className="w-full" loading={loading}>
-          Sign in
+        <Button type="submit" size="lg" className="w-full mt-2" loading={loading}>
+          Sign In
         </Button>
       </form>
 
-      <p className="text-muted mt-6 text-center text-sm">
+      <p className="text-muted mt-6 text-center text-xs sm:text-sm">
         Don't have an account?{" "}
-        <Link to="/register" className="text-brand-400 font-semibold">
-          Create one — free
+        <Link to="/register" className="text-brand-400 font-bold hover:underline">
+          Create one now
         </Link>
       </p>
     </div>

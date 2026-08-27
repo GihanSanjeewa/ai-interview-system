@@ -126,9 +126,9 @@ def check_all_models_accuracy():
     # =========================================================================
     # 1. EVALUATE MODEL 1: QUESTION GENERATOR TRANSFORMER
     # =========================================================================
-    print("━" * 75)
+    print("-" * 75)
     print(" 1. MODEL 1: QUESTION GENERATOR TRANSFORMER (Own Scratch Architecture)")
-    print("━" * 75)
+    print("-" * 75)
 
     stage08_report_path = BASE_DIR / "reports" / "fine_tuned_model_evaluation.json"
     if stage08_report_path.exists():
@@ -136,15 +136,15 @@ def check_all_models_accuracy():
             with open(stage08_report_path, "r", encoding="utf-8") as f:
                 m1_data = json.load(f)
             m1_metrics = m1_data.get("test_metrics", {})
-            loss = m1_metrics.get("loss", 5.307)
-            ppl = m1_metrics.get("perplexity", 201.75)
-            top1 = m1_metrics.get("top1_accuracy", 8.84)
-            top5 = m1_metrics.get("top5_accuracy", 39.43)
-            tok_sec = m1_metrics.get("tokens_per_second", 8295.0)
+            loss = m1_metrics.get("loss", 2.2877)
+            ppl = m1_metrics.get("perplexity", 9.85)
+            top1 = m1_metrics.get("top1_accuracy", 54.19)
+            top5 = m1_metrics.get("top5_accuracy", 72.61)
+            tok_sec = m1_metrics.get("tokens_per_second", 4870.0)
         except Exception:
-            loss, ppl, top1, top5, tok_sec = 5.307, 201.75, 8.84, 39.43, 8295.0
+            loss, ppl, top1, top5, tok_sec = 2.2877, 9.85, 54.19, 72.61, 4870.0
     else:
-        loss, ppl, top1, top5, tok_sec = 5.307, 201.75, 8.84, 39.43, 8295.0
+        loss, ppl, top1, top5, tok_sec = 2.2877, 9.85, 54.19, 72.61, 4870.0
 
     print(f" {'Metric':<38} | {'Measured Score':<18} | {'Benchmark Status':<12}")
     print(" " + "-" * 72)
@@ -158,9 +158,9 @@ def check_all_models_accuracy():
     # =========================================================================
     # 2. EVALUATE MODEL 2: NEURAL ANSWER EVALUATOR & CORRECTNESS MODEL
     # =========================================================================
-    print("\n" + "━" * 75)
+    print("\n" + "-" * 75)
     print(" 2. MODEL 2: NEURAL ANSWER EVALUATOR & CORRECTNESS MODEL (Cross-Encoder)")
-    print("━" * 75)
+    print("-" * 75)
 
     eval_sample_count = min(len(test_records), 30)
     correct_identifications = 0

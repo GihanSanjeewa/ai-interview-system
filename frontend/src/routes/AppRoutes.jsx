@@ -16,7 +16,6 @@ import Interview from "@/pages/app/Interview";
 import History from "@/pages/app/History";
 import Report from "@/pages/app/Report";
 import Profile from "@/pages/app/Profile";
-import Subscription from "@/pages/app/Subscription";
 import CvAnalysis from "@/pages/app/CvAnalysis";
 import Jobs from "@/pages/app/Jobs";
 
@@ -55,7 +54,6 @@ export default function AppRoutes() {
             <Route path="reports/:id" element={<Report />} />
             <Route path="jobs" element={<Jobs />} />
             <Route path="profile" element={<Profile />} />
-            <Route path="subscription" element={<Subscription />} />
           </Route>
 
           {/* Legacy redirects */}
@@ -63,6 +61,7 @@ export default function AppRoutes() {
           <Route path="/interview" element={<Navigate to="/app/interview" replace />} />
           <Route path="/history" element={<Navigate to="/app/history" replace />} />
           <Route path="/report" element={<Navigate to="/app/reports" replace />} />
+          <Route path="/subscription" element={<Navigate to="/app/dashboard" replace />} />
 
           {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -96,9 +96,9 @@ def train_upgraded_model(epochs: int = 5, batch_size: int = 32, lr: float = 5e-4
     model = CompactTransformerLM(
         vocab_size=vocab_size,
         d_model=512,
-        n_heads=8,
-        n_layers=6,
-        hidden_dim=1024,
+        num_heads=8,
+        num_layers=6,
+        d_ff=1024,
         max_seq_len=256,
         dropout=0.1
     )

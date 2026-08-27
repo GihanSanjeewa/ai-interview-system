@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, User } from "lucide-react";
+import { Mail, User, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { Input, Label, FieldError, PasswordInput } from "@/components/ui/Input";
@@ -32,9 +32,9 @@ export default function Register() {
 
   const validate = () => {
     const next = {};
-    if (form.name.trim().length < 2) next.name = "Tell us your name.";
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) next.email = "Enter a valid email.";
-    if (strength < 2) next.password = "Use 8+ chars, mix letters & numbers.";
+    if (form.name.trim().length < 2) next.name = "Please enter your full name.";
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) next.email = "Enter a valid email address.";
+    if (strength < 2) next.password = "Use 8+ characters with mixed letters and numbers.";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -45,10 +45,10 @@ export default function Register() {
     setLoading(true);
     try {
       await register(form.name, form.email, form.password);
-      toast.success("Account created", "Let's pick your first interview.");
+      toast.success("Account created successfully", "Welcome to Inverview AI Studio!");
       navigate("/app/dashboard", { replace: true });
     } catch (err) {
-      toast.error("Sign up failed", err?.message || "Try again.");
+      toast.error("Sign up failed", err?.message || "Please check your details and try again.");
     } finally {
       setLoading(false);
     }
@@ -56,47 +56,50 @@ export default function Register() {
 
   return (
     <div>
-      <h1 className="font-display text-default text-3xl font-bold">
-        Create your account
-      </h1>
-      <p className="text-muted mt-2 text-sm">
-        Free forever. No credit card. Start with a 15-min mock.
-      </p>
+      <div className="mb-6">
+        <h1 className="font-display text-default text-2xl sm:text-3xl font-extrabold">
+          Create Candidate Profile
+        </h1>
+        <p className="text-muted mt-1.5 text-xs sm:text-sm">
+          Get started with multi-modal AI mock interviews and CV analysis.
+        </p>
+      </div>
 
-      <div className="mt-8">
-        <SocialButtons />
-        <div className="my-6 flex items-center gap-3">
-          <span className="border-token h-px flex-1 border-t" />
-          <span className="text-subtle text-xs font-semibold uppercase tracking-widest">
-            or
-          </span>
-          <span className="border-token h-px flex-1 border-t" />
-        </div>
+      <SocialButtons />
+
+      <div className="my-5 flex items-center gap-3">
+        <span className="border-token h-px flex-1 border-t" />
+        <span className="text-subtle text-[10px] font-bold uppercase tracking-widest">
+          or sign up with email
+        </span>
+        <span className="border-token h-px flex-1 border-t" />
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <Label htmlFor="name">Full name</Label>
+          <Label htmlFor="name">Full Name</Label>
           <Input
             id="name"
-            placeholder="Jane Doe"
+            placeholder="Jane Candidate"
             leftIcon={User}
             value={form.name}
             onChange={setField("name")}
+            error={errors.name}
             autoComplete="name"
           />
           <FieldError>{errors.name}</FieldError>
         </div>
 
         <div>
-          <Label htmlFor="email">Email address</Label>
+          <Label htmlFor="email">Email Address</Label>
           <Input
             id="email"
             type="email"
-            placeholder="you@example.com"
+            placeholder="jane@example.com"
             leftIcon={Mail}
             value={form.email}
             onChange={setField("email")}
+            error={errors.email}
             autoComplete="email"
           />
           <FieldError>{errors.email}</FieldError>
@@ -106,20 +109,21 @@ export default function Register() {
           <Label htmlFor="password">Password</Label>
           <PasswordInput
             id="password"
-            placeholder="At least 8 characters"
+            placeholder="Min. 8 characters"
             value={form.password}
             onChange={setField("password")}
             autoComplete="new-password"
+            error={errors.password}
           />
           <div className="mt-2 flex gap-1.5">
             {[0, 1, 2, 3].map((i) => (
               <span
                 key={i}
                 className={cn(
-                  "h-1 flex-1 rounded-full transition-colors",
+                  "h-1 flex-1 rounded-full transition-colors duration-300",
                   i < strength
                     ? ["bg-rose-400", "bg-amber-400", "bg-amber-300", "bg-emerald-400"][strength - 1]
-                    : "bg-surface-2"
+                    : "bg-surface-3"
                 )}
               />
             ))}
@@ -127,33 +131,14 @@ export default function Register() {
           <FieldError>{errors.password}</FieldError>
         </div>
 
-        <label className="flex items-start gap-2 text-sm">
-          <input
-            type="checkbox"
-            className="accent-brand-500 mt-0.5 size-4 rounded"
-            defaultChecked
-          />
-          <span className="text-muted">
-            I agree to the{" "}
-            <a href="#" className="text-brand-400 font-medium">
-              Terms
-            </a>{" "}
-            and{" "}
-            <a href="#" className="text-brand-400 font-medium">
-              Privacy Policy
-            </a>
-            .
-          </span>
-        </label>
-
-        <Button type="submit" size="lg" className="w-full" loading={loading}>
-          Create account
+        <Button type="submit" size="lg" className="w-full mt-2" loading={loading}>
+          Create Account & Start
         </Button>
       </form>
 
-      <p className="text-muted mt-6 text-center text-sm">
+      <p className="text-muted mt-6 text-center text-xs sm:text-sm">
         Already have an account?{" "}
-        <Link to="/login" className="text-brand-400 font-semibold">
+        <Link to="/login" className="text-brand-400 font-bold hover:underline">
           Sign in
         </Link>
       </p>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
+  Bot,
   Briefcase,
   CheckCircle2,
   ChevronRight,
@@ -11,6 +12,8 @@ import {
   Mic,
   Sparkles,
   Upload,
+  UserCheck,
+  Zap,
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
@@ -20,28 +23,46 @@ import { useToast } from "@/context/ToastContext";
 import { cn, formatDate } from "@/lib/utils";
 
 const DIFFICULTIES = [
-  { id: "beginner", label: "Beginner", color: "text-emerald-400" },
-  { id: "intermediate", label: "Intermediate", color: "text-amber-400" },
-  { id: "advanced", label: "Advanced", color: "text-rose-400" },
+  { id: "beginner", label: "Beginner", desc: "Foundational questions & gentle probing", color: "text-emerald-400" },
+  { id: "intermediate", label: "Intermediate", desc: "Production tradeoffs & realistic loops", color: "text-amber-400" },
+  { id: "advanced", label: "Advanced", desc: "Staff/Principal system design & edge cases", color: "text-rose-400" },
 ];
 
 const FALLBACK_TRACKS = [
-  { id: "software_engineering", label: "Software Engineering" },
-  { id: "web_development", label: "Web Development" },
-  { id: "data_science", label: "Data Science" },
-  { id: "networking", label: "Networking" },
-  { id: "ui_ux", label: "UI/UX" },
-  { id: "business_analysis", label: "Business Analysis" },
+  { id: "software_engineering", label: "Software Engineering", desc: "Algorithms, Concurrency & Clean Code" },
+  { id: "web_development", label: "Web Development", desc: "React 19, TypeScript & Modern Frontend" },
+  { id: "data_science", label: "Data Science", desc: "ML Models, Feature Pipelines & Python" },
+  { id: "networking", label: "Networking & Cloud", desc: "AWS, Kubernetes & Microservices" },
+  { id: "ui_ux", label: "UI / UX Engineering", desc: "Design Systems & Accessibility" },
+  { id: "business_analysis", label: "Business Analysis", desc: "Requirements & Architecture Planning" },
 ];
 
-const TRACK_GRADIENTS = {
-  software_engineering: "from-brand-500 to-violet-500",
-  web_development: "from-cyan-400 to-sky-500",
-  data_science: "from-purple-500 to-fuchsia-500",
-  networking: "from-emerald-400 to-teal-500",
-  ui_ux: "from-pink-500 to-rose-500",
-  business_analysis: "from-amber-400 to-orange-500",
-};
+const PERSONAS = [
+  {
+    id: "aria",
+    name: "Aria",
+    style: "Friendly & Encouraging",
+    tag: "Standard Loop",
+    desc: "Provides gentle pacing and structured follow-ups.",
+    gradient: "from-pink-500 to-rose-600",
+  },
+  {
+    id: "marcus",
+    name: "Marcus",
+    style: "Direct & Probing",
+    tag: "Senior+",
+    desc: "Challenges edge cases, architecture trade-offs, and scalability.",
+    gradient: "from-brand-500 to-indigo-600",
+  },
+  {
+    id: "kenji",
+    name: "Kenji",
+    style: "Methodical & Analytical",
+    tag: "System Design",
+    desc: "Deep focus on precision, distributed systems, and data flow.",
+    gradient: "from-cyan-400 to-blue-600",
+  },
+];
 
 export default function InterviewSetup({ onStart, prefill }) {
   const toast = useToast();
@@ -66,9 +87,10 @@ export default function InterviewSetup({ onStart, prefill }) {
           if (!category) setCategory(data.tracks[0]);
         }
       } catch {
-        // fallback already set
+        // Fallback already set
       }
     })();
+
     (async () => {
       try {
         const { items } = await cvApi.list();
@@ -81,10 +103,9 @@ export default function InterviewSetup({ onStart, prefill }) {
         setLoadingCvs(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Apply prefill from the CV page
+  // Apply prefill
   useEffect(() => {
     if (!prefill) return;
     if (prefill.cvId) setCvId(prefill.cvId);
@@ -99,7 +120,6 @@ export default function InterviewSetup({ onStart, prefill }) {
     [cvs, cvId]
   );
 
-  // Suggested tracks come from the selected CV's parsed result
   const suggestedTrackIds = useMemo(
     () =>
       (selectedCv?.suggestedTracks ?? [])
@@ -123,101 +143,103 @@ export default function InterviewSetup({ onStart, prefill }) {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
-      <div className="space-y-6 lg:col-span-2">
+    <div className="grid gap-8 lg:grid-cols-12">
+      {/* Left Configuration Column */}
+      <div className="space-y-6 lg:col-span-8">
         <div>
-          <Badge variant="brand" icon={Sparkles}>
-            New session
+          <Badge variant="brand" icon={Sparkles} dot pulse>
+            Studio Loop Setup
           </Badge>
-          <h1 className="font-display text-default mt-3 text-3xl font-bold sm:text-4xl">
-            Configure your interview
+          <h1 className="font-display text-default mt-3 text-3xl font-extrabold sm:text-4xl">
+            Configure Your Mock Interview
           </h1>
-          <p className="text-muted mt-2 max-w-2xl">
-            Pick a CV, track and persona. Aria tailors questions to your
-            uploaded experience and adapts in real time.
+          <p className="text-muted mt-1.5 max-w-2xl text-xs sm:text-sm leading-relaxed">
+            Choose a linked resume, technical track, and AI interviewer persona. Aria tailors
+            interview loops to your actual tech stack with real-time follow-up probes.
           </p>
         </div>
 
-        {/* CV picker (§3.1) */}
-        <Section icon={FileText} title="Your CV" desc="Link a CV so Aria knows your experience.">
+        {/* 1. Linked Resume */}
+        <StudioSection
+          icon={FileText}
+          title="1. Link a Resume / CV"
+          desc="Aria parses your past projects to craft tailored follow-up scenarios."
+        >
           {loadingCvs ? (
-            <div className="text-muted text-sm">Loading your CVs…</div>
+            <div className="text-muted text-xs">Loading resumes…</div>
           ) : cvs.length === 0 ? (
-            <EmptyState
-              icon={FileText}
-              title="No CVs uploaded"
-              description="Upload one and unlock CV-tailored questions plus job matching."
-              action={
-                <Link to="/app/cv">
-                  <Button leftIcon={Upload}>Upload a CV</Button>
-                </Link>
-              }
-            />
+            <div className="rounded-2xl border border-dashed border-token p-6 text-center">
+              <p className="text-default font-bold text-sm">No resumes uploaded yet</p>
+              <p className="text-muted text-xs mt-1">Upload one to enable resume-tailored questions.</p>
+              <Link to="/app/cv" className="inline-block mt-3">
+                <Button size="sm" leftIcon={Upload}>Upload CV</Button>
+              </Link>
+            </div>
           ) : (
-            <div className="space-y-2">
-              <div className="grid gap-2 sm:grid-cols-2">
+            <div className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {cvs.map((c) => (
                   <button
                     key={c.id}
+                    type="button"
                     onClick={() => setCvId(c.id)}
-                    disabled={c.status !== "PARSED"}
                     className={cn(
-                      "group bg-surface-2 border-token relative overflow-hidden rounded-2xl border p-4 text-left transition",
-                      cvId === c.id && "border-brand-500/50 bg-brand-500/10",
-                      c.status !== "PARSED" && "opacity-60"
+                      "group flex items-center gap-3.5 rounded-2xl border p-4 text-left transition-all cursor-pointer",
+                      cvId === c.id
+                        ? "border-brand-500 bg-brand-500/10 shadow-md shadow-brand-500/10"
+                        : "border-token bg-surface hover:bg-surface-2"
                     )}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="from-brand-500/15 to-accent-500/15 grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br">
-                        <FileText className="text-brand-400 size-4.5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-default truncate text-sm font-semibold">
-                          {c.originalName}
-                        </p>
-                        <p className="text-subtle text-[11px]">
-                          {formatDate(c.createdAt)} ·{" "}
-                          {c.status === "PARSED"
-                            ? "Ready"
-                            : c.status === "PENDING"
-                            ? "Analyzing…"
-                            : "Failed"}
-                        </p>
-                      </div>
-                      {cvId === c.id && (
-                        <CheckCircle2 className="text-brand-400 size-5" />
-                      )}
+                    <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-500/15 text-brand-400 border border-brand-500/30">
+                      <FileText className="size-5" />
                     </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-default truncate text-sm font-bold">
+                        {c.originalName}
+                      </p>
+                      <p className="text-subtle text-[11px] mt-0.5">
+                        {formatDate(c.createdAt)} · {c.status === "PARSED" ? "Ready" : "Analyzing"}
+                      </p>
+                    </div>
+                    {cvId === c.id && (
+                      <CheckCircle2 className="size-5 text-brand-400 shrink-0" />
+                    )}
                   </button>
                 ))}
               </div>
+
               <div className="flex items-center justify-between pt-1">
                 <button
+                  type="button"
                   onClick={() => setCvId(null)}
                   className={cn(
-                    "text-subtle hover:text-default text-xs",
-                    !cvId && "text-default"
+                    "text-xs font-semibold text-subtle hover:text-default transition",
+                    !cvId && "text-brand-400 font-bold"
                   )}
                 >
-                  Skip CV for this session
+                  Skip CV attachment (Standard Question Bank)
                 </button>
                 <Link
                   to="/app/cv"
-                  className="text-brand-400 hover:text-brand-300 text-xs font-semibold"
+                  className="text-brand-400 hover:text-brand-300 text-xs font-bold"
                 >
                   Manage CVs →
                 </Link>
               </div>
             </div>
           )}
-        </Section>
+        </StudioSection>
 
-        {/* Track / category (§3.1 categories) */}
-        <Section icon={Briefcase} title="Interview track" desc="Choose what you're practicing.">
+        {/* 2. Track Selector */}
+        <StudioSection
+          icon={Briefcase}
+          title="2. Select Technical Track"
+          desc="Pick the specific technical domain you want to practice."
+        >
           {suggestedTrackIds.length > 0 && (
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <span className="text-subtle text-[10px] font-semibold uppercase tracking-wider">
-                Suggested for you:
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <span className="text-subtle text-[10px] font-bold uppercase tracking-wider">
+                Recommended from your CV:
               </span>
               {suggestedTrackIds.map((id) => {
                 const t = tracks.find((x) => x.id === id);
@@ -225,11 +247,12 @@ export default function InterviewSetup({ onStart, prefill }) {
                 return (
                   <button
                     key={t.id}
+                    type="button"
                     onClick={() => setCategory(t)}
                     className={cn(
-                      "rounded-full border px-2.5 py-1 text-[11px] font-semibold transition",
+                      "rounded-full border px-3 py-1 text-xs font-bold transition cursor-pointer",
                       category?.id === t.id
-                        ? "border-brand-500/50 bg-brand-500/10 text-brand-300"
+                        ? "border-brand-500 bg-brand-500/15 text-brand-300 shadow-sm"
                         : "border-brand-500/30 bg-brand-500/5 text-brand-300 hover:bg-brand-500/15"
                     )}
                   >
@@ -239,201 +262,217 @@ export default function InterviewSetup({ onStart, prefill }) {
               })}
             </div>
           )}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {tracks.map((c) => {
-              const grad = TRACK_GRADIENTS[c.id] || "from-brand-500 to-violet-500";
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => setCategory(c)}
-                  className={cn(
-                    "group relative overflow-hidden rounded-2xl border p-4 text-left transition",
-                    category?.id === c.id
-                      ? "border-brand-500/50 bg-brand-500/10"
-                      : "border-token bg-surface hover:bg-surface-2"
-                  )}
-                >
-                  <div
-                    className={`absolute -right-10 -top-10 size-24 rounded-full bg-gradient-to-br ${grad} opacity-20 blur-2xl`}
-                  />
-                  <div className="relative flex items-center gap-3">
-                    <div className={`grid size-9 place-items-center rounded-lg bg-gradient-to-br ${grad} text-white`}>
-                      <Briefcase className="size-4" />
-                    </div>
-                    <p className="text-default text-sm font-semibold">{c.label}</p>
-                    {category?.id === c.id && (
-                      <CheckCircle2 className="text-brand-400 ml-auto size-4" />
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </Section>
 
-        {/* Difficulty + Duration */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {tracks.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setCategory(c)}
+                className={cn(
+                  "group relative overflow-hidden rounded-2xl border p-4 text-left transition-all cursor-pointer",
+                  category?.id === c.id
+                    ? "border-brand-500 bg-brand-500/10 shadow-md shadow-brand-500/10"
+                    : "border-token bg-surface hover:bg-surface-2"
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex size-9 items-center justify-center rounded-xl bg-brand-500/15 text-brand-400 border border-brand-500/30">
+                    <Briefcase className="size-4.5" />
+                  </div>
+                  {category?.id === c.id && (
+                    <CheckCircle2 className="size-4.5 text-brand-400" />
+                  )}
+                </div>
+                <p className="text-default font-display text-sm font-bold mt-3">{c.label}</p>
+                {c.desc && <p className="text-muted text-[11px] mt-1 leading-snug">{c.desc}</p>}
+              </button>
+            ))}
+          </div>
+        </StudioSection>
+
+        {/* 3. Difficulty & Duration */}
         <div className="grid gap-6 sm:grid-cols-2">
-          <Section icon={Sparkles} title="Difficulty">
-            <div className="bg-surface border-token grid grid-cols-3 rounded-2xl border p-1">
+          <StudioSection icon={Sparkles} title="Difficulty Tier">
+            <div className="space-y-2">
               {DIFFICULTIES.map((d) => (
                 <button
                   key={d.id}
+                  type="button"
                   onClick={() => setDifficulty(d)}
                   className={cn(
-                    "rounded-xl py-2.5 text-sm font-semibold transition",
+                    "flex w-full items-center justify-between rounded-2xl border p-3 text-left transition cursor-pointer",
                     difficulty.id === d.id
-                      ? "bg-surface-2 text-default border border-token shadow-sm"
-                      : "text-muted"
+                      ? "border-brand-500 bg-brand-500/10"
+                      : "border-token bg-surface hover:bg-surface-2"
                   )}
                 >
-                  <span className={difficulty.id === d.id ? d.color : ""}>
-                    {d.label}
-                  </span>
+                  <div>
+                    <span className={cn("text-xs font-bold", difficulty.id === d.id ? d.color : "text-default")}>
+                      {d.label}
+                    </span>
+                    <p className="text-muted text-[11px] mt-0.5">{d.desc}</p>
+                  </div>
+                  {difficulty.id === d.id && (
+                    <CheckCircle2 className="size-4 text-brand-400 shrink-0" />
+                  )}
                 </button>
               ))}
             </div>
-          </Section>
-          <Section icon={Clock} title="Duration">
-            <div className="bg-surface border-token grid grid-cols-3 rounded-2xl border p-1">
+          </StudioSection>
+
+          <StudioSection icon={Clock} title="Loop Duration">
+            <div className="grid grid-cols-3 gap-2">
               {[15, 30, 45].map((m) => (
                 <button
                   key={m}
+                  type="button"
                   onClick={() => setDuration(m)}
                   className={cn(
-                    "rounded-xl py-2.5 text-sm font-semibold transition",
+                    "flex flex-col items-center justify-center rounded-2xl border py-4 transition cursor-pointer",
                     duration === m
-                      ? "bg-surface-2 text-default border border-token shadow-sm"
-                      : "text-muted"
+                      ? "border-brand-500 bg-brand-500/10 text-brand-400 shadow-sm font-bold"
+                      : "border-token bg-surface text-muted hover:bg-surface-2"
                   )}
                 >
-                  {m} min
+                  <span className="font-display text-lg font-bold">{m}</span>
+                  <span className="text-[10px] uppercase font-semibold text-subtle">Minutes</span>
                 </button>
               ))}
             </div>
-          </Section>
+          </StudioSection>
         </div>
 
-        {/* Persona */}
-        <Section icon={Mic} title="AI Interviewer persona">
+        {/* 4. AI Persona Selection */}
+        <StudioSection icon={Bot} title="4. Choose Interviewer Persona">
           <div className="grid gap-3 sm:grid-cols-3">
-            {[
-              { id: "aria", name: "Aria", style: "Friendly & supportive", tag: "Recommended", gradient: "from-pink-500 to-rose-500" },
-              { id: "marcus", name: "Marcus", style: "Direct & probing", tag: "Senior+", gradient: "from-brand-500 to-violet-500" },
-              { id: "kenji", name: "Kenji", style: "Calm & methodical", tag: "System Design", gradient: "from-cyan-400 to-sky-500" },
-            ].map((p) => (
+            {PERSONAS.map((p) => (
               <button
                 key={p.id}
+                type="button"
                 onClick={() => setPersona(p.id)}
                 className={cn(
-                  "relative overflow-hidden rounded-2xl border p-4 text-left transition",
+                  "group relative rounded-2xl border p-4 text-left transition cursor-pointer",
                   persona === p.id
-                    ? "border-brand-500/50 bg-brand-500/10"
+                    ? "border-brand-500 bg-brand-500/10 shadow-md shadow-brand-500/10"
                     : "border-token bg-surface hover:bg-surface-2"
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`size-12 rounded-full bg-gradient-to-br ${p.gradient} grid place-items-center text-base font-bold text-white`}>
+                  <div
+                    className={`size-11 rounded-2xl bg-gradient-to-br ${p.gradient} flex items-center justify-center text-white font-bold text-sm shadow-md`}
+                  >
                     {p.name[0]}
                   </div>
                   <div>
-                    <p className="text-default text-sm font-semibold">{p.name}</p>
-                    <p className="text-subtle text-xs">{p.style}</p>
+                    <p className="text-default font-bold text-sm">{p.name}</p>
+                    <p className="text-subtle text-[11px]">{p.style}</p>
                   </div>
                 </div>
-                <Badge size="sm" variant={persona === p.id ? "brand" : "outline"} className="mt-3">
-                  {p.tag}
-                </Badge>
+                <p className="text-muted text-[11px] mt-3 leading-relaxed">{p.desc}</p>
+                <div className="mt-3 flex items-center justify-between">
+                  <Badge variant={persona === p.id ? "brand" : "outline"} size="xs">
+                    {p.tag}
+                  </Badge>
+                  {persona === p.id && (
+                    <CheckCircle2 className="size-4 text-brand-400" />
+                  )}
+                </div>
               </button>
             ))}
           </div>
-        </Section>
+        </StudioSection>
 
-        {/* Language (§3.2 — English + Sinhala) */}
-        <Section icon={Globe} title="Language">
-          <div className="flex flex-wrap gap-2">
-            {["English", "Sinhala"].map((l) => (
+        {/* 5. Language Selection */}
+        <StudioSection icon={Globe} title="5. Language">
+          <div className="flex flex-wrap gap-2.5">
+            {[
+              { id: "English", label: "English (US / UK)", tag: "Default" },
+              { id: "Sinhala", label: "සිංහල (Sinhala)", tag: "Native ASR" },
+            ].map((l) => (
               <button
-                key={l}
-                onClick={() => setLanguage(l)}
+                key={l.id}
+                type="button"
+                onClick={() => setLanguage(l.id)}
                 className={cn(
-                  "rounded-full border px-4 py-2 text-sm font-medium transition",
-                  language === l
-                    ? "border-brand-500/50 bg-brand-500/10 text-brand-300"
-                    : "border-token bg-surface text-muted hover:text-default"
+                  "flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-xs font-bold transition cursor-pointer",
+                  language === l.id
+                    ? "border-brand-500 bg-brand-500/15 text-brand-300 shadow-sm"
+                    : "border-token bg-surface text-muted hover:bg-surface-2"
                 )}
               >
-                {l === "English" ? "English" : "සිංහල (Sinhala)"}
+                <span>{l.label}</span>
+                <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[9px] uppercase tracking-wider text-subtle">
+                  {l.tag}
+                </span>
               </button>
             ))}
           </div>
-        </Section>
+        </StudioSection>
       </div>
 
-      {/* Summary card */}
-      <div className="lg:col-span-1">
-        <motion.aside
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="sticky top-24 space-y-4"
-        >
-          <div className="glass-strong rounded-3xl border p-6">
-            <p className="text-subtle text-xs font-semibold uppercase tracking-widest">
-              Session preview
-            </p>
-            <h3 className="font-display text-default mt-2 text-2xl font-bold">
+      {/* Right Sticky Preview Summary */}
+      <div className="lg:col-span-4">
+        <aside className="sticky top-24 space-y-4">
+          <div className="glass-card rounded-3xl border border-token p-6 shadow-xl">
+            <span className="text-subtle text-[10px] font-bold uppercase tracking-widest">
+              Live Session Preview
+            </span>
+            <h3 className="font-display text-default mt-2 text-2xl font-extrabold">
               {category?.label}
             </h3>
-            <p className="text-muted text-sm">
-              {duration}-minute mock with{" "}
+            <p className="text-muted text-xs mt-1">
+              {duration}-minute loop with{" "}
               {persona === "aria" ? "Aria" : persona === "marcus" ? "Marcus" : "Kenji"}.
             </p>
 
-            <div className="mt-6 space-y-3">
-              <Row label="Track" value={category?.label} />
-              <Row label="Difficulty" value={difficulty.label} />
-              <Row label="Duration" value={`${duration} min`} />
-              <Row
+            <div className="mt-6 space-y-3 divide-y divide-token/60 border-y border-token/60 py-4 text-xs">
+              <SummaryRow label="Track" value={category?.label} />
+              <SummaryRow label="Difficulty" value={difficulty.label} />
+              <SummaryRow label="Duration" value={`${duration} Minutes`} />
+              <SummaryRow
                 label="Persona"
                 value={
                   persona === "aria"
-                    ? "Aria · Friendly"
+                    ? "Aria (Friendly)"
                     : persona === "marcus"
-                    ? "Marcus · Direct"
-                    : "Kenji · Methodical"
+                    ? "Marcus (Direct)"
+                    : "Kenji (Methodical)"
                 }
               />
-              <Row label="Language" value={language} />
-              <Row label="CV" value={selectedCv ? selectedCv.originalName : "None"} />
+              <SummaryRow label="Language" value={language} />
+              <SummaryRow label="Linked CV" value={selectedCv ? selectedCv.originalName : "None (Generic)"} />
             </div>
 
             <Button
               size="lg"
-              className="mt-6 w-full"
+              className="mt-6 w-full shadow-glow font-bold"
               rightIcon={ChevronRight}
               onClick={handleStart}
             >
-              Start interview
+              Launch Studio Room
             </Button>
+
             <p className="text-subtle mt-3 text-center text-[11px]">
-              Your mic is requested only when you press <strong>Start answer</strong>.
+              Microphone permission requested upon answering.
             </p>
           </div>
-        </motion.aside>
+        </aside>
       </div>
     </div>
   );
 }
 
-function Section({ icon: Icon, title, desc, children }) {
+function StudioSection({ icon: Icon, title, desc, children }) {
   return (
-    <div className="bg-surface border-token rounded-3xl border p-6">
-      <div className="mb-4 flex items-start gap-3">
-        <div className="from-brand-500/15 to-accent-500/15 text-brand-400 grid size-10 place-items-center rounded-xl bg-gradient-to-br">
-          <Icon className="size-4.5" />
+    <div className="glass-card rounded-3xl border border-token p-6 sm:p-7">
+      <div className="flex items-start gap-3.5 mb-4">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500/15 to-accent-500/15 text-brand-400 border border-brand-500/30">
+          <Icon className="size-5" />
         </div>
         <div>
-          <h3 className="text-default font-semibold">{title}</h3>
-          {desc && <p className="text-muted text-xs">{desc}</p>}
+          <h3 className="text-default font-display text-base font-bold">{title}</h3>
+          {desc && <p className="text-muted text-xs mt-0.5">{desc}</p>}
         </div>
       </div>
       {children}
@@ -441,13 +480,11 @@ function Section({ icon: Icon, title, desc, children }) {
   );
 }
 
-function Row({ label, value }) {
+function SummaryRow({ label, value }) {
   return (
-    <div className="flex items-center justify-between gap-3 text-sm">
+    <div className="flex items-center justify-between pt-2">
       <span className="text-muted">{label}</span>
-      <span className="text-default truncate text-right font-semibold">
-        {value}
-      </span>
+      <span className="text-default font-bold truncate max-w-[170px] text-right">{value}</span>
     </div>
   );
 }

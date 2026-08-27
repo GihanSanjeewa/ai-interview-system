@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { CheckCircle2, Mail } from "lucide-react";
+import { CheckCircle2, Mail, ArrowLeft } from "lucide-react";
 import { useToast } from "@/context/ToastContext";
 import { Input, Label } from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
@@ -14,33 +14,33 @@ export default function ForgotPassword() {
   const onSubmit = async (e) => {
     e.preventDefault();
     if (!/^\S+@\S+\.\S+$/.test(email)) {
-      toast.error("Enter a valid email");
+      toast.error("Invalid email", "Please enter a valid email address.");
       return;
     }
     setLoading(true);
     setTimeout(() => {
       setSent(true);
       setLoading(false);
-      toast.success("Reset link sent", `Check ${email} for instructions.`);
-    }, 900);
+      toast.success("Reset link dispatched", `Check ${email} for instructions.`);
+    }, 800);
   };
 
   if (sent) {
     return (
-      <div className="text-center">
-        <div className="from-emerald-400/20 to-emerald-500/5 mx-auto flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br">
-          <CheckCircle2 className="size-7 text-emerald-400" />
+      <div className="text-center py-4">
+        <div className="from-emerald-400/20 to-emerald-500/10 border border-emerald-500/30 mx-auto flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br shadow-lg">
+          <CheckCircle2 className="size-8 text-emerald-400" />
         </div>
-        <h1 className="font-display text-default mt-5 text-3xl font-bold">
-          Check your inbox
+        <h1 className="font-display text-default mt-5 text-2xl font-bold">
+          Check Your Inbox
         </h1>
-        <p className="text-muted mt-2 text-sm">
-          We sent a reset link to <span className="text-default font-semibold">{email}</span>.
-          The link expires in 15 minutes.
+        <p className="text-muted mt-2 text-xs sm:text-sm leading-relaxed">
+          We sent a secure password recovery link to{" "}
+          <span className="text-default font-bold">{email}</span>.
         </p>
-        <Link to="/login" className="mt-8 inline-block">
-          <Button variant="secondary" size="lg">
-            Back to sign in
+        <Link to="/login" className="mt-7 inline-block w-full">
+          <Button variant="secondary" size="lg" className="w-full" leftIcon={ArrowLeft}>
+            Back to Sign In
           </Button>
         </Link>
       </div>
@@ -49,16 +49,18 @@ export default function ForgotPassword() {
 
   return (
     <div>
-      <h1 className="font-display text-default text-3xl font-bold">
-        Forgot password?
-      </h1>
-      <p className="text-muted mt-2 text-sm">
-        Enter your email and we'll send you a secure reset link.
-      </p>
+      <div className="mb-6">
+        <h1 className="font-display text-default text-2xl sm:text-3xl font-extrabold">
+          Reset Password
+        </h1>
+        <p className="text-muted mt-1.5 text-xs sm:text-sm">
+          Enter your registered email and we'll send you recovery steps.
+        </p>
+      </div>
 
-      <form onSubmit={onSubmit} className="mt-8 space-y-4">
+      <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <Label htmlFor="email">Email address</Label>
+          <Label htmlFor="email">Email Address</Label>
           <Input
             id="email"
             type="email"
@@ -68,14 +70,14 @@ export default function ForgotPassword() {
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
-        <Button type="submit" size="lg" className="w-full" loading={loading}>
-          Send reset link
+        <Button type="submit" size="lg" className="w-full mt-2" loading={loading}>
+          Send Recovery Link
         </Button>
       </form>
 
-      <p className="text-muted mt-6 text-center text-sm">
-        Remembered it?{" "}
-        <Link to="/login" className="text-brand-400 font-semibold">
+      <p className="text-muted mt-6 text-center text-xs sm:text-sm">
+        Remember your password?{" "}
+        <Link to="/login" className="text-brand-400 font-bold hover:underline">
           Back to sign in
         </Link>
       </p>
