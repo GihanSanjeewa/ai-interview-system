@@ -1,0 +1,30 @@
+{
+  "timestamp_utc": "2026-08-27T11:04:19.101274+00:00",
+  "original_record_count": 17289,
+  "new_records_added": 0,
+  "total_expanded_records": 17289,
+  "sources": [
+    "ali-alkhars/interviews (Hugging Face)",
+    "sahil2801/CodeAlpaca-20k (Hugging Face)"
+  ],
+  "domain_distribution": {
+    "General Software Engineering": 9323,
+    "Frontend Development": 3904,
+    "Software Engineering": 111,
+    "Database Systems": 2113,
+    "Data Science & ML": 14,
+    "System Design": 71,
+    "DevOps & Cloud": 220,
+    "Backend & Web APIs": 382,
+    "Algorithms & Data Structures": 1151
+  },
+  "difficulty_distribution": {
+    "Beginner": 3091,
+    "Intermediate": 10790,
+    "Advanced": 3408
+  },
+  "files_updated": [
+    "C:\\Users\\gihan\\Documents\\ai-interview-system\\ml-service\\dataset\\raw\\raw_interview_dataset.json",
+    "C:\\Users\\gihan\\Documents\\ai-interview-system\\ml-service\\dataset\\raw\\raw_interview_dataset_expanded_22k.json"
+  ]
+}
