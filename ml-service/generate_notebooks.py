@@ -1159,7 +1159,23 @@ with open(WORKSPACE_DIR / "reports" / "fine_tuned_model_evaluation.json", "w", e
         "promotion_gate": gate_result
     }, f, indent=2)
 
-print("Stage 08 Completed Successfully.")
+print("Stage 08 Base & Specialized Evaluation Completed.")
+"""),
+        code("""# Cell 3: ROC Curve, Precision-Recall Curve & Confusion Matrix Suite
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+from sklearn.metrics import roc_curve, auc, precision_recall_curve, confusion_matrix, precision_score, recall_score, f1_score
+
+print("=== RUNNING ADVANCED STATISTICAL ML EVALUATION ===")
+from evaluate_roc_precision_metrics import run_roc_precision_evaluation
+stat_report = run_roc_precision_evaluation()
+
+# Display ROC and PR Curve
+from IPython.display import Image, display
+display(Image(filename=str(WORKSPACE_DIR / "reports" / "figures" / "08_fig04_roc_and_precision_recall.png")))
+display(Image(filename=str(WORKSPACE_DIR / "reports" / "figures" / "08_fig05_confusion_matrix_and_distribution.png")))
+print("ROC Curve, Precision-Recall Curve, and Confusion Matrix generated successfully!")
 """)
     ]
 

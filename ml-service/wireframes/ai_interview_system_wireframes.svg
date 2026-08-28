@@ -1,0 +1,329 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3200 1800" width="3200" height="1800" style="background-color: #0b0f19; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <defs>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#a855f7" />
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.9" />
+    </linearGradient>
+    <linearGradient id="aiGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ec4899" />
+      <stop offset="50%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Canvas Header -->
+  <rect x="0" y="0" width="3200" height="80" fill="#0f172a" />
+  <text x="60" y="48" fill="#f8fafc" font-size="24" font-weight="bold">AI Interview System — Penpot Wireframe Board</text>
+  <text x="600" y="48" fill="#94a3b8" font-size="16">Screen Flow: 1. Dashboard &amp; Role Setup ➔ 2. CV Analysis &amp; Extraction ➔ 3. Live 16:9 Studio ➔ 4. Assessment Analytics Report</text>
+
+  <!-- ========================================================================= -->
+  <!-- SCREEN 1: DASHBOARD & ROLE PICKER (x: 60, y: 120, w: 700, h: 760) -->
+  <!-- ========================================================================= -->
+  <g id="screen-1-dashboard" transform="translate(60, 120)">
+    <!-- Browser Window Frame -->
+    <rect width="700" height="760" rx="20" fill="#0f172a" stroke="#334155" stroke-width="2" />
+    <!-- Window Bar -->
+    <rect width="700" height="44" rx="20" fill="#1e293b" />
+    <circle cx="25" cy="22" r="6" fill="#ef4444" />
+    <circle cx="45" cy="22" r="6" fill="#f59e0b" />
+    <circle cx="65" cy="22" r="6" fill="#10b981" />
+    <text x="100" y="27" fill="#64748b" font-size="12">interview-ai.app/app/dashboard</text>
+
+    <!-- Header Navigation -->
+    <text x="40" y="85" fill="#f8fafc" font-size="20" font-weight="bold">Interview AI</text>
+    <rect x="560" y="65" width="100" height="32" rx="16" fill="#334155" />
+    <text x="585" y="85" fill="#f8fafc" font-size="12">Profile</text>
+
+    <!-- Hero Card -->
+    <rect x="40" y="115" width="620" height="150" rx="16" fill="url(#brandGrad)" opacity="0.9" />
+    <text x="65" y="155" fill="#ffffff" font-size="22" font-weight="bold">Next-Gen AI Mock Interview Studio</text>
+    <text x="65" y="185" fill="#e2e8f0" font-size="13">Practice real technical loops with adaptive AI personas, acoustic feedback &amp; scoring.</text>
+    <rect x="65" y="205" width="140" height="36" rx="18" fill="#ffffff" />
+    <text x="95" y="228" fill="#4f46e5" font-size="13" font-weight="bold">Start Loop ➔</text>
+
+    <!-- Interview Track Cards Grid -->
+    <text x="40" y="300" fill="#f8fafc" font-size="16" font-weight="bold">Select Practice Track</text>
+
+    <!-- Card 1: Frontend -->
+    <rect x="40" y="320" width="295" height="110" rx="12" fill="#1e293b" stroke="#334155" />
+    <circle cx="70" cy="355" r="16" fill="#6366f1" opacity="0.3" />
+    <text x="95" y="355" fill="#f8fafc" font-size="14" font-weight="bold">React / Frontend</text>
+    <text x="95" y="375" fill="#94a3b8" font-size="11">Hooks, Virtual DOM, TypeScript, Next.js</text>
+    <text x="95" y="410" fill="#10b981" font-size="11">● 42 Questions Available</text>
+
+    <!-- Card 2: Backend -->
+    <rect x="365" y="320" width="295" height="110" rx="12" fill="#1e293b" stroke="#334155" />
+    <circle cx="395" cy="355" r="16" fill="#a855f7" opacity="0.3" />
+    <text x="420" y="355" fill="#f8fafc" font-size="14" font-weight="bold">Node.js / Python Backend</text>
+    <text x="420" y="375" fill="#94a3b8" font-size="11">REST APIs, Async I/O, Concurrency</text>
+    <text x="420" y="410" fill="#10b981" font-size="11">● 58 Questions Available</text>
+
+    <!-- Card 3: System Design -->
+    <rect x="40" y="445" width="295" height="110" rx="12" fill="#1e293b" stroke="#334155" />
+    <circle cx="70" cy="480" r="16" fill="#ec4899" opacity="0.3" />
+    <text x="95" y="480" fill="#f8fafc" font-size="14" font-weight="bold">System Design &amp; Arch</text>
+    <text x="95" y="500" fill="#94a3b8" font-size="11">Scalability, Caching, Kafka, Sharding</text>
+    <text x="95" y="535" fill="#10b981" font-size="11">● 26 Questions Available</text>
+
+    <!-- Card 4: DevOps & Cloud -->
+    <rect x="365" y="445" width="295" height="110" rx="12" fill="#1e293b" stroke="#334155" />
+    <circle cx="395" cy="480" r="16" fill="#3b82f6" opacity="0.3" />
+    <text x="420" y="480" fill="#f8fafc" font-size="14" font-weight="bold">DevOps &amp; Cloud</text>
+    <text x="420" y="500" fill="#94a3b8" font-size="11">Docker, Kubernetes, AWS, CI/CD</text>
+    <text x="420" y="535" fill="#10b981" font-size="11">● 34 Questions Available</text>
+
+    <!-- Recent History Strip -->
+    <text x="40" y="590" fill="#f8fafc" font-size="15" font-weight="bold">Recent Performance</text>
+    <rect x="40" y="605" width="620" height="60" rx="10" fill="#1e293b" />
+    <text x="60" y="640" fill="#f8fafc" font-size="13">Senior React Mock Loop</text>
+    <text x="350" y="640" fill="#10b981" font-size="13" font-weight="bold">Score: 84/100</text>
+    <text x="560" y="640" fill="#6366f1" font-size="12">View Report ➔</text>
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- SCREEN 2: CV ANALYSIS & EXTRACTION (x: 820, y: 120, w: 700, h: 760) -->
+  <!-- ========================================================================= -->
+  <g id="screen-2-cv-analysis" transform="translate(820, 120)">
+    <rect width="700" height="760" rx="20" fill="#0f172a" stroke="#334155" stroke-width="2" />
+    <rect width="700" height="44" rx="20" fill="#1e293b" />
+    <circle cx="25" cy="22" r="6" fill="#ef4444" />
+    <circle cx="45" cy="22" r="6" fill="#f59e0b" />
+    <circle cx="65" cy="22" r="6" fill="#10b981" />
+    <text x="100" y="27" fill="#64748b" font-size="12">interview-ai.app/app/cv-analysis</text>
+
+    <text x="40" y="85" fill="#f8fafc" font-size="20" font-weight="bold">CV Analysis &amp; Skill Extraction</text>
+    <text x="40" y="105" fill="#94a3b8" font-size="12">NLP parser extracts demonstrated competencies &amp; matches interview tracks.</text>
+
+    <!-- Upload Hero Box -->
+    <rect x="40" y="125" width="620" height="110" rx="16" fill="#1e293b" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="6,6" />
+    <text x="240" y="175" fill="#f8fafc" font-size="15" font-weight="bold">Drag &amp; Drop Resume (PDF / DOCX)</text>
+    <text x="280" y="195" fill="#64748b" font-size="11">Maximum file size: 10MB</text>
+
+    <!-- Extracted Profile Banner -->
+    <rect x="40" y="250" width="620" height="130" rx="16" fill="url(#cardGrad)" stroke="#334155" />
+    <text x="65" y="285" fill="#f8fafc" font-size="18" font-weight="bold">Gihan_Resume_Senior_SWE.pdf</text>
+    <text x="65" y="305" fill="#94a3b8" font-size="12">Parsed 42 skills · 4.5 Years Demonstrated Experience</text>
+    <rect x="65" y="325" width="80" height="24" rx="12" fill="#10b981" opacity="0.2" />
+    <text x="75" y="341" fill="#10b981" font-size="11" font-weight="bold">✓ PARSED</text>
+
+    <!-- Readiness Gauge (Circular representation) -->
+    <circle cx="580" cy="315" r="42" fill="none" stroke="#334155" stroke-width="8" />
+    <circle cx="580" cy="315" r="42" fill="none" stroke="#6366f1" stroke-width="8" stroke-dasharray="210, 264" />
+    <text x="562" y="322" fill="#f8fafc" font-size="18" font-weight="bold">82%</text>
+    <text x="550" y="338" fill="#94a3b8" font-size="9">READINESS</text>
+
+    <!-- Extracted Skill Buckets -->
+    <text x="40" y="410" fill="#f8fafc" font-size="14" font-weight="bold">Extracted Technologies</text>
+    <g transform="translate(40, 425)">
+      <rect x="0" y="0" width="70" height="26" rx="6" fill="#6366f1" opacity="0.2" /><text x="12" y="17" fill="#818cf8" font-size="11">React.js</text>
+      <rect x="80" y="0" width="85" height="26" rx="6" fill="#6366f1" opacity="0.2" /><text x="92" y="17" fill="#818cf8" font-size="11">TypeScript</text>
+      <rect x="175" y="0" width="70" height="26" rx="6" fill="#6366f1" opacity="0.2" /><text x="187" y="17" fill="#818cf8" font-size="11">Node.js</text>
+      <rect x="255" y="0" width="80" height="26" rx="6" fill="#6366f1" opacity="0.2" /><text x="267" y="17" fill="#818cf8" font-size="11">FastAPI</text>
+      <rect x="345" y="0" width="85" height="26" rx="6" fill="#6366f1" opacity="0.2" /><text x="357" y="17" fill="#818cf8" font-size="11">PostgreSQL</text>
+      <rect x="440" y="0" width="65" height="26" rx="6" fill="#6366f1" opacity="0.2" /><text x="452" y="17" fill="#818cf8" font-size="11">Docker</text>
+      <rect x="515" y="0" width="55" height="26" rx="6" fill="#6366f1" opacity="0.2" /><text x="527" y="17" fill="#818cf8" font-size="11">AWS</text>
+    </g>
+
+    <!-- Suggested Tracks -->
+    <text x="40" y="490" fill="#f8fafc" font-size="14" font-weight="bold">AI-Matched Recommended Tracks</text>
+
+    <rect x="40" y="510" width="620" height="65" rx="12" fill="#1e293b" stroke="#334155" />
+    <text x="65" y="540" fill="#f8fafc" font-size="14" font-weight="bold">Senior Frontend Track (React + TS)</text>
+    <text x="65" y="558" fill="#94a3b8" font-size="11">96% Skill Compatibility Match</text>
+    <rect x="520" y="525" width="120" height="34" rx="8" fill="#6366f1" />
+    <text x="545" y="546" fill="#ffffff" font-size="12" font-weight="bold">Launch ➔</text>
+
+    <rect x="40" y="590" width="620" height="65" rx="12" fill="#1e293b" stroke="#334155" />
+    <text x="65" y="620" fill="#f8fafc" font-size="14" font-weight="bold">Full-Stack Cloud Architecture</text>
+    <text x="65" y="638" fill="#94a3b8" font-size="11">88% Skill Compatibility Match</text>
+    <rect x="520" y="605" width="120" height="34" rx="8" fill="#334155" />
+    <text x="545" y="626" fill="#f8fafc" font-size="12" font-weight="bold">Launch ➔</text>
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- SCREEN 3: LIVE 16:9 INTERVIEW STUDIO (x: 1580, y: 120, w: 760, h: 760) -->
+  <!-- ========================================================================= -->
+  <g id="screen-3-interview-studio" transform="translate(1580, 120)">
+    <rect width="760" height="760" rx="20" fill="#0f172a" stroke="#334155" stroke-width="2" />
+    <rect width="760" height="44" rx="20" fill="#1e293b" />
+    <circle cx="25" cy="22" r="6" fill="#ef4444" />
+    <circle cx="45" cy="22" r="6" fill="#f59e0b" />
+    <circle cx="65" cy="22" r="6" fill="#10b981" />
+    <text x="100" y="27" fill="#64748b" font-size="12">interview-ai.app/app/interview/studio (Live Session)</text>
+
+    <!-- Live Status Top Bar -->
+    <rect x="40" y="60" width="60" height="24" rx="12" fill="#ef4444" opacity="0.2" />
+    <circle cx="55" cy="72" r="4" fill="#ef4444" />
+    <text x="66" y="76" fill="#ef4444" font-size="10" font-weight="bold">LIVE</text>
+    <text x="120" y="77" fill="#f8fafc" font-size="13" font-weight="bold">Role: Senior Frontend Engineer</text>
+    <text x="560" y="77" fill="#94a3b8" font-size="13">Elapsed: 12:45 / 30:00</text>
+    <rect x="680" y="58" width="40" height="26" rx="6" fill="#ef4444" />
+    <text x="690" y="75" fill="#ffffff" font-size="11" font-weight="bold">End</text>
+
+    <!-- Main 16:9 AI Interviewer Screen -->
+    <rect x="40" y="95" width="680" height="340" rx="16" fill="url(#aiGrad)" opacity="0.85" />
+    
+    <!-- AI Avatar Center -->
+    <circle cx="380" cy="230" r="55" fill="#ffffff" opacity="0.2" filter="url(#glow)" />
+    <circle cx="380" cy="230" r="45" fill="#ffffff" opacity="0.3" />
+    <!-- AI Face Icon -->
+    <circle cx="365" cy="225" r="4" fill="#ffffff" />
+    <circle cx="395" cy="225" r="4" fill="#ffffff" />
+    <path d="M 368 245 Q 380 255 392 245" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round" />
+
+    <!-- Live Audio Waveform -->
+    <g transform="translate(310, 305)" fill="#ffffff" opacity="0.8">
+      <rect x="0" y="10" width="4" height="20" rx="2" />
+      <rect x="12" y="4" width="4" height="32" rx="2" />
+      <rect x="24" y="0" width="4" height="40" rx="2" />
+      <rect x="36" y="8" width="4" height="24" rx="2" />
+      <rect x="48" y="2" width="4" height="36" rx="2" />
+      <rect x="60" y="0" width="4" height="40" rx="2" />
+      <rect x="72" y="12" width="4" height="16" rx="2" />
+      <rect x="84" y="4" width="4" height="32" rx="2" />
+      <rect x="96" y="8" width="4" height="24" rx="2" />
+      <rect x="108" y="12" width="4" height="16" rx="2" />
+      <rect x="120" y="14" width="4" height="12" rx="2" />
+    </g>
+
+    <!-- Picture in Picture (User Webcam) -->
+    <rect x="540" y="115" width="160" height="110" rx="12" fill="#0f172a" stroke="#ffffff" stroke-width="2" />
+    <text x="555" y="135" fill="#94a3b8" font-size="10">Candidate (You)</text>
+    <circle cx="620" cy="175" r="22" fill="#334155" />
+    <rect x="550" y="205" width="140" height="6" rx="3" fill="#10b981" />
+
+    <!-- Active Question Subtitle Overlay -->
+    <rect x="60" y="375" width="640" height="46" rx="10" fill="#000000" opacity="0.65" />
+    <text x="80" y="403" fill="#ffffff" font-size="13" font-weight="bold">"Explain the difference between controlled and uncontrolled components in React."</text>
+
+    <!-- Studio Control Dock -->
+    <rect x="40" y="450" width="680" height="65" rx="14" fill="#1e293b" stroke="#334155" />
+    <!-- Mute Mic Button -->
+    <rect x="60" y="465" width="85" height="36" rx="8" fill="#334155" />
+    <text x="85" y="488" fill="#f8fafc" font-size="12">🎙️ Mic</text>
+    <!-- Camera Button -->
+    <rect x="155" y="465" width="85" height="36" rx="8" fill="#334155" />
+    <text x="175" y="488" fill="#f8fafc" font-size="12">📹 Cam</text>
+    <!-- Start / Submit Answer Button (Primary) -->
+    <rect x="360" y="465" width="160" height="36" rx="8" fill="#10b981" />
+    <text x="390" y="488" fill="#ffffff" font-size="13" font-weight="bold">Submit Answer ✓</text>
+    <!-- Skip / Don't Know Button -->
+    <rect x="535" y="465" width="160" height="36" rx="8" fill="#334155" />
+    <text x="565" y="488" fill="#94a3b8" font-size="12">I Don't Know ➔</text>
+
+    <!-- Real-Time Acoustic & Text Metrics Dock -->
+    <text x="40" y="545" fill="#f8fafc" font-size="14" font-weight="bold">Live Turn Metrics (Model 2 Acoustic Engine)</text>
+    <g transform="translate(40, 560)">
+      <rect x="0" y="0" width="105" height="65" rx="10" fill="#1e293b" stroke="#334155" />
+      <text x="12" y="24" fill="#94a3b8" font-size="10">CONFIDENCE</text>
+      <text x="12" y="50" fill="#f8fafc" font-size="16" font-weight="bold">82%</text>
+
+      <rect x="115" y="0" width="105" height="65" rx="10" fill="#1e293b" stroke="#334155" />
+      <text x="127" y="24" fill="#94a3b8" font-size="10">TECHNICAL</text>
+      <text x="127" y="50" fill="#10b981" font-size="16" font-weight="bold">78%</text>
+
+      <rect x="230" y="0" width="105" height="65" rx="10" fill="#1e293b" stroke="#334155" />
+      <text x="242" y="24" fill="#94a3b8" font-size="10">RELEVANCE</text>
+      <text x="242" y="50" fill="#6366f1" font-size="16" font-weight="bold">91%</text>
+
+      <rect x="345" y="0" width="105" height="65" rx="10" fill="#1e293b" stroke="#334155" />
+      <text x="357" y="24" fill="#94a3b8" font-size="10">FLUENCY</text>
+      <text x="357" y="50" fill="#f8fafc" font-size="16" font-weight="bold">85%</text>
+
+      <rect x="460" y="0" width="105" height="65" rx="10" fill="#1e293b" stroke="#334155" />
+      <text x="472" y="24" fill="#94a3b8" font-size="10">PACE (WPM)</text>
+      <text x="472" y="50" fill="#f8fafc" font-size="16" font-weight="bold">138</text>
+
+      <rect x="575" y="0" width="105" height="65" rx="10" fill="#1e293b" stroke="#334155" />
+      <text x="587" y="24" fill="#94a3b8" font-size="10">VERDICT</text>
+      <text x="587" y="50" fill="#10b981" font-size="13" font-weight="bold">CORRECT</text>
+    </g>
+
+    <!-- Real-Time Transcript Stream -->
+    <rect x="40" y="640" width="680" height="90" rx="12" fill="#1e293b" />
+    <text x="60" y="665" fill="#6366f1" font-size="12" font-weight="bold">You (Candidate):</text>
+    <text x="60" y="688" fill="#cbd5e1" font-size="12">"In controlled components, state is bound to React hooks like useState, whereas uncontrolled components use refs..."</text>
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- SCREEN 4: ASSESSMENT & ANALYTICS REPORT (x: 2380, y: 120, w: 760, h: 760) -->
+  <!-- ========================================================================= -->
+  <g id="screen-4-report" transform="translate(2380, 120)">
+    <rect width="760" height="760" rx="20" fill="#0f172a" stroke="#334155" stroke-width="2" />
+    <rect width="760" height="44" rx="20" fill="#1e293b" />
+    <circle cx="25" cy="22" r="6" fill="#ef4444" />
+    <circle cx="45" cy="22" r="6" fill="#f59e0b" />
+    <circle cx="65" cy="22" r="6" fill="#10b981" />
+    <text x="100" y="27" fill="#64748b" font-size="12">interview-ai.app/app/reports/session_001</text>
+
+    <!-- Report Header Banner -->
+    <rect x="40" y="65" width="680" height="120" rx="16" fill="url(#cardGrad)" stroke="#334155" />
+    <text x="65" y="105" fill="#f8fafc" font-size="20" font-weight="bold">Candidate Performance Diagnostic</text>
+    <text x="65" y="128" fill="#94a3b8" font-size="12">Track: Senior Frontend Engineer · Completed in 28 mins · 6 Questions Evaluated</text>
+    <rect x="65" y="145" width="120" height="26" rx="13" fill="#10b981" opacity="0.2" />
+    <text x="80" y="162" fill="#10b981" font-size="11" font-weight="bold">STRONG HIRE (84%)</text>
+
+    <!-- Big Score Badge -->
+    <circle cx="640" cy="125" r="42" fill="#6366f1" opacity="0.2" />
+    <text x="622" y="133" fill="#f8fafc" font-size="24" font-weight="bold">84</text>
+    <text x="618" y="150" fill="#94a3b8" font-size="9">OVERALL</text>
+
+    <!-- 2 Column Analytics -->
+    <!-- Column 1: Competency Breakdown -->
+    <text x="40" y="215" fill="#f8fafc" font-size="14" font-weight="bold">Competency Radar Dimensions</text>
+    <g transform="translate(40, 230)">
+      <rect width="325" height="190" rx="12" fill="#1e293b" />
+      <text x="20" y="30" fill="#cbd5e1" font-size="12">Technical Accuracy (Model 2)</text>
+      <rect x="20" y="40" width="285" height="6" rx="3" fill="#334155" /><rect x="20" y="40" width="230" height="6" rx="3" fill="#6366f1" />
+
+      <text x="20" y="75" fill="#cbd5e1" font-size="12">Communication Clarity</text>
+      <rect x="20" y="85" width="285" height="6" rx="3" fill="#334155" /><rect x="20" y="85" width="250" height="6" rx="3" fill="#a855f7" />
+
+      <text x="20" y="120" fill="#cbd5e1" font-size="12">Speech Delivery &amp; Fluency</text>
+      <rect x="20" y="130" width="285" height="6" rx="3" fill="#334155" /><rect x="20" y="130" width="240" height="6" rx="3" fill="#10b981" />
+
+      <text x="20" y="165" fill="#cbd5e1" font-size="12">STAR Behavioral Depth</text>
+      <rect x="20" y="175" width="285" height="6" rx="3" fill="#334155" /><rect x="20" y="175" width="210" height="6" rx="3" fill="#f59e0b" />
+    </g>
+
+    <!-- Column 2: Acoustic Diagnostics -->
+    <text x="395" y="215" fill="#f8fafc" font-size="14" font-weight="bold">Acoustic &amp; Delivery Analysis</text>
+    <g transform="translate(395, 230)">
+      <rect width="325" height="190" rx="12" fill="#1e293b" />
+      <text x="20" y="35" fill="#94a3b8" font-size="11">Average Pace:</text><text x="200" y="35" fill="#f8fafc" font-size="12" font-weight="bold">136 WPM (Ideal)</text>
+      <text x="20" y="70" fill="#94a3b8" font-size="11">Pause Distribution:</text><text x="200" y="70" fill="#f8fafc" font-size="12" font-weight="bold">1.2s avg (Natural)</text>
+      <text x="20" y="105" fill="#94a3b8" font-size="11">Filler Word Frequency:</text><text x="200" y="105" fill="#10b981" font-size="12" font-weight="bold">1.8% (Very Low)</text>
+      <text x="20" y="140" fill="#94a3b8" font-size="11">Acoustic Confidence:</text><text x="200" y="140" fill="#6366f1" font-size="12" font-weight="bold">86 / 100</text>
+      <text x="20" y="175" fill="#94a3b8" font-size="11">Tone Pitch Stability:</text><text x="200" y="175" fill="#f8fafc" font-size="12" font-weight="bold">92% Stable</text>
+    </g>
+
+    <!-- Question-by-Question Turn Breakdown -->
+    <text x="40" y="455" fill="#f8fafc" font-size="14" font-weight="bold">Question-by-Question Evaluator Feedback</text>
+    
+    <!-- Item 1 -->
+    <rect x="40" y="475" width="680" height="70" rx="10" fill="#1e293b" />
+    <circle cx="65" cy="510" r="12" fill="#10b981" opacity="0.2" /><text x="60" y="515" fill="#10b981" font-size="12" font-weight="bold">✓</text>
+    <text x="90" y="500" fill="#f8fafc" font-size="13" font-weight="bold">Q1: Controlled vs Uncontrolled Components</text>
+    <text x="90" y="525" fill="#94a3b8" font-size="11">Key concepts covered: useState, useRef, DOM binding. Technical Score: 85/100</text>
+    <text x="640" y="512" fill="#10b981" font-size="12" font-weight="bold">85%</text>
+
+    <!-- Item 2 -->
+    <rect x="40" y="555" width="680" height="70" rx="10" fill="#1e293b" />
+    <circle cx="65" cy="590" r="12" fill="#f59e0b" opacity="0.2" /><text x="60" y="595" fill="#f59e0b" font-size="12" font-weight="bold">~</text>
+    <text x="90" y="580" fill="#f8fafc" font-size="13" font-weight="bold">Q2: React Virtual DOM Reconciliation &amp; Diffing</text>
+    <text x="90" y="605" fill="#94a3b8" font-size="11">Partially covered fiber trees; suggested review on keys in dynamic lists. Technical Score: 72/100</text>
+    <text x="640" y="592" fill="#f59e0b" font-size="12" font-weight="bold">72%</text>
+
+    <!-- Download PDF / Export Action -->
+    <rect x="40" y="650" width="680" height="50" rx="12" fill="#6366f1" />
+    <text x="290" y="681" fill="#ffffff" font-size="14" font-weight="bold">📥 Download Full Evaluation PDF</text>
+  </g>
+</svg>

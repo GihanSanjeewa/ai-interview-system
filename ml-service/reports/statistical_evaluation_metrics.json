@@ -1,0 +1,20 @@
+{
+  "generated_utc": "2026-08-28T08:51:35.842216+00:00",
+  "total_test_evaluated": 200,
+  "roc_auc": 0.8701,
+  "pr_auc": 0.9147,
+  "accuracy_pct": 80.5,
+  "precision_pct": 100.0,
+  "recall_pct": 61.0,
+  "f1_score_pct": 75.78,
+  "confusion_matrix": {
+    "true_positives": 61,
+    "true_negatives": 100,
+    "false_positives": 0,
+    "false_negatives": 39
+  },
+  "figures": [
+    "C:\\Users\\gihan\\Documents\\ai-interview-system\\ml-service\\reports\\figures\\08_fig04_roc_and_precision_recall.png",
+    "C:\\Users\\gihan\\Documents\\ai-interview-system\\ml-service\\reports\\figures\\08_fig05_confusion_matrix_and_distribution.png"
+  ]
+}
