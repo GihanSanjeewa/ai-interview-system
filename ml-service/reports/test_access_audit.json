@@ -331,6 +331,38 @@
       "split_requested": "test",
       "access_granted": true,
       "details": "Authorized held-out test evaluation."
+    },
+    {
+      "timestamp": "2026-08-28T08:51:29.913307+00:00",
+      "notebook_id": 5,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "test",
+      "access_granted": false,
+      "details": "TestDatasetLockedError triggered."
+    },
+    {
+      "timestamp": "2026-08-28T08:51:29.931314+00:00",
+      "notebook_id": 7,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "test",
+      "access_granted": false,
+      "details": "TestDatasetLockedError triggered."
+    },
+    {
+      "timestamp": "2026-08-28T08:51:30.583524+00:00",
+      "notebook_id": 5,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "validation",
+      "access_granted": true,
+      "details": "Loaded validation split."
+    },
+    {
+      "timestamp": "2026-08-28T08:51:30.623828+00:00",
+      "notebook_id": 8,
+      "caller": "verify_ml_pipeline.py",
+      "split_requested": "test",
+      "access_granted": true,
+      "details": "Authorized held-out test evaluation."
     }
   ]
 }
