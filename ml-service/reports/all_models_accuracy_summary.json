@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-27T17:10:51Z",
+  "timestamp": "2026-08-28T12:48:18Z",
   "model_1_question_generator": {
     "model_id": "ai-interview-question-generator-v1.0.0",
     "top5_accuracy": "72.61%",
@@ -13,6 +13,6 @@
     "overall_accuracy": "76.7%",
     "correct_answer_identification": "53.3%",
     "incorrect_answer_discrimination": "100.0%",
-    "evaluation_latency_ms": 15.42
+    "evaluation_latency_ms": 93.73
   }
 }

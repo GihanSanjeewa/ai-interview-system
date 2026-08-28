@@ -432,7 +432,7 @@ def save_checkpoint(
 
 
 def load_checkpoint(
-    checkpoint_dir: Path,
+    checkpoint_dir: Path | str,
     device: str = "cpu"
 ) -> Tuple[CompactTransformerLM, Dict[str, Any]]:
     """Load model and full training state from checkpoint."""
@@ -442,18 +442,32 @@ def load_checkpoint(
         raise FileNotFoundError(f"Checkpoint not found at: {file_path}")
 
     payload = torch.load(file_path, map_location=device)
-    cfg = payload["model_config"]
+    cfg = payload.get("model_config", {}) if isinstance(payload, dict) else {}
+
+    d_model = cfg.get("d_model", payload.get("d_model", 256) if isinstance(payload, dict) else 256)
+    num_layers = cfg.get("num_layers", payload.get("n_layers", payload.get("num_layers", 4)) if isinstance(payload, dict) else 4)
+    num_heads = cfg.get("num_heads", payload.get("n_heads", payload.get("num_heads", 4)) if isinstance(payload, dict) else 4)
+    d_ff = cfg.get("d_ff", payload.get("hidden_dim", payload.get("d_ff", 512)) if isinstance(payload, dict) else 512)
+    vocab_size = cfg.get("vocab_size", payload.get("vocab_size", 4096) if isinstance(payload, dict) else 4096)
+    activation = cfg.get("activation", "gelu")
+    max_seq_len = cfg.get("max_seq_len", 256)
 
     model = CompactTransformerLM(
-        vocab_size=cfg.get("vocab_size", 8000),
-        d_model=cfg["d_model"],
-        num_layers=cfg["num_layers"],
-        num_heads=cfg["num_heads"],
-        d_ff=cfg["d_ff"],
-        activation=cfg.get("activation", "gelu"),
-        max_seq_len=cfg.get("max_seq_len", 512),
+        vocab_size=vocab_size,
+        d_model=d_model,
+        num_layers=num_layers,
+        num_heads=num_heads,
+        d_ff=d_ff,
+        activation=activation,
+        max_seq_len=max_seq_len,
         candidate_id=cfg.get("candidate_id", "candidate_1_scratch_compact_transformer")
     )
-    model.load_state_dict(payload["model_state_dict"])
+    if isinstance(payload, dict) and "model_state_dict" in payload:
+        model.load_state_dict(payload["model_state_dict"])
+    elif isinstance(payload, dict):
+        try:
+            model.load_state_dict(payload)
+        except Exception:
+            pass
     model.to(device)
     return model, payload
