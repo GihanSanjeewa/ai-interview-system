@@ -122,12 +122,29 @@ class CustomBPETokenizer:
         (target_dir / "tokenizer.json").write_text(json.dumps(data, indent=2), encoding="utf-8")
 
     @classmethod
-    def load(cls, directory: Path) -> CustomBPETokenizer:
-        """Load tokenizer from disk."""
+    def load(cls, directory: Path | str) -> CustomBPETokenizer:
+        """Load tokenizer from disk with automatic multi-path discovery."""
         target_dir = Path(directory)
-        file_path = target_dir / "tokenizer.json" if target_dir.is_dir() else target_dir
-        if not file_path.exists():
-            raise FileNotFoundError(f"Tokenizer file not found at: {file_path}")
+        candidates = [
+            target_dir / "tokenizer.json" if target_dir.is_dir() else target_dir,
+            target_dir,
+            target_dir.parent / "tokenizer" / "tokenizer.json",
+            target_dir.parent.parent / "tokenizer" / "tokenizer.json",
+            Path("/content/ai-interview-system/ml-service/tokenizer/tokenizer.json"),
+            Path("/content/drive/MyDrive/ai-interview-system/ml-service/tokenizer/tokenizer.json"),
+        ]
+        file_path = None
+        for cand in candidates:
+            if cand.is_file() and cand.exists():
+                file_path = cand
+                break
+            elif cand.is_dir() and (cand / "tokenizer.json").exists():
+                file_path = cand / "tokenizer.json"
+                break
+
+        if file_path is None or not file_path.exists():
+            raise FileNotFoundError(f"Tokenizer file not found at: {target_dir}")
+
         data = json.loads(file_path.read_text(encoding="utf-8"))
         tok = cls(vocab_size=data.get("target_vocab_size", 8000))
         tok.token2id = data["token2id"]

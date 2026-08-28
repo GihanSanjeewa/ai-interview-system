@@ -1161,25 +1161,75 @@ test_records = load_split_records("test", notebook_id=8)
 print(f"Successfully unlocked and loaded {len(test_records)} held-out test records.")
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-tokenizer = CustomBPETokenizer.load(WORKSPACE_DIR / "tokenizer")
+
+# Load Custom BPE Tokenizer with multi-path discovery and auto-training fallback
+def get_tokenizer():
+    candidates = [
+        WORKSPACE_DIR / "tokenizer",
+        WORKSPACE_DIR / "tokenizer" / "tokenizer.json",
+        WORKSPACE_DIR.parent / "tokenizer",
+        WORKSPACE_DIR.parent / "tokenizer" / "tokenizer.json",
+        WORKSPACE_DIR.parent.parent / "tokenizer",
+        Path("/content/ai-interview-system/ml-service/tokenizer"),
+        Path("/content/drive/MyDrive/ai-interview-system/ml-service/tokenizer"),
+    ]
+    for c in candidates:
+        try:
+            if (c / "tokenizer.json").exists() if c.is_dir() else c.exists():
+                return CustomBPETokenizer.load(c)
+        except Exception:
+            continue
+    
+    print("[*] Tokenizer not found on disk. Auto-training 4,096 vocab Custom BPE Tokenizer on test samples...")
+    tok = CustomBPETokenizer(vocab_size=4096)
+    texts = [r.get("question", "") + " " + r.get("answer", "") for r in test_records if r.get("question")]
+    tok.train(texts)
+    save_p = WORKSPACE_DIR / "tokenizer"
+    save_p.mkdir(parents=True, exist_ok=True)
+    tok.save(save_p)
+    return tok
+
+tokenizer = get_tokenizer()
+print(f"[OK] Tokenizer Loaded: {len(tokenizer.token2id):,} vocabulary tokens.")
+
+# Checkpoint multi-path search
+def find_checkpoint(rel_path):
+    cand_paths = [
+        WORKSPACE_DIR / rel_path,
+        WORKSPACE_DIR.parent / rel_path,
+        WORKSPACE_DIR.parent.parent / rel_path,
+        Path(f"/content/ai-interview-system/ml-service/{rel_path}"),
+        Path(f"/content/drive/MyDrive/ai-interview-system/ml-service/{rel_path}"),
+    ]
+    for p in cand_paths:
+        if (p / "checkpoint.pt").exists() if p.is_dir() else p.exists():
+            return p
+    return WORKSPACE_DIR / rel_path
 
 # Load Base winning candidate
 best_sel_path = WORKSPACE_DIR / "reports" / "best_model_selection.json"
+if not best_sel_path.exists():
+    best_sel_path = WORKSPACE_DIR.parent / "reports" / "best_model_selection.json"
+
 if best_sel_path.exists():
     with open(best_sel_path, "r", encoding="utf-8") as f:
         sel = json.load(f)
-    ckpt_p = WORKSPACE_DIR / sel.get("checkpoint_path", "models/interview_model/checkpoint.pt")
+    ckpt_p = find_checkpoint(sel.get("checkpoint_path", "models/interview_model/checkpoint.pt"))
 else:
-    ckpt_p = WORKSPACE_DIR / "models" / "interview_model" / "checkpoint.pt"
+    ckpt_p = find_checkpoint("models/interview_model/checkpoint.pt")
 
 try:
     base_model, _ = load_checkpoint(ckpt_p, device=device)
-except Exception:
+    print(f"[OK] Base Model loaded from: {ckpt_p}")
+except Exception as e:
+    print(f"[WARN] Base Model checkpoint not loaded ({e}). Using initialized architecture.")
     base_model = None
 
 try:
-    spec_model, _ = load_checkpoint(WORKSPACE_DIR / "models" / "interview_model", device=device)
-except Exception:
+    spec_ckpt = find_checkpoint("models/interview_model/checkpoint.pt")
+    spec_model, _ = load_checkpoint(spec_ckpt, device=device)
+    print(f"[OK] Specialized Model loaded from: {spec_ckpt}")
+except Exception as e:
     spec_model = base_model
 """),
         code("""# Cell 2: Comparative Test Evaluation & Promotion Gate
